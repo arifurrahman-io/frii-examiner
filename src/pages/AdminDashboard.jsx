@@ -14,6 +14,7 @@ import {
   FaClipboard,
   FaCalendarTimes,
   FaChartPie,
+  FaLaptopCode,
 } from "react-icons/fa";
 import {
   PieChart,
@@ -28,24 +29,86 @@ import {
   getDashboardSummary,
   getTopResponsibleTeachers,
   getRecentGrantedLeaves,
-  getAssignmentByDutyType, // Data for Responsibility Name-wise
-  getAssignmentByBranch, // Data for Branch-wise
+  getAssignmentByDutyType,
+  getAssignmentByBranch,
 } from "../api/apiService";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
+// --- 1. PROFESSIONAL & SUBDUED COLOR PALETTE ---
 const COLORS = [
-  "#6366F1",
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
+  "#4F46E5", // Indigo 600
+  "#0D9488", // Teal 600
+  "#06B6D4", // Cyan 500
+  "#F59E0B", // Amber 500
+  "#64748B", // Slate 500
+  "#A78BFA", // Violet 400
 ];
 
-// --- NEW/UPDATED: Chart Component (Uses 'name' for label) ---
+// --- 2. KPI CONFIGURATION (Muted Colors) ---
+const KPI_CONFIG = [
+  {
+    title: "Total Teachers",
+    key: "teachers",
+    icon: FaUserTie,
+    colorClass: "text-indigo-600",
+    bgClass: "border-indigo-200",
+  },
+  {
+    title: "Total Branches",
+    key: "branches",
+    icon: FaBuilding,
+    colorClass: "text-slate-600",
+    bgClass: "border-slate-200",
+  },
+  {
+    title: "Total Classes",
+    key: "classes",
+    icon: FaUsers,
+    colorClass: "text-teal-600",
+    bgClass: "border-teal-200",
+  },
+  {
+    title: "Total Subjects",
+    key: "subjects",
+    icon: FaBookOpen,
+    colorClass: "text-amber-600",
+    bgClass: "border-amber-200",
+  },
+  {
+    title: "Active Duties",
+    key: "responsibilities",
+    icon: FaTasks,
+    colorClass: "text-sky-600",
+    bgClass: "border-sky-200",
+  },
+];
+
+// --- 3. KPI CARD COMPONENT (Minimal Shadow/Color) ---
+const IconKpiCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
+  // Uses responsive grid columns defined in the main component
+  <div
+    className={`bg-white p-6 rounded-lg shadow-sm border border-gray-200 transition duration-200 hover:shadow-md`}
+  >
+    <div className="flex items-center justify-between">
+      <div>
+        <span className="text-sm text-gray-500 font-semibold uppercase tracking-wide">
+          {title}
+        </span>
+        <h3 className="text-3xl font-bold text-gray-800 leading-tight mt-1">
+          {value}
+        </h3>
+      </div>
+      <div className={`p-3 rounded-full ${colorClass} bg-gray-100`}>
+        <Icon className={`text-2xl ${colorClass}`} />
+      </div>
+    </div>
+  </div>
+);
+
+// --- 4. CHART COMPONENT (Remains Functional) ---
 const DutyChart = ({ data, title }) => {
-  // Added 'title' prop
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
@@ -55,7 +118,6 @@ const DutyChart = ({ data, title }) => {
     );
   }
 
-  // Prepare data for Recharts (Using generic 'name' field)
   const chartData = data.map((item, index) => ({
     name: item.name,
     value: Number(item.count),
@@ -64,7 +126,7 @@ const DutyChart = ({ data, title }) => {
 
   return (
     <div className="h-full flex flex-col">
-      <h4 className="text-md font-semibold text-gray-700 mb-2 border-b pb-1">
+      <h4 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">
         {title}
       </h4>
       <ResponsiveContainer width="100%" height={260}>
@@ -73,23 +135,22 @@ const DutyChart = ({ data, title }) => {
             data={chartData}
             dataKey="value"
             nameKey="name"
-            cx="50%"
+            cx="40%"
             cy="50%"
-            outerRadius={75} // Reduced size for side-by-side view
+            outerRadius={75}
             fill="#8884d8"
             labelLine={false}
-            // label
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip formatter={(value) => [value, "Assignments"]} />
           <Legend
-            layout="vertical" // Changed layout for better fit
+            layout="vertical"
             align="right"
             verticalAlign="middle"
-            wrapperStyle={{ paddingLeft: "10px" }}
+            wrapperStyle={{ paddingLeft: "15px", fontSize: "12px" }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -97,38 +158,19 @@ const DutyChart = ({ data, title }) => {
   );
 };
 
-// --- 1. KPI CARD COMPONENT (Omitted for brevity) ---
-const KpiCard = ({ title, value, growth, unit = "" }) => (
-  <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 transition-shadow duration-200">
-    <div className="flex justify-between items-center mb-1">
-      <span className="text-sm text-gray-500">{title}</span>
-      <span
-        className={`text-xs font-semibold flex items-center ${
-          growth >= 0 ? "text-green-600" : "text-red-600"
-        }`}
-      >
-        {growth >= 0 ? "▲" : "▼"} {Math.abs(growth)}%
-      </span>
-    </div>
-    <h3 className="text-4xl font-extrabold text-indigo-700 leading-tight">
-      {value}
-      {unit}
-    </h3>
-    <p className="text-xs text-gray-400">since last month</p>
-  </div>
-);
-
-// --- 2. QUICK ACCESS CARD COMPONENT (Helper) ---
+// --- 5. QUICK ACCESS CARD COMPONENT (Neutral Look) ---
 const QuickAccessCard = ({ icon: Icon, title, path }) => (
+  // Uses responsive grid columns defined in the main component
   <Link
     to={path}
-    className="text-sm p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg font-semibold flex items-center transition-colors"
+    className="text-sm p-4 bg-white hover:bg-gray-100 rounded-lg font-semibold flex items-center transition-all duration-200 border border-gray-200 shadow-sm"
   >
-    <Icon className="mr-2 text-indigo-600" /> {title}
+    <Icon className="mr-3 text-lg text-indigo-600" />
+    <span className="text-gray-700">{title}</span>
   </Link>
 );
 
-// --- 3. MAIN DASHBOARD COMPONENT ---
+// --- 6. MAIN DASHBOARD COMPONENT ---
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -142,18 +184,14 @@ const AdminDashboard = () => {
     totalGrantedLeaves: 0,
   });
   const [topTeachers, setTopTeachers] = useState([]);
-
-  // States for dual charting
   const [dutyTypeData, setDutyTypeData] = useState([]);
   const [branchData, setBranchData] = useState([]);
-
   const [recentLeaves, setRecentLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        // Fetch all data concurrently
         const [summaryRes, topTeachersRes, dutyTypeRes, branchRes, leavesRes] =
           await Promise.all([
             getDashboardSummary(),
@@ -163,7 +201,6 @@ const AdminDashboard = () => {
             getRecentGrantedLeaves(),
           ]);
 
-        // 1. Set KPI Totals
         setTotals({
           branches: summaryRes.data.totalBranches || 0,
           classes: summaryRes.data.totalClasses || 0,
@@ -173,7 +210,6 @@ const AdminDashboard = () => {
           totalGrantedLeaves: summaryRes.data.totalGrantedLeaves || 0,
         });
 
-        // 2. Set Lists and Analytics
         setTopTeachers(topTeachersRes.data);
         setDutyTypeData(dutyTypeRes.data);
         setBranchData(branchRes.data);
@@ -189,7 +225,6 @@ const AdminDashboard = () => {
   }, []);
 
   const handleViewAllLeaves = () => {
-    // Navigate to the new dedicated page /leaves/granted
     navigate("/leaves/granted");
     toast.success("Redirecting to Granted Leaves Report.");
   };
@@ -197,158 +232,162 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="text-center p-20">
-        <FaSyncAlt className="animate-spin text-5xl text-indigo-600 mx-auto" />
-        <p className="mt-4 text-xl text-gray-600 font-semibold">
-          Loading Dashboard Data...
-        </p>
+        <LoadingSpinner size="text-5xl" message="Loading Dashboard Data..." />
       </div>
     );
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Modern Gradient Heading */}
-      <h2 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600 mb-10 leading-tight">
-        Welcome, {user?.name || "Admin"}! 👋
+      {/* PROFESSIONAL HEADING (Responsive font size) */}
+      <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-10 leading-tight border-b-2 border-indigo-100 pb-3">
+        Administration Dashboard{" "}
+        {/* <span className="text-indigo-600">({user?.name || "Admin"})</span> */}
       </h2>
 
+      {/* Main Grid: Stacks on mobile, splits on large screens */}
       <div className="grid grid-cols-12 gap-8">
-        {/* --- A. KPI ROW (Full Width - 12/12) --- */}
-        <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-4">
-          <KpiCard
-            title="Total Teachers"
-            value={totals.teachers}
-            growth={3.5}
-          />
-          <KpiCard
-            title="Total Branches"
-            value={totals.branches}
-            growth={1.2}
-          />
-          <KpiCard title="Total Classes" value={totals.classes} growth={0} />
-          <KpiCard
-            title="Total Subjects"
-            value={totals.subjects}
-            growth={-2.1}
-          />
-          <KpiCard
-            title="Active Duties"
-            value={totals.responsibilities}
-            growth={4.8}
-          />
+        {/* --- A. KPI ROW (Responsive 1/2/5 columns) --- */}
+        <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-4">
+          {KPI_CONFIG.map((kpi) => (
+            <IconKpiCard
+              key={kpi.key}
+              title={kpi.title}
+              value={totals[kpi.key]}
+              icon={kpi.icon}
+              colorClass={kpi.colorClass}
+              bgClass={kpi.bgClass}
+            />
+          ))}
         </div>
 
-        {/* --- B. MAIN ANALYTICS & ACTIVITY (Left Column - 8/12) --- */}
+        {/* --- B. MAIN ANALYTICS & ACTIVITY (Left Column: Full on mobile, 8/12 on large) --- */}
         <div className="col-span-12 lg:col-span-8 space-y-8">
-          {/* ✅ DUAL CHART CONTAINER */}
-          <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100 relative">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
-              <FaChartBar className="mr-2 text-indigo-500" /> Duty Assignment
-              Analytics
+          {/* DUAL CHART CONTAINER (Responsive 1/2 columns) */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 relative">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center border-b pb-3">
+              <FaChartBar className="mr-3 text-indigo-500" /> Duty Assignment
+              Analysis
             </h3>
 
-            {/* Render two charts side-by-side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-              {/* 1. Responsibility Name Analysis */}
-              <div className="h-80">
+              {/* 1. Responsibility Name Analysis (Border only on medium screens) */}
+              <div className="h-80 md:border-r md:border-gray-100 md:pr-4 pr-0">
                 <DutyChart
                   data={dutyTypeData}
-                  title="Responsibility Name-wise"
+                  title="Responsibility Name-wise Distribution"
                 />
               </div>
 
-              {/* 2. Branch Wise Analysis */}
-              <div className="h-80">
-                <DutyChart data={branchData} title="Branch Wise Analysis" />
+              {/* 2. Branch Wise Analysis (Padding only on medium screens) */}
+              <div className="h-80 md:pl-4 pl-0">
+                <DutyChart
+                  data={branchData}
+                  title="Assignment Load by Branch"
+                />
               </div>
             </div>
           </div>
 
-          {/* Master Setup Quick Access Links */}
-          <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
+          {/* Master Setup Quick Access Links (Responsive 2/3/4 columns) */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
               <FaClipboard className="mr-2 text-indigo-500" /> Master Setup
               Quick Access
             </h3>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <QuickAccessCard
                 icon={FaBuilding}
-                title="Branches"
+                title="Branches Setup"
                 path="/setup/branch"
               />
               <QuickAccessCard
                 icon={FaUsers}
-                title="Classes"
+                title="Classes Setup"
                 path="/setup/class"
               />
               <QuickAccessCard
                 icon={FaBookOpen}
-                title="Subjects"
+                title="Subjects Setup"
                 path="/setup/subject"
               />
               <QuickAccessCard
+                icon={FaTasks}
+                title="Duty Types Setup"
+                path="/setup/responsibility"
+              />
+              <QuickAccessCard
                 icon={FaUserTie}
-                title="Teachers"
+                title="Teachers List"
                 path="/teachers"
               />
               <QuickAccessCard
-                icon={FaTasks}
+                icon={FaCalendarCheck}
+                title="Routine Setup"
+                path="/routine"
+              />
+              <QuickAccessCard
+                icon={FaLaptopCode}
                 title="Assign Duties"
                 path="/assign"
               />
               <QuickAccessCard
-                icon={FaCalendarCheck}
-                title="Routines"
-                path="/routine"
+                icon={FaChartBar}
+                title="View Reports"
+                path="/report"
               />
             </div>
           </div>
         </div>
 
-        {/* --- C. TOP RESPONSIBLE TEACHERS SIDEBAR (Right Column - 4/12) --- */}
+        {/* --- C. SIDEBAR (Right Column: Full on mobile, 4/12 on large) --- */}
         <div className="col-span-12 lg:col-span-4 space-y-8">
-          <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100 h-fit">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
+          {/* Top Teachers List */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 h-fit">
+            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center border-b pb-2">
               <FaMedal className="mr-2 text-yellow-600" /> Top Responsible
               Keepers
             </h3>
 
-            {/* List of Teachers (Ranked by Total Duties) */}
             <div className="space-y-3">
               {topTeachers.length > 0 ? (
                 topTeachers.map((t, index) => (
                   <div
                     key={t.teacherId}
-                    className="flex justify-between items-center p-2 border-b last:border-b-0"
+                    className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-100 hover:bg-gray-50 transition"
                   >
-                    <span className="font-semibold text-gray-800">
-                      {index + 1}. {t.name}
+                    <span className="font-semibold text-gray-800 flex items-center">
+                      <span className="text-lg w-6 font-bold text-indigo-600 mr-2">
+                        {index + 1}.
+                      </span>{" "}
+                      {t.name}
                     </span>
-                    <span className="text-indigo-600 font-bold">
+                    <span className="text-indigo-600 font-bold text-xs bg-indigo-100 px-2 py-0.5 rounded-full">
                       {t.totalDuties} Duties
                     </span>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 italic">
+                <p className="text-sm text-gray-500 italic p-4 text-center bg-gray-50 rounded-lg">
                   No assigned duties found.
                 </p>
               )}
             </div>
           </div>
 
-          {/* Granted Leaves Card (Table and Redirection) */}
-          <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
-              <FaCalendarTimes className="mr-2 text-indigo-500" /> Recent
-              Granted Leaves ({recentLeaves.length})
+          {/* Granted Leaves Card */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center border-b pb-2">
+              <FaCalendarTimes className="mr-2 text-red-600" /> Recent Granted
+              Leaves ({recentLeaves.length})
             </h3>
 
+            {/* Use overflow-x-auto for horizontal table scrolling on small screens */}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead>
-                  <tr>
+                  <tr className="bg-gray-50">
                     <th className="px-2 py-2 text-left font-semibold text-gray-600">
                       S.N.
                     </th>
@@ -356,27 +395,21 @@ const AdminDashboard = () => {
                       Teacher
                     </th>
                     <th className="px-2 py-2 text-left font-semibold text-gray-600">
-                      Campus
-                    </th>
-                    <th className="px-2 py-2 text-left font-semibold text-gray-600">
-                      Responsibility
+                      Duty
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
                   {recentLeaves.length > 0 ? (
                     recentLeaves.map((leave, index) => (
-                      <tr key={leave._id}>
+                      <tr key={leave._id} className="hover:bg-red-50">
                         <td className="px-2 py-2 whitespace-nowrap">
                           {index + 1}.
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 whitespace-nowrap text-gray-800">
                           {leave.teacher?.name}
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
-                          {leave.teacher?.campus?.name || "N/A"}
-                        </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 whitespace-nowrap text-red-600 font-medium">
                           {leave.responsibilityType?.name || "N/A"}
                         </td>
                       </tr>
@@ -384,7 +417,7 @@ const AdminDashboard = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="4"
+                        colSpan="3"
                         className="text-center py-4 text-gray-500 italic"
                       >
                         No granted leaves recorded recently.

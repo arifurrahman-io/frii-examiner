@@ -14,8 +14,10 @@ import {
 
 const getInitialState = (initialData) => ({
   _id: initialData?._id || "",
-  teacher: initialData?.teacher || "",
+  // Teacher is the MongoDB ObjectId, passed from the teacher profile view
+  teacher: initialData?.teacher || initialData?.teacherId || "",
   year: initialData?.year || new Date().getFullYear(),
+  // For editing, these fields come as IDs, correctly mapped from the Routine model's subdocument.
   className: initialData?.classNameId || "",
   subject: initialData?.subjectId || "",
 });
@@ -28,7 +30,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
   const [loading, setLoading] = useState(false);
   const currentYear = new Date().getFullYear();
 
-  // Reset form state when initialData changes (for modal reuse)
+  // CRITICAL FIX: Reset or initialize form state when initialData changes (for modal reuse/editing)
   useEffect(() => {
     setFormData(getInitialState(initialData));
   }, [initialData]);
@@ -153,6 +155,8 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
             { _id: currentYear - 1, name: `${currentYear - 1}` },
           ]}
           required
+          // Disable year selector during edit to prevent moving the assignment to the wrong year
+          disabled={!!initialData}
         />
 
         {/* Select Teacher (Using SelectDropdown) */}
@@ -164,6 +168,8 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           options={teachers}
           placeholder="Choose Teacher (Name & ID)"
           required
+          // Disable teacher selector during edit
+          disabled={!!initialData}
         />
 
         {/* Select Class (Using SelectDropdown) */}

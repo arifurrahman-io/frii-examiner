@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import { FaSignInAlt, FaUserTie, FaLock } from "react-icons/fa";
+import { FaSignInAlt, FaUserTie, FaLock, FaSyncAlt } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate, Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
+
+// Reusable UI Components
+import InputField from "../components/ui/InputField"; // <--- Import InputField
+import Button from "../components/ui/Button"; // <--- Import Button
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
@@ -11,7 +15,6 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // AuthContext থেকে login ফাংশন এবং isAuthenticated স্টেট আনা
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -59,88 +62,57 @@ const LoginPage = () => {
   };
 
   return (
-    // ✅ MODERNIZE: Add subtle gradient background to the page wrapper
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-indigo-100">
-      {/* ✅ MODERNIZE: Deeper shadow and slightly softer corners */}
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-3xl border border-indigo-100/50 transform transition-all duration-500 hover:shadow-4xl">
-        <div className="text-center mb-8">
-          <FaUserTie className="text-6xl text-indigo-600 mx-auto mb-3" />
-          <h2 className="text-3xl font-extrabold text-gray-800">
-            Admin/Teacher Login
+    // ✅ Updated: BG gradient and layout container
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-100">
+      {/* ✅ Updated: Enhanced card style with cleaner design */}
+      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-4xl border border-indigo-200/70 transform transition-all duration-500 hover:shadow-5xl">
+        <div className="text-center mb-10">
+          <FaUserTie className="text-6xl text-indigo-700 mx-auto mb-3" />
+          <h2 className="text-4xl font-extrabold text-gray-800 tracking-tight">
+            Login Required
           </h2>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 mt-2 font-medium">
             Access your Responsibility Management Platform
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username/Teacher ID Field */}
-          <div>
-            <label
-              className="block text-sm font-medium text-gray-700 mb-1"
-              htmlFor="teacherIdOrEmail"
-            >
-              Teacher ID or Email
-            </label>
-            <div className="relative">
-              <FaUserTie className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                id="teacherIdOrEmail"
-                type="text"
-                name="teacherIdOrEmail"
-                value={credentials.teacherIdOrEmail}
-                onChange={handleChange}
-                placeholder="Enter ID or Email"
-                // ✅ MODERNIZE: Enhanced focus style
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-600 focus:border-indigo-600 focus:ring-2 transition"
-                required
-              />
-            </div>
-          </div>
+          {/* 1. Username/Teacher ID Field (Using reusable InputField) */}
+          <InputField
+            label="Teacher ID or Email"
+            type="text"
+            name="teacherIdOrEmail"
+            icon={FaUserTie}
+            placeholder="Enter ID or Email"
+            value={credentials.teacherIdOrEmail}
+            onChange={handleChange}
+            required
+            // Note: InputField handles border/focus styling internally
+          />
 
-          {/* Password Field */}
-          <div>
-            <label
-              className="block text-sm font-medium text-gray-700 mb-1"
-              htmlFor="password"
-            >
-              Password
-            </label>
-            <div className="relative">
-              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                id="password"
-                type="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleChange}
-                placeholder="Enter Password"
-                // ✅ MODERNIZE: Enhanced focus style
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-600 focus:border-indigo-600 focus:ring-2 transition"
-                required
-              />
-            </div>
-          </div>
+          {/* 2. Password Field (Using reusable InputField) */}
+          <InputField
+            label="Password"
+            type="password"
+            name="password"
+            icon={FaLock}
+            placeholder="Enter Password"
+            value={credentials.password}
+            onChange={handleChange}
+            required
+          />
 
-          {/* Submit Button */}
-          <button
+          {/* 3. Submit Button (Using reusable Button) */}
+          <Button
             type="submit"
-            // ✅ MODERNIZE: Stronger hover and focus rings
-            className="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold uppercase tracking-wider hover:bg-indigo-700 transition duration-200 flex items-center justify-center disabled:opacity-50 focus:ring-4 focus:ring-indigo-300"
-            disabled={loading}
+            fullWidth
+            loading={loading}
+            variant="primary"
+            className="mt-8 text-lg py-3"
           >
-            {loading ? (
-              // ✅ MODERNIZE: Use FaSyncAlt for visual feedback
-              <>
-                <FaSyncAlt className="animate-spin mr-2" /> Logging In...
-              </>
-            ) : (
-              <>
-                <FaSignInAlt className="mr-2" />
-                LOG IN
-              </>
-            )}
-          </button>
+            <FaSignInAlt className="mr-2" />
+            LOG IN
+          </Button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">

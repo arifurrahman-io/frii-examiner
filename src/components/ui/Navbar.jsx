@@ -43,16 +43,17 @@ const Navbar = () => {
       location.pathname === item.path ||
       (item.path !== "/" && location.pathname.startsWith(item.path));
 
-    // Active style: Solid color and red bottom border
+    // Active style: Dark text, Indigo bottom border on white background
     const activeStyle = isActive
-      ? "text-white font-bold bg-indigo-700/80 border-b-2 border-red-400"
-      : "text-indigo-200 hover:text-white hover:bg-indigo-700/50";
+      ? "text-indigo-700 font-semibold border-b-2 border-indigo-600"
+      : "text-gray-700 hover:text-indigo-700 hover:bg-gray-100"; // Light hover accent
 
     return (
       <Link
         to={item.path}
         onClick={onClick}
-        className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition duration-150 ${activeStyle}`}
+        // Minimal padding for a horizontal menu bar
+        className={`flex items-center space-x-2 px-3 py-1.5 text-sm transition duration-150 ${activeStyle}`}
       >
         <item.icon className="text-lg" />
         <span>{item.name}</span>
@@ -61,44 +62,39 @@ const Navbar = () => {
   };
 
   return (
-    // ✅ Solid, full-width background
-    <nav className="bg-indigo-800 shadow-xl sticky top-0 z-40">
-      {/* max-w-full ensures the container expands to the full screen width */}
+    // ✅ Updated: White background, soft shadow, sticky
+    <nav className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* বাম অংশ: লোগো/ব্র্যান্ডিং ও ডেস্কটপ মেনু */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-              <FaRegCalendarAlt className="text-2xl text-white" />
-              <span className="text-xl font-bold tracking-wider text-white">
+              <FaRegCalendarAlt className="text-2xl text-indigo-700" />
+              <span className="text-xl font-bold tracking-wider text-gray-800">
                 Exam Manager
               </span>
             </Link>
 
-            {/* ডেস্কটপ মেনু আইটেম (কম্প্যাক্ট স্পেসিং) */}
-            <div className="hidden md:ml-4 md:flex md:space-x-1">
+            {/* ডেস্কটপ মেনু আইটেম (Centered/Left-aligned links) */}
+            <div className="hidden md:ml-10 md:flex md:space-x-6">
               {NavItems.map((item) => (
                 <NavLink key={item.name} item={item} />
               ))}
             </div>
           </div>
 
-          {/* ডান অংশ: ইউজার অ্যাকশন (ডেস্কটপ) */}
-          <div className="hidden md:flex md:items-center space-x-4">
-            {/* ইউজার নেম ও রোল */}
-            <div className="flex flex-col items-end leading-none">
-              <span className="text-sm font-semibold text-white">
-                {user?.name || "Admin"}
-              </span>
-              <span className="text-xs text-indigo-300">
-                ({user?.role?.toUpperCase() || "ADMIN"})
-              </span>
+          {/* ডান অংশ: ইউজার অ্যাকশন (Text Link + Primary Button) */}
+          <div className="hidden md:flex md:items-center space-x-6">
+            {/* User Info / Text Link Style (Matches "Log In" text link) */}
+            <div className="text-sm font-medium text-indigo-600">
+              <FaUserTie className="inline mr-1 text-base" />
+              {user?.name || "Admin"} ({user?.role?.toUpperCase()})
             </div>
 
-            {/* লগআউট বাটন */}
+            {/* Logout Button (Matches "Get Started" primary button) */}
             <button
               onClick={handleLogout}
-              className="flex items-center px-3 py-2 bg-red-600 rounded-lg font-semibold hover:bg-red-700 transition duration-200 text-white text-sm focus:ring-2 focus:ring-red-300"
+              className="flex items-center px-4 py-2 bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 text-white text-sm shadow-md"
               title="Logout"
             >
               <FaSignOutAlt className="mr-2" />
@@ -110,7 +106,8 @@ const Navbar = () => {
           <div className="flex md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              // Text and background colors reversed for light mode
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600"
             >
               <span className="sr-only">Open main menu</span>
               {isOpen ? (
@@ -123,11 +120,11 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* --- মোবাইল মেনু (রেসপনসিভ) --- */}
+      {/* --- মোবাইল মেনু (রেসপনসিভ - Light Mode) --- */}
       <div
         className={`${
           isOpen ? "block" : "hidden"
-        } md:hidden bg-indigo-900 border-t border-indigo-700 shadow-2xl`}
+        } md:hidden bg-gray-50 border-t border-gray-200 shadow-lg`}
       >
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {NavItems.map((item) => (
@@ -138,13 +135,19 @@ const Navbar = () => {
             />
           ))}
 
-          {/* মোবাইল লগআউট বাটন */}
+          {/* User Info on mobile */}
+          <div className="text-sm font-medium text-indigo-600 px-3 py-2 border-t border-gray-200 mt-2">
+            <FaUserTie className="inline mr-1 text-base" />
+            {user?.name || "Admin"} ({user?.role?.toUpperCase()})
+          </div>
+
+          {/* মোবাইল লগআউট বাটন (Primary Button Style) */}
           <button
             onClick={handleLogout}
-            className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-red-600 hover:bg-red-700 transition duration-150 mt-2"
+            className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 mt-2"
           >
             <FaSignOutAlt className="mr-2" />
-            Logout ({user?.name || "Admin"})
+            Logout
           </button>
         </div>
       </div>
