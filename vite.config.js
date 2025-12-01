@@ -6,16 +6,16 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  // ✅ API কলগুলোকে Express সার্ভারে ফরওয়ার্ড করার জন্য এই ব্লকটি যোগ করুন
+  // ✅ API কলগুলোকে Express সার্ভারে ফরওয়ার্ড করার জন্য কনফিগারেশন
   server: {
     // এই পোর্টটি (5173) ফ্রন্টএন্ডে ব্যবহার হবে
     proxy: {
       // যখনই ফ্রন্টএন্ড '/api' দিয়ে শুরু করে কোনো রিকোয়েস্ট করবে...
       "/api": {
-        // ...তখন রিকোয়েস্টটি এই টার্গেটে (আপনার Express সার্ভার) পাঠিয়ে দেওয়া হবে।
+        // ...তখন রিকোয়েস্টটি আপনার লাইভ ব্যাকএন্ড টার্গেটে পাঠিয়ে দেওয়া হবে।
         target: "https://frii-examiner-back.onrender.com",
         changeOrigin: true,
-        secure: false, // HTTPS ব্যবহার না করলে false রাখুন
+        // secure: false লাইনটি বাদ দেওয়া হলো, কারণ Render এর বৈধ SSL সার্টিফিকেট রয়েছে।
       },
     },
   },
