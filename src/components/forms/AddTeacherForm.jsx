@@ -103,12 +103,14 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
-      {/* 🚀 MODERNIZE: Enhanced header for better visual impact */}
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b-2 border-indigo-100 pb-3">
+    // 💡 ELEGANT FIX: Removed shadow-2xl and using a light gray border for a clean, flat design.
+    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl border border-gray-200">
+      {/* 🚀 MODERNIZE: Clean header, reduced border contrast */}
+      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
         <FaUserPlus className="mr-3 text-3xl text-indigo-600" />
         Add New Teacher
       </h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Teacher Name */}
         <InputField

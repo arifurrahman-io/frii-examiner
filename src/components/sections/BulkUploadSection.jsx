@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/components/sections/BulkUploadSection.jsx
+
+import React, { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { FaUpload, FaFileExcel, FaSyncAlt } from "react-icons/fa";
 import Button from "../ui/Button";
@@ -9,7 +11,9 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [bulkErrors, setBulkErrors] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false); // NEW STATE for drag styling
 
+  // Handler for file input change
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -17,6 +21,25 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
       setBulkErrors([]);
     }
   };
+
+  // DRAG HANDLERS
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileChange({ target: { files: files } });
+    }
+  }, []);
 
   const handleBulkUpload = async () => {
     if (!selectedFile) {
@@ -54,31 +77,70 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-2xl border border-gray-100 h-full">
+    // Container: Using border-gray-200 for clean look.
+    <div className="p-6 bg-white rounded-xl border border-gray-200 h-full">
       <h3 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center">
         <FaFileExcel className="mr-3 text-green-600" />
         Bulk Upload Teachers
       </h3>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {" "}
+        {/* Increased vertical space */}
+        {/* Hidden File Input */}
         <input
+          id="teacher-excel-upload"
           type="file"
           accept=".xlsx, .xls"
           onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500"
+          className="hidden"
         />
-
-        {selectedFile && (
-          <p className="text-sm font-medium text-gray-700 bg-indigo-50 p-2 rounded-lg">
-            Selected: {selectedFile.name}
-          </p>
-        )}
-
+        {/* 💡 MODERN DRAG-AND-DROP ZONE */}
+        <div
+          className={`flex flex-col items-center justify-center p-8 border-2 rounded-xl h-40 transition duration-300 cursor-pointer ${
+            isDragOver
+              ? "border-indigo-600 bg-indigo-50/50"
+              : selectedFile
+              ? "border-green-400 bg-green-50"
+              : "border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() =>
+            document.getElementById("teacher-excel-upload").click()
+          }
+        >
+          {/* Content based on file state */}
+          {selectedFile ? (
+            <>
+              <FaFileExcel className="text-4xl text-green-600 mb-2" />
+              <p className="font-semibold text-gray-800">{selectedFile.name}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Ready for upload. Click Upload button below.
+              </p>
+            </>
+          ) : (
+            <>
+              <FaUpload className="text-4xl text-indigo-500 mb-2" />
+              <p className="text-lg text-gray-600 font-medium">
+                Drag files here or{" "}
+                <span className="text-indigo-600 font-bold hover:text-indigo-700">
+                  browse
+                </span>
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Accepts .xlsx and .xls files
+              </p>
+            </>
+          )}
+        </div>
         <Button
           onClick={handleBulkUpload}
           fullWidth
           loading={uploading}
-          variant="success"
+          // Changed variant to 'primary' (indigo) for the prominent blue action button
+          variant="primary"
           disabled={!selectedFile}
         >
           <FaUpload className="mr-2" />

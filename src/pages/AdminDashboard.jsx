@@ -240,8 +240,8 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* PROFESSIONAL HEADING (Responsive font size) */}
-      <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-10 leading-tight border-b-2 border-indigo-100 pb-3">
-        Administration Dashboard{" "}
+      <h2 className="text-2xl sm:text-3xl text-center font-bold text-gray-900 mb-10 leading-tight border-b-2 border-indigo-100 pb-3">
+        Administration Dashboard
         {/* <span className="text-indigo-600">({user?.name || "Admin"})</span> */}
       </h2>
 

@@ -1,9 +1,11 @@
+// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/GrantedLeavesPage.jsx
+
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaCalendarTimes, FaFileExcel } from "react-icons/fa";
 import {
   getAllGrantedLeavesForReport,
-  exportLeavesReportToExcel, // ✅ Export function imported
+  // ❌ REMOVED: exportLeavesReportToExcel import
 } from "../api/apiService";
 import LoadingSpinner from "../components/ui/LoadingSpinner"; // Assuming this is the correct component name
 
@@ -28,20 +30,7 @@ const GrantedLeavesPage = () => {
     fetchLeaves();
   }, []);
 
-  // ✅ HANDLER: Function to export the granted leaves list
-  const handleExportExcel = () => {
-    toast.promise(
-      new Promise((resolve) => {
-        exportLeavesReportToExcel(); // Trigger the backend Excel download route
-        resolve();
-      }),
-      {
-        loading: "Preparing Granted Leaves Excel file...",
-        success: "Download started!",
-        error: "Download failed. Check Admin rights or server logs.",
-      }
-    );
-  };
+  // ❌ REMOVED: handleExportExcel function
 
   if (loading) {
     return (
@@ -60,24 +49,15 @@ const GrantedLeavesPage = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-3xl font-bold text-indigo-800 mb-8 flex items-center">
+      <h2 className="text-2xl font-bold text-indigo-800 mb-8 flex items-center">
         <FaCalendarTimes className="mr-3" />
         Granted Leaves Report ({leavesData.length})
       </h2>
 
-      {/* --- Export and Actions Area --- */}
-      <div className="mb-6 flex justify-end space-x-3">
-        <button
-          onClick={handleExportExcel} // ✅ Use the new handler
-          className="p-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
-          disabled={leavesData.length === 0}
-        >
-          <FaFileExcel className="mr-2" /> Export to Excel
-        </button>
-      </div>
+      {/* ❌ REMOVED: Export and Actions Area (including Export to Excel button) */}
 
       {/* --- Report Table --- */}
-      <div className="overflow-x-auto bg-white rounded-xl shadow-2xl border border-gray-100">
+      <div className="overflow-x-auto bg-white rounded-xl border border-gray-100">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-indigo-50">
             <tr>

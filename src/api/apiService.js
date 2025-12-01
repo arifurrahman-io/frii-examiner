@@ -1,3 +1,5 @@
+// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/api/apiService.js
+
 import axios from "axios";
 
 const api = axios.create({
@@ -28,7 +30,7 @@ export const getTopResponsibleTeachers = () =>
 export const getRecentGrantedLeaves = () =>
   api.get("/dashboard/recent-granted-leaves");
 export const getAssignmentAnalytics = () =>
-  api.get("/dashboard/assignment-analytics"); // Original Category Analytics (kept)
+  api.get("/dashboard/assignment-analytics");
 // Dashboard Charts
 export const getAssignmentByDutyType = () =>
   api.get("/dashboard/assignment-by-type");
@@ -72,7 +74,7 @@ export const deleteRoutine = (routineId) =>
   api.delete(`/routines/${routineId}`);
 export const getTeacherRoutines = (teacherId) =>
   api.get(`/routines/teacher/${teacherId}`);
-// ✅ NEW: Bulk Routine Upload Function
+// Bulk Routine Upload Function
 export const uploadRoutineExcel = (formData) =>
   api.post("/routines/bulk-upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -85,7 +87,7 @@ export const assignDuty = (assignmentData) =>
 export const deleteAssignmentPermanently = (assignmentId) =>
   api.delete(`/assignments/${assignmentId}`);
 export const getReportData = (filters) =>
-  api.get("/assignments", { params: filters });
+  api.get("/reports/data", { params: filters }); // Changed to use /reports/data
 export const getAssignmentsByTeacherAndYear = (teacherId, year) =>
   api.get(`/assignments/teacher/${teacherId}?year=${year}`);
 
@@ -124,17 +126,7 @@ export const updateMasterData = (type, id, data) =>
 export const deleteMasterData = (type, id) =>
   api.delete(getMasterUrl(type, id));
 
-// --- ৬. রিপোর্ট এক্সপোর্ট API ---
-
-export const exportReportToExcel = (filters) => {
-  const params = new URLSearchParams(filters).toString();
-  return window.open(`/api/reports/export/excel?${params}`, "_blank");
-};
-
-export const exportLeavesReportToExcel = () => {
-  // Open the new backend route in a new tab for download
-  return window.open(`/api/leaves/export/excel`, "_blank");
-};
+// --- ৬. রিপোর্ট এক্সপোর্ট API (All Removed) ---
 
 export const checkLeaveConflict = (filters) =>
   api.get("/leaves/conflict-check", { params: filters });

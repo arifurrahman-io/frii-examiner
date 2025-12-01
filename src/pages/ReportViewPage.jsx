@@ -1,23 +1,14 @@
-// src/pages/ReportViewPage.jsx (Final Revision for Minimal Filters and Year Range)
+// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/ReportViewPage.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import {
   FaChartBar,
-  FaFilePdf,
-  FaFileExcel,
   FaFilter,
   FaSyncAlt,
   FaClipboardList,
+  FaSearch, // Added for search/filter visual flair
 } from "react-icons/fa";
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  pdf,
-} from "@react-pdf/renderer";
 
 // Reusable UI Components
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -28,224 +19,19 @@ import {
   getResponsibilityTypes,
   getBranches,
   getReportData,
-  exportReportToExcel,
 } from "../api/apiService";
 
-// --- PDF STYLING (UNCHANGED) ---
-const styles = StyleSheet.create({
-  page: {
-    padding: 30, // Increased padding
-    fontFamily: "Helvetica",
-    backgroundColor: "#f9fafb", // Subtle background color
-  },
-  header: {
-    fontSize: 22,
-    textAlign: "center",
-    marginBottom: 5,
-    fontWeight: "extrabold",
-    color: "#1E3A8A", // Deep Indigo
-  },
-  subHeader: {
-    fontSize: 10, // Smaller font for filter details
-    textAlign: "center",
-    marginBottom: 10,
-    color: "#4B5563", // Gray text
-  },
-  filterRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 8,
-    paddingVertical: 5,
-    backgroundColor: "#E0E7FF", // Light blue background for filter info
-    borderRadius: 4,
-    borderBottom: "1pt solid #A5B4FC",
-  },
-  filterText: {
-    fontSize: 8,
-    color: "#374151",
-    fontWeight: "bold",
-  },
-  table: {
-    display: "table",
-    width: "auto",
-    // Base table style is now minimal, borders are set on cells
-    marginTop: 15,
-  },
-  tableRow: {
-    margin: "auto",
-    flexDirection: "row",
-  },
-  // Base style for Header cell - Border styles REMOVED to be set in JSX
-  tableColHeader: {
-    width: "14.28%",
-    borderColor: "#4F46E5",
-    backgroundColor: "#4F46E5", // Indigo 600
-    color: "white",
-    padding: 6,
-    fontSize: 7,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  // Base style for Body cell - Border styles REMOVED to be set in JSX
-  tableCol: {
-    width: "14.28%",
-    borderColor: "#E5E7EB", // Light gray border
-    padding: 4,
-    fontSize: 6,
-    color: "#374151",
-  },
-});
-
-// --- PDF DOCUMENT COMPONENT (REVISED FOR MINIMAL COLUMNS) ---
-const ReportPDF = ({ data, filters, title, reportType }) => {
-  if (!data || data.length === 0) {
-    return (
-      <Document>
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.header}>No Data Available</Text>
-        </Page>
-      </Document>
-    );
-  }
-
-  const allHeaders = Object.keys(data[0]);
-
-  // ✅ DEFINITIVE COLUMN LIST: Only these keys will be rendered for the detailed view
-  const MINIMAL_COLUMNS = ["ID", "TEACHER", "CAMPUS", "CLASS", "SUBJECT"];
-
-  let filteredHeaders;
-
-  // Check if it's the detailed report (by checking for _ID or ID field existence)
-  if (
-    reportType === "DETAILED_ASSIGNMENT" &&
-    (allHeaders.includes("_ID") || allHeaders.includes("ID"))
-  ) {
-    // Use the minimal set for detailed report
-    filteredHeaders = allHeaders.filter((header) =>
-      MINIMAL_COLUMNS.includes(header)
-    );
-  } else {
-    // Original logic for summary/other reports: Exclude unnecessary metadata
-    const standardExclusions = [
-      "STATUS",
-      "CREATED AT",
-      "UPDATED AT",
-      "_ID",
-      "TEACHERID",
-      "RESPONSIBILITY TYPE",
-      "YEAR",
-    ];
-    filteredHeaders = allHeaders.filter(
-      (header) => !standardExclusions.includes(header)
-    );
-  }
-
-  const numColumns = filteredHeaders.length;
-  // Dynamic width calculation
-  const colWidth = `${100 / numColumns}%`;
-
-  return (
-    <Document>
-      <Page size="A4" orientation="portrait" style={styles.page}>
-        <Text style={styles.header}>{title}</Text>
-        <Text style={styles.subHeader}>
-          Report Type: {filters.reportType.replace(/_/g, " ")}
-        </Text>
-
-        {/* Filter Row with light background for applied filters */}
-        <View style={styles.filterRow}>
-          <Text style={styles.filterText}>Year: {filters.year}</Text>
-          <Text style={styles.filterText}>Branch: {filters.branchName}</Text>
-          <Text style={styles.filterText}>Type: {filters.typeName}</Text>
-          <Text style={styles.filterText}>Class: {filters.className}</Text>
-        </View>
-
-        <View style={styles.table}>
-          {/* Table Header Row */}
-          <View style={styles.tableRow}>
-            {filteredHeaders.map((header, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.tableColHeader,
-                  { width: colWidth },
-                  {
-                    borderStyle: "solid",
-                    borderBottomWidth: 1,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    borderLeftWidth: index === 0 ? 1 : 0,
-                  },
-                ]}
-              >
-                <Text>
-                  {/* Convert uppercase key to readable title (e.g., TEACHER -> Teacher) */}
-                  {header === "ID"
-                    ? "S.L."
-                    : header.charAt(0).toUpperCase() +
-                      header.slice(1).toLowerCase()}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Table Body Rows */}
-          {data.map((row, rowIndex) => (
-            <View
-              key={rowIndex}
-              style={[
-                styles.tableRow,
-                // Add alternating row color for better readability
-                rowIndex % 2 === 1 ? { backgroundColor: "#F3F4F6" } : {},
-              ]}
-            >
-              {filteredHeaders.map((key, colIndex) => {
-                let displayValue = row[key];
-
-                if (key === "ID") {
-                  displayValue = rowIndex + 1;
-                }
-
-                return (
-                  <View
-                    key={colIndex}
-                    style={[
-                      styles.tableCol,
-                      { width: colWidth },
-                      // CRITICAL FIX: Define ALL border properties explicitly here
-                      {
-                        borderStyle: "solid",
-                        borderBottomWidth: 1,
-                        borderRightWidth: 1,
-                        borderTopWidth: 0, // No top border on body cells
-                        borderLeftWidth: colIndex === 0 ? 1 : 0, // Add left border only to the first column
-                        // Set right border for the last cell if it's the last cell
-                        ...(colIndex === numColumns - 1
-                          ? { borderRightWidth: 1 }
-                          : {}),
-                      },
-                    ]}
-                  >
-                    <Text>{displayValue || "N/A"}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-      </Page>
-    </Document>
-  );
-};
-
-// --- REPORT TABLE COMPONENT (REVISED FOR MINIMAL COLUMNS) ---
-const ReportTable = ({ data, classes, types, reportType }) => {
+// --- REPORT TABLE COMPONENT (Enhanced UI) ---
+const ReportTable = ({ data, reportType }) => {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl shadow-lg border border-gray-200">
-        <FaClipboardList className="text-5xl text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">
+      <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+        <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-4" />
+        <p className="text-lg text-gray-600 font-medium">
           No records found matching your current filter criteria.
+        </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Try adjusting your filters and fetching again.
         </p>
       </div>
     );
@@ -253,30 +39,34 @@ const ReportTable = ({ data, classes, types, reportType }) => {
 
   const allHeaders = Object.keys(data[0]);
 
-  // ✅ DEFINITIVE COLUMN LIST: Only these keys will be rendered for the detailed view
-  const MINIMAL_COLUMNS = ["ID", "TEACHER", "CAMPUS", "CLASS", "SUBJECT"];
+  // ✅ UPDATED: Define essential columns in the requested order
+  const MINIMAL_COLUMNS = [
+    "ID",
+    "CLASS",
+    "SUBJECT",
+    "TEACHER",
+    "CAMPUS",
+    "RESPONSIBILITY_TYPE",
+  ];
 
   let filteredHeaders;
 
-  // Check if it's the detailed report (by checking for _ID or ID field existence)
   if (
     reportType === "DETAILED_ASSIGNMENT" &&
     (allHeaders.includes("_ID") || allHeaders.includes("ID"))
   ) {
-    // Use the minimal set for detailed report
-    filteredHeaders = allHeaders.filter((header) =>
-      MINIMAL_COLUMNS.includes(header)
+    // Use the requested minimal columns for detailed view, ensuring they exist in the data
+    filteredHeaders = MINIMAL_COLUMNS.filter((header) =>
+      allHeaders.includes(header)
     );
   } else {
-    // Original logic for summary/other reports: Exclude unnecessary metadata
+    // For Summary reports, use all generated headers excluding metadata
     const standardExclusions = [
       "STATUS",
       "CREATED AT",
       "UPDATED AT",
       "_ID",
       "TEACHERID",
-      "RESPONSIBILITY TYPE",
-      "YEAR",
     ];
     filteredHeaders = allHeaders.filter(
       (header) => !standardExclusions.includes(header)
@@ -284,20 +74,22 @@ const ReportTable = ({ data, classes, types, reportType }) => {
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-xl shadow-2xl border border-gray-100">
+    <div className="overflow-x-auto bg-white rounded-xl border border-gray-100">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-indigo-600">
+        <thead className="bg-indigo-600 sticky top-0">
+          {" "}
+          {/* Sticky header for better UX on scroll */}
           <tr>
             {filteredHeaders.map((headerKey, index) => (
               <th
                 key={index}
-                className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
               >
                 {/* Convert uppercase key to readable title (e.g., TEACHER -> Teacher) */}
                 {headerKey === "ID"
                   ? "S.L."
-                  : headerKey.charAt(0).toUpperCase() +
-                    headerKey.slice(1).toLowerCase()}
+                  : headerKey.replace(/_/g, " ").charAt(0).toUpperCase() +
+                    headerKey.replace(/_/g, " ").slice(1).toLowerCase()}
               </th>
             ))}
           </tr>
@@ -314,12 +106,12 @@ const ReportTable = ({ data, classes, types, reportType }) => {
                   let displayValue = cellValue;
 
                   if (typeof cellValue === "object" && cellValue !== null) {
-                    if (cellValue.name) {
-                      displayValue = cellValue.name;
-                    } else {
-                      displayValue = "";
-                    }
-                  } else if (cellValue === null || cellValue === undefined) {
+                    displayValue = cellValue.name || "";
+                  } else if (
+                    cellValue === null ||
+                    cellValue === undefined ||
+                    displayValue === ""
+                  ) {
                     displayValue = "N/A";
                   }
 
@@ -327,18 +119,30 @@ const ReportTable = ({ data, classes, types, reportType }) => {
                     displayValue = rowIndex + 1;
                   }
 
+                  // Highlight summary counts
                   if (key === "TotalAssignments") {
                     displayValue = (
-                      <span className="font-extrabold text-indigo-700">
+                      <span className="font-extrabold text-indigo-700 text-base">
                         {displayValue}
                       </span>
                     );
                   }
 
+                  // Conditional styling for STATUS (If present, though excluded from list)
+                  let statusClass = "text-gray-800";
+                  if (key === "STATUS") {
+                    if (displayValue === "Assigned")
+                      statusClass = "text-blue-600 font-medium";
+                    else if (displayValue === "Completed")
+                      statusClass = "text-green-600 font-medium";
+                    else if (displayValue === "Cancelled")
+                      statusClass = "text-red-600 italic";
+                  }
+
                   return (
                     <td
                       key={colIndex}
-                      className="px-4 py-2 whitespace-nowrap text-sm text-gray-800"
+                      className={`px-4 py-3 whitespace-nowrap text-sm ${statusClass}`}
                     >
                       {displayValue}
                     </td>
@@ -355,7 +159,6 @@ const ReportTable = ({ data, classes, types, reportType }) => {
 const ReportViewPage = () => {
   const currentYear = new Date().getFullYear();
 
-  // ✅ FIX 1: Limit Year options to current year and two previous years (no future years)
   const yearOptions = [
     { _id: currentYear, name: `${currentYear}` },
     { _id: currentYear - 1, name: `${currentYear - 1}` },
@@ -368,8 +171,6 @@ const ReportViewPage = () => {
     { _id: "CLASS_SUMMARY", name: "Class-wise Summary" },
   ];
 
-  // Status options removed from UI
-
   // State definitions
   const [filters, setFilters] = useState({
     reportType: "DETAILED_ASSIGNMENT",
@@ -377,7 +178,6 @@ const ReportViewPage = () => {
     typeId: "",
     classId: "",
     branchId: "",
-    // ✅ FIX 2: Status is hardcoded to 'Assigned'
     status: "Assigned",
   });
 
@@ -411,25 +211,19 @@ const ReportViewPage = () => {
     fetchMasterData();
   }, []);
 
-  const getFilterName = (id, options, defaultText = "All") => {
-    if (!id) return defaultText;
-    const item = options.find((opt) => opt._id === id);
-    return item ? item.name : defaultText;
-  };
-
   const fetchReport = useCallback(async () => {
     if (fetchTrigger === 0) return;
 
     setLoading(true);
     try {
-      // filters automatically includes hardcoded status: "Assigned"
       const { data } = await getReportData(filters);
       setReportData(data);
       if (data.length === 0) {
         toast.info("No responsibility records found matching your filters.");
       }
     } catch (error) {
-      toast.error("Error fetching report data.");
+      console.error("Fetch Report Data Error:", error);
+      toast.error("Error fetching report data. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -453,118 +247,49 @@ const ReportViewPage = () => {
   const isBranchSummary = filters.reportType === "CAMPUS_SUMMARY";
   const isClassSummary = filters.reportType === "CLASS_SUMMARY";
 
+  // Enforce mandatory filters for summary reports (Strong Filtering)
   const isFetchDisabled =
     loading ||
     (isBranchSummary && !filters.branchId) ||
     (isClassSummary && !filters.classId);
 
-  const handleExportExcel = () => {
-    toast.promise(
-      new Promise((resolve) => {
-        setTimeout(() => {
-          exportReportToExcel(filters);
-          resolve();
-        }, 500);
-      }),
-      {
-        loading: "Preparing Excel file...",
-        success: "Download started!",
-        error: "Download failed.",
-      }
-    );
-  };
-
-  const handleOpenPDF = async () => {
-    const isPDFDownloadDisabled = reportData.length === 0 || loading;
-    if (isPDFDownloadDisabled) {
-      toast.error("No data to export.");
-      return;
-    }
-    setLoading(true);
-
-    try {
-      const selectedBranchName = getFilterName(
-        filters.branchId,
-        masterData.branches,
-        "All Campuses"
-      );
-      const selectedClassName = getFilterName(
-        filters.classId,
-        masterData.classes,
-        "All Classes"
-      );
-      const selectedTypeName = getFilterName(
-        filters.typeId,
-        masterData.types,
-        "All Types"
-      );
-
-      const doc = (
-        <ReportPDF
-          data={reportData}
-          filters={{
-            ...filters,
-            branchName: selectedBranchName,
-            className: selectedClassName,
-            typeName: selectedTypeName,
-          }}
-          title="Responsibility Report"
-          reportType={filters.reportType}
-        />
-      );
-
-      const blob = await pdf(doc).toBlob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-
-      toast.success("PDF report opened in a new tab.");
-    } catch (error) {
-      console.error("PDF Generation Error:", error);
-      toast.error(
-        "Failed to generate or open PDF. Please ensure @react-pdf/renderer is installed and the component structure is correct."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isPDFDownloadDisabled = reportData.length === 0 || loading;
-
   return (
     <div className="p-4">
-      {/* 🚀 MODERNIZE HEADER */}
-      <h2 className="text-4xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
-        <FaChartBar className="mr-3 text-4xl text-indigo-600" />
+      {/* 🚀 MODERNIZE HEADER: Large, prominent, and clean */}
+      <h2 className="text-2xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
+        <FaChartBar className="mr-3 text-2xl text-indigo-600" />
         Responsibility Report View
       </h2>
 
-      {/* --- FILTER AREA (Shadow reduced to 'shadow-md') --- */}
-      <div className="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100">
+      {/* --- FILTER AREA: Clean card design --- */}
+      <div className="bg-white p-6 rounded-xl  mb-10 border border-gray-100">
         <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
           <FaFilter className="mr-2 text-indigo-500" /> Filter Report Data
         </h3>
 
-        {/* Improved grid layout for visual separation */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 items-end">
-          {/* Report Type Filter - 1/5 */}
+        {/* Responsive Filter Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 items-end">
+          {/* Report Type Filter */}
           <SelectDropdown
             label="Report Type"
             name="reportType"
             value={filters.reportType}
             onChange={handleChange}
             options={reportTypeOptions}
+            className="xl:col-span-1"
           />
 
-          {/* Year Filter - 2/5 */}
+          {/* Year Filter */}
           <SelectDropdown
             label="Year"
             name="year"
             value={filters.year}
             onChange={handleChange}
             options={yearOptions}
+            className="xl:col-span-1"
           />
 
-          {/* Branch Filter - 3/5 */}
+          {/* Branch Filter (Conditional Required) */}
           <SelectDropdown
             label="Branch/Campus"
             name="branchId"
@@ -572,9 +297,11 @@ const ReportViewPage = () => {
             onChange={handleChange}
             options={masterData.branches}
             placeholder="All Campuses"
+            required={isBranchSummary}
+            className="xl:col-span-1"
           />
 
-          {/* Responsibility Type Filter - 4/5 */}
+          {/* Responsibility Type Filter */}
           <SelectDropdown
             label="Type"
             name="typeId"
@@ -582,9 +309,10 @@ const ReportViewPage = () => {
             onChange={handleChange}
             options={masterData.types}
             placeholder="All Responsibility Types"
+            className="xl:col-span-1"
           />
 
-          {/* Class Filter - 5/5 */}
+          {/* Class Filter (Conditional Required) */}
           <SelectDropdown
             label="Class"
             name="classId"
@@ -592,62 +320,35 @@ const ReportViewPage = () => {
             onChange={handleChange}
             options={masterData.classes}
             placeholder="All Classes"
+            required={isClassSummary}
+            className="xl:col-span-1"
           />
 
-          {/* Status filter is removed from UI */}
-        </div>
-
-        {/* Fetch button outside the grid */}
-        <div className="mt-6 flex justify-end">
-          <Button
-            onClick={handleFetchData}
-            disabled={isFetchDisabled}
-            className="w-full sm:w-1/4 py-3"
-            variant="primary"
-          >
-            <FaSyncAlt className={`mr-2 ${loading ? "animate-spin" : ""}`} />{" "}
-            Fetch Data
-          </Button>
+          {/* Fetch button: Always occupy the last slot in the grid */}
+          <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
+            <Button
+              onClick={handleFetchData}
+              disabled={isFetchDisabled}
+              fullWidth
+              variant="primary"
+            >
+              <FaSearch className={`mr-2 ${loading ? "animate-spin" : ""}`} />{" "}
+              Fetch Data
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* --- EXPORT BUTTONS --- */}
-      <div className="mb-6 flex justify-end space-x-3">
-        <Button
-          onClick={handleExportExcel}
-          disabled={isPDFDownloadDisabled}
-          variant="success"
-        >
-          <FaFileExcel className="mr-2" /> Export to Excel
-        </Button>
-
-        {/* ✅ CUSTOM BUTTON replaces PDFDownloadLink and calls handleOpenPDF */}
-        <Button
-          onClick={handleOpenPDF}
-          disabled={isPDFDownloadDisabled || loading}
-          loading={loading}
-          variant="danger"
-        >
-          <FaFilePdf className="mr-2" />
-          Export to PDF
-        </Button>
-      </div>
-
-      {/* --- REPORT TABLE --- */}
+      {/* --- REPORT TABLE DISPLAY --- */}
       {loading ? (
-        <div className="text-center p-10 bg-white rounded-xl shadow-md">
+        <div className="text-center p-10 bg-white rounded-xl">
           <FaSyncAlt className="animate-spin text-4xl text-indigo-500 mx-auto" />
           <p className="mt-4 text-lg text-gray-600 font-semibold">
             Loading report...
           </p>
         </div>
       ) : (
-        <ReportTable
-          data={reportData}
-          classes={masterData.classes}
-          types={masterData.types}
-          reportType={filters.reportType}
-        />
+        <ReportTable data={reportData} reportType={filters.reportType} />
       )}
     </div>
   );

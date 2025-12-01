@@ -147,13 +147,14 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
   };
 
   return (
-    // ❌ REMOVED: shadow-2xl. Use clean border.
-    <div className="p-6 bg-white rounded-xl border border-gray-300 max-w-lg mx-auto">
-      {/* 🚀 Header retains clean styling */}
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b-2 border-indigo-100 pb-3">
+    // 💡 ELEGANT FIX: Removed shadow-2xl. Using light gray border (border-gray-200) for clean, flat design.
+    <div className="p-6 bg-white rounded-xl border border-gray-200 max-w-lg mx-auto">
+      {/* 🚀 MODERNIZE: Cleaner header with reduced border contrast */}
+      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
         <FaPlus className="mr-3 text-3xl text-indigo-600" />
         {currentConfig.title}
       </h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name Input */}
         <InputField
@@ -228,6 +229,7 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a brief description or note (Optional)"
             rows="3"
+            // Retaining the focus styles for accessibility and clean feedback
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
           />
         </div>

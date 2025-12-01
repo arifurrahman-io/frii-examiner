@@ -17,11 +17,6 @@ const LayoutContainer = ({ children }) => {
       <main className="flex-grow">
         <div className="container mx-auto">{children}</div>
       </main>
-
-      {/* ৩. ঐচ্ছিক ফুটার */}
-      {/* <footer className="bg-gray-200 text-center py-3 text-sm text-gray-600">
-        &copy; {new Date().getFullYear()} Teacher Management Platform
-      </footer> */}
     </div>
   );
 };

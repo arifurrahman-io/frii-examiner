@@ -1,13 +1,19 @@
-import React, { useState } from "react";
+// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/RoutineSetupPage.jsx
+
+import React, { useState, useCallback } from "react"; // Added useCallback for drag events
 import {
   FaCalendarAlt,
   FaFileExcel,
   FaUpload,
   FaSyncAlt,
+  FaCloudUploadAlt, // Using a cloud icon for visual appeal
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import AddRoutineForm from "../components/forms/AddRoutineForm";
 import Button from "../components/ui/Button";
+
+// ✅ CORRECTED IMPORT PATH
+import SelectDropdown from "../components/ui/SelectDropdown";
 
 // ✅ IMPORT the API function for bulk upload
 import { uploadRoutineExcel } from "../api/apiService";
@@ -16,14 +22,17 @@ const RoutineSetupPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false); // NEW STATE for drag styling
 
   // --- ১. এক্সেল ফাইল হ্যান্ডলিং ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (
       file &&
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      (file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.name.endsWith(".xls") ||
+        file.name.endsWith(".xlsx"))
     ) {
       setSelectedFile(file);
       toast.success(`${file.name} selected for upload.`);
@@ -32,6 +41,25 @@ const RoutineSetupPage = () => {
       toast.error("Please select a valid .xlsx file.");
     }
   };
+
+  // NEW DRAG HANDLERS (Basic implementation for visual feedback)
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileChange({ target: { files: files } });
+    }
+  }, []);
 
   // --- ২. এক্সেল ফাইল আপলোড লজিক (INTEGRATED) ---
   const handleExcelUpload = async () => {
@@ -45,10 +73,8 @@ const RoutineSetupPage = () => {
     formData.append("excelFile", selectedFile);
 
     try {
-      // ✅ API CALL: Use the actual function
       const response = await uploadRoutineExcel(formData);
 
-      // Destructure and check results based on backend controller logic
       const { savedTeachersCount, savedRoutinesCount, errors } = response.data;
 
       let successMessage = `Bulk upload complete: ${savedRoutinesCount} routines saved.`;
@@ -57,10 +83,8 @@ const RoutineSetupPage = () => {
         successMessage += ` (${savedTeachersCount} new teachers created).`;
       }
 
-      // Provide feedback for partial success/failure
       if (errors.length > 0) {
         successMessage += ` ${errors.length} records failed due to conflicts or missing data.`;
-        // Use error toast for visibility of failure
         toast.error(successMessage, { duration: 8000 });
       } else {
         toast.success(successMessage);
@@ -68,7 +92,6 @@ const RoutineSetupPage = () => {
 
       setSelectedFile(null);
 
-      // Successfully refresh the list
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       const errorMessage =
@@ -95,13 +118,13 @@ const RoutineSetupPage = () => {
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* বাম কলাম: ম্যানুয়াল এন্ট্রি */}
+        {/* বাম কলাম: ম্যানুয়াল এন্ট্রি (Uses clean styling from AddRoutineForm) */}
         <div className="lg:col-span-1">
           <AddRoutineForm onSaveSuccess={handleManualSaveSuccess} />
         </div>
 
-        {/* ডান কলাম: এক্সেল আপলোড */}
-        <div className="lg:col-span-1 p-6 bg-white rounded-xl shadow-2xl border border-gray-100 h-full flex flex-col justify-between">
+        {/* ডান কলাম: এক্সেল আপলোড (Modernized Card) */}
+        <div className="lg:col-span-1 p-6 bg-white rounded-xl border border-gray-200 h-full flex flex-col justify-between">
           <div>
             <h3 className="text-xl font-bold text-indigo-800 mb-4 flex items-center">
               <FaFileExcel className="mr-2 text-2xl text-green-600" />
@@ -113,29 +136,54 @@ const RoutineSetupPage = () => {
               update the system.
             </p>
 
-            <div className="space-y-4">
-              {/* ফাইল সিলেকশন */}
-              <label className="block">
-                <span className="sr-only">Choose routine file</span>
-                {/* 🎨 MODERN FILE INPUT */}
-                <input
-                  type="file"
-                  accept=".xlsx"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-700
-                              file:mr-4 file:py-2 file:px-4
-                              file:rounded-lg file:border-0
-                              file:text-sm file:font-semibold
-                              file:bg-indigo-100 file:text-indigo-700
-                              hover:file:bg-indigo-200 transition duration-150 border border-gray-300 rounded-lg"
-                />
-              </label>
+            {/* 💡 MODERN FILE UPLOAD SECTION (DRAG/DROP AESTHETIC) */}
+            <div
+              className={`flex flex-col items-center justify-center p-8 border-2 rounded-xl h-40 transition duration-300 cursor-pointer ${
+                isDragOver
+                  ? "border-indigo-600 bg-indigo-50/50"
+                  : selectedFile
+                  ? "border-green-400 bg-green-50"
+                  : "border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() =>
+                document.getElementById("routine-excel-upload").click()
+              }
+            >
+              <input
+                id="routine-excel-upload"
+                type="file"
+                accept=".xlsx"
+                onChange={handleFileChange}
+                className="hidden" // Hide the default input
+              />
 
-              {/* নির্বাচিত ফাইল প্রদর্শন */}
-              {selectedFile && (
-                <div className="text-sm font-medium text-gray-700 bg-yellow-50 p-2 rounded-lg flex justify-between items-center border border-yellow-200">
-                  <span>File Selected: {selectedFile.name}</span>
-                </div>
+              {/* Content based on file state */}
+              {selectedFile ? (
+                <>
+                  <FaFileExcel className="text-4xl text-green-600 mb-2" />
+                  <p className="font-semibold text-gray-800">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click to select a different file.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <FaUpload className="text-4xl text-indigo-500 mb-2" />
+                  <p className="text-lg text-gray-600 font-medium">
+                    Drag files here or{" "}
+                    <span className="text-indigo-600 font-bold hover:text-indigo-700">
+                      browse
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Accepts .xlsx files only
+                  </p>
+                </>
               )}
             </div>
           </div>
@@ -160,12 +208,6 @@ const RoutineSetupPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Optional Routine List Section (currently commented out) */}
-      {/* <div className="mt-12">
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">Current Active Routines</h3>
-          <RoutineListTable key={refreshTrigger} />
-      </div> */}
     </div>
   );
 };

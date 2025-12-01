@@ -48,7 +48,7 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
 
         const teacherDetails = teacherRes.data.teacherDetails;
 
-        // ফর্ম ডেটা সেট করা
+        // 폼 ডেটা সেট করা
         setFormData({
           teacherId: teacherDetails.teacherId,
           name: teacherDetails.name,
@@ -128,20 +128,24 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
   };
 
   if (loading) {
+    // 💡 Using the modernized spinner component (now larger and darker by default)
     return (
       <div className="text-center p-10">
-        <FaSyncAlt className="animate-spin text-3xl text-indigo-500 mx-auto" />
-        <p className="mt-2 text-gray-600">Loading teacher data...</p>
+        <FaSyncAlt className="animate-spin text-5xl text-indigo-700 mx-auto" />
+        <p className="mt-4 text-lg text-gray-600">Loading teacher data...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center">
-        <FaUserEdit className="mr-3 text-indigo-600" />
+    // 💡 ELEGANT FIX: Removed shadow-2xl. Using light gray border for clean, flat design.
+    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl border border-gray-200">
+      {/* 🚀 MODERNIZE: Cleaner header with soft bottom border */}
+      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
+        <FaUserEdit className="mr-3 text-3xl text-indigo-600" />
         Update Teacher Profile ({formData.teacherId})
       </h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Teacher Name (Using InputField) */}
         <InputField
@@ -165,7 +169,8 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
           value={formData.teacherId}
           placeholder="Teacher ID"
           disabled
-          className="bg-gray-50"
+          // Using a standard, clean disabled style
+          className="bg-gray-50 opacity-90"
         />
 
         {/* Select Branch (Using SelectDropdown) */}

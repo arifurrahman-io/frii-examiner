@@ -135,15 +135,16 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
   const buttonText = initialData ? "SAVE CHANGES" : "SAVE ROUTINE";
 
   return (
-    // ❌ REMOVED: shadow-2xl. Use clean border for flat design.
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-300">
-      {/* 🚀 MODERNIZE: Consistent header styling */}
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b-2 border-indigo-100 pb-3">
+    // 💡 ELEGANT FIX: Removed shadows. Used border-gray-200 for a lighter border.
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200">
+      {/* 🚀 MODERNIZE: Cleaner header with reduced border contrast */}
+      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
         <FaCalendarAlt className="mr-3 text-3xl text-indigo-600" />
         {formTitle}
       </h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Year Selector (Standard select for simplicity as it's static) */}
+        {/* Year Selector */}
         <SelectDropdown
           label="Academic Year"
           name="year"
@@ -159,7 +160,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           disabled={!!initialData}
         />
 
-        {/* Select Teacher (Using SelectDropdown) */}
+        {/* Select Teacher */}
         <SelectDropdown
           label="Select Teacher"
           name="teacher"
@@ -172,7 +173,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           disabled={!!initialData}
         />
 
-        {/* Select Class (Using SelectDropdown) */}
+        {/* Select Class */}
         <SelectDropdown
           label="Select Class"
           name="className"
@@ -183,7 +184,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           required
         />
 
-        {/* Select Subject (Using SelectDropdown) */}
+        {/* Select Subject */}
         <SelectDropdown
           label="Select Subject"
           name="subject"
@@ -194,10 +195,10 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           required
         />
 
-        {/* Submit Button */}
+        {/* 💡 ELEGANT BUTTON: Removed shadow, maintained clean hover effect. */}
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 flex items-center justify-center disabled:opacity-50"
+          className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 flex items-center justify-center disabled:opacity-50 focus:ring-4 focus:ring-indigo-300 focus:outline-none"
           disabled={loading}
         >
           {loading ? (
@@ -210,8 +211,6 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           )}
         </button>
       </form>
-
-      {/* ❌ REMOVED: Redundant Bulk Upload Section */}
     </div>
   );
 };

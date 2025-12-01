@@ -26,12 +26,22 @@ const SelectDropdown = ({
   className = "",
   ...props
 }) => {
-  // ত্রুটি থাকলে ইনপুট স্টাইল পরিবর্তন
-  const selectBaseStyle =
-    "w-full p-3 rounded-lg bg-white appearance-none transition duration-150 cursor-pointer";
-  const selectStyle = error
-    ? "border-2 border-red-500 focus:ring-red-500 focus:border-red-500"
-    : "border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500";
+  // 💡 MODERN STYLING: Clean, border-focused design with prominent focus ring.
+  const baseStyle =
+    "w-full p-3 rounded-lg bg-white appearance-none transition duration-150 cursor-pointer text-gray-800";
+
+  const defaultStyle =
+    "border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
+
+  const errorStyle = error
+    ? "border-red-500 ring-2 ring-red-500" // Use ring for visible error highlight
+    : defaultStyle;
+
+  const disabledStyle = props.disabled
+    ? "bg-gray-100 cursor-not-allowed opacity-80"
+    : "";
+
+  const finalClassName = `${baseStyle} ${errorStyle} ${disabledStyle}`;
 
   return (
     <div className={`space-y-1 ${className}`}>
@@ -54,7 +64,7 @@ const SelectDropdown = ({
           value={value}
           onChange={onChange}
           required={required}
-          className={`${selectBaseStyle} ${selectStyle}`}
+          className={finalClassName}
           {...props}
         >
           {/* প্লেসহোল্ডার অপশন */}
@@ -73,7 +83,11 @@ const SelectDropdown = ({
         </select>
 
         {/* কাস্টম Chevron আইকন (ডিফল্ট সিস্টেম মেনু লুকানোর জন্য) */}
-        <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
+        <FaChevronDown
+          className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+            error ? "text-red-500" : "text-gray-400"
+          }`}
+        />
 
         {/* ত্রুটির আইকন (যদি error থাকে) */}
         {error && (
