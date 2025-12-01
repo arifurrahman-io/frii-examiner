@@ -13,7 +13,7 @@ export default defineConfig({
       // যখনই ফ্রন্টএন্ড '/api' দিয়ে শুরু করে কোনো রিকোয়েস্ট করবে...
       "/api": {
         // ...তখন রিকোয়েস্টটি এই টার্গেটে (আপনার Express সার্ভার) পাঠিয়ে দেওয়া হবে।
-        target: "http://localhost:5000",
+        target: "https://frii-examiner-back.onrender.com",
         changeOrigin: true,
         secure: false, // HTTPS ব্যবহার না করলে false রাখুন
       },
