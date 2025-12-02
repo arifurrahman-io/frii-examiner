@@ -130,3 +130,9 @@ export const deleteMasterData = (type, id) =>
 
 export const checkLeaveConflict = (filters) =>
   api.get("/leaves/conflict-check", { params: filters });
+
+export const exportCustomReportToPDF = (filters) => {
+  const params = new URLSearchParams(filters).toString();
+  // Assumes backend handles custom report generation and columns (S.L, Class, Subject, Teacher name, Branch/Campus name)
+  return window.open(`/api/reports/export/custom-pdf?${params}`, "_blank");
+};

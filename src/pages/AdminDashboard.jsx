@@ -4,9 +4,8 @@ import {
   FaBuilding,
   FaUsers,
   FaBookOpen,
-  FaClipboardList,
-  FaUserTie,
   FaTasks,
+  FaUserTie,
   FaChartBar,
   FaCalendarCheck,
   FaSyncAlt,
@@ -187,20 +186,17 @@ const AdminDashboard = () => {
   const [dutyTypeData, setDutyTypeData] = useState([]);
   const [branchData, setBranchData] = useState([]);
   const [recentLeaves, setRecentLeaves] = useState([]);
+
+  // Initialize loading to true for the initial KPI fetch
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSummary = async () => {
-      try {
-        const [summaryRes, topTeachersRes, dutyTypeRes, branchRes, leavesRes] =
-          await Promise.all([
-            getDashboardSummary(),
-            getTopResponsibleTeachers(),
-            getAssignmentByDutyType(),
-            getAssignmentByBranch(),
-            getRecentGrantedLeaves(),
-          ]);
+      let primaryDataLoaded = false;
 
+      // 1. PHASE 1: Fetch fast KPI counts first (drops the spinner quickly)
+      try {
+        const summaryRes = await getDashboardSummary();
         setTotals({
           branches: summaryRes.data.totalBranches || 0,
           classes: summaryRes.data.totalClasses || 0,
@@ -209,16 +205,33 @@ const AdminDashboard = () => {
           teachers: summaryRes.data.totalTeachers || 0,
           totalGrantedLeaves: summaryRes.data.totalGrantedLeaves || 0,
         });
-
-        setTopTeachers(topTeachersRes.data);
-        setDutyTypeData(dutyTypeRes.data);
-        setBranchData(branchRes.data);
-        setRecentLeaves(leavesRes.data);
+        setLoading(false);
+        primaryDataLoaded = true;
       } catch (error) {
         console.error("Failed to fetch dashboard summary:", error);
         toast.error("Failed to load dashboard data totals.");
-      } finally {
         setLoading(false);
+        return;
+      }
+
+      // 2. PHASE 2: Fetch slower chart/list data asynchronously
+      if (primaryDataLoaded) {
+        try {
+          const [topTeachersRes, dutyTypeRes, branchRes, leavesRes] =
+            await Promise.all([
+              getTopResponsibleTeachers(),
+              getAssignmentByDutyType(),
+              getAssignmentByBranch(),
+              getRecentGrantedLeaves(),
+            ]);
+
+          setTopTeachers(topTeachersRes.data);
+          setDutyTypeData(dutyTypeRes.data);
+          setBranchData(branchRes.data);
+          setRecentLeaves(leavesRes.data);
+        } catch (error) {
+          console.error("Failed to fetch dashboard charts/lists:", error);
+        }
       }
     };
     fetchSummary();
@@ -229,6 +242,7 @@ const AdminDashboard = () => {
     toast.success("Redirecting to Granted Leaves Report.");
   };
 
+  // Only show the full spinner if the primary KPI data is still loading
   if (loading) {
     return (
       <div className="text-center p-20">
@@ -240,9 +254,8 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* PROFESSIONAL HEADING (Responsive font size) */}
-      <h2 className="text-2xl sm:text-3xl text-center font-bold text-gray-900 mb-10 leading-tight border-b-2 border-indigo-100 pb-3">
-        Administration Dashboard
-        {/* <span className="text-indigo-600">({user?.name || "Admin"})</span> */}
+      <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-10 leading-tight border-b-2 border-indigo-100 pb-3">
+        Administration Dashboard{" "}
       </h2>
 
       {/* Main Grid: Stacks on mobile, splits on large screens */}

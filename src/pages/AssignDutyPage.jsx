@@ -166,7 +166,7 @@ const AssignDutyPage = () => {
       </h2>
 
       {/* --- ১. ফিল্টার এরিয়া --- */}
-      <div className="bg-white p-6 rounded-xl shadow-2xl mb-8 border border-gray-100">
+      <div className="bg-white p-6 rounded-xl mb-8 border border-gray-100">
         <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
           <FaFilter className="mr-2 text-indigo-500" /> Select Assignment
           Criteria
