@@ -1,5 +1,3 @@
-// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/ReportViewPage.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import {
@@ -8,14 +6,16 @@ import {
   FaSyncAlt,
   FaClipboardList,
   FaSearch,
-  FaFilePdf, // Added PDF icon for the button
+  FaFilePdf,
   FaCheckCircle,
+  FaBuilding, // Icon for Campus-wise
+  FaGraduationCap, // Icon for Class-wise
 } from "react-icons/fa";
 
 // Reusable UI Components
 import SelectDropdown from "../components/ui/SelectDropdown";
 import Button from "../components/ui/Button";
-import Modal from "../components/ui/Modal"; // Import Modal
+import Modal from "../components/ui/Modal";
 
 import {
   getClasses,
@@ -26,8 +26,7 @@ import {
 
 // --- Conceptual: Custom Export Function (Must be added to apiService.js) ---
 const exportCustomReportToPDF = (filters) => {
-  const params = new URLSearchParams(filters).toString();
-  // We simulate calling a new backend endpoint
+  const params = new URLSearchParams(filters).toString(); // We simulate calling a new backend endpoint
   return window.open(`/api/reports/export/custom-pdf?${params}`, "_blank");
 };
 // --- END Conceptual ---
@@ -37,20 +36,24 @@ const ReportTable = ({ data, reportType }) => {
   if (!ArrayOfData(data)) {
     return (
       <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-200">
-        <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-4" />
+               {" "}
+        <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-4" />     
+         {" "}
         <p className="text-lg text-gray-600 font-medium">
-          No records found matching your current filter criteria.
+                    No records found matching your current filter criteria.    
+             {" "}
         </p>
+               {" "}
         <p className="text-sm text-gray-500 mt-2">
-          Try adjusting your filters and fetching again.
+                    Try adjusting your filters and fetching again.        {" "}
         </p>
+             {" "}
       </div>
     );
   }
 
-  const allHeaders = Object.keys(data[0]);
+  const allHeaders = Object.keys(data[0]); // Define essential columns in the requested order
 
-  // Define essential columns in the requested order
   const MINIMAL_COLUMNS = [
     "ID",
     "CLASS",
@@ -80,29 +83,40 @@ const ReportTable = ({ data, reportType }) => {
 
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-2xl border border-gray-100">
+           {" "}
       <table className="min-w-full divide-y divide-gray-200">
+               {" "}
         <thead className="bg-indigo-600 sticky top-0">
+                   {" "}
           <tr>
+                       {" "}
             {filteredHeaders.map((headerKey, index) => (
               <th
                 key={index}
                 className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
               >
+                               {" "}
                 {headerKey === "ID"
                   ? "S.L."
                   : headerKey.replace(/_/g, " ").charAt(0).toUpperCase() +
                     headerKey.replace(/_/g, " ").slice(1).toLowerCase()}
+                             {" "}
               </th>
             ))}
+                     {" "}
           </tr>
+                 {" "}
         </thead>
+               {" "}
         <tbody className="bg-white divide-y divide-gray-100">
+                   {" "}
           {filteredHeaders.length > 0 &&
             data.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
                 className="hover:bg-indigo-50 transition duration-150"
               >
+                               {" "}
                 {filteredHeaders.map((key, colIndex) => {
                   const cellValue = row[key];
                   let displayValue = cellValue;
@@ -136,14 +150,18 @@ const ReportTable = ({ data, reportType }) => {
                       key={colIndex}
                       className={`px-4 py-3 whitespace-nowrap text-sm ${statusClass}`}
                     >
-                      {displayValue}
+                                            {displayValue}                   {" "}
                     </td>
                   );
                 })}
+                             {" "}
               </tr>
             ))}
+                 {" "}
         </tbody>
+             {" "}
       </table>
+         {" "}
     </div>
   );
 };
@@ -157,9 +175,8 @@ const ReportViewPage = () => {
     { _id: currentYear, name: `${currentYear}` },
     { _id: currentYear - 1, name: `${currentYear - 1}` },
     { _id: currentYear - 2, name: `${currentYear - 2}` },
-  ];
+  ]; // State definitions
 
-  // State definitions
   const [filters, setFilters] = useState({
     reportType: "DETAILED_ASSIGNMENT",
     year: currentYear,
@@ -167,12 +184,12 @@ const ReportViewPage = () => {
     classId: "",
     branchId: "",
     status: "Assigned",
-  });
+  }); // NEW STATE: Modal control and selection
 
-  // NEW STATE: Modal control and selection
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [selectedExportType, setSelectedExportType] = useState("");
   const [exportLoading, setExportLoading] = useState(false);
+  // State to show validation message in modal
+  const [exportError, setExportError] = useState(null);
 
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
@@ -237,43 +254,45 @@ const ReportViewPage = () => {
     setFetchTrigger((prev) => prev + 1);
   };
 
-  const isFetchDisabled = loading;
+  const isFetchDisabled = loading; // --- Export Logic Refactored for Buttons ---
 
-  // --- Export Modal Logic ---
-  const handleFinalExport = () => {
-    if (!selectedExportType || !filters.typeId || !filters.year) {
-      toast.error(
-        "Please select a Report Type and ensure Year/Responsibility Type filters are set."
+  const handleExportAction = (exportType) => {
+    // Reset any previous export errors
+    setExportError(null);
+
+    if (!filters.typeId || !filters.year) {
+      setExportError(
+        "Year and Responsibility Type filters must be selected first."
+      );
+      return;
+    }
+
+    let mandatoryFilterId = "";
+    let mandatoryFilterName = "";
+
+    if (exportType === "EXPORT_BRANCH_DETAILED") {
+      mandatoryFilterId = filters.branchId;
+      mandatoryFilterName = "Branch/Campus";
+    } else if (exportType === "EXPORT_CLASS_DETAILED") {
+      mandatoryFilterId = filters.classId;
+      mandatoryFilterName = "Class";
+    }
+
+    if (!mandatoryFilterId) {
+      setExportError(
+        `Please select a ${mandatoryFilterName} filter for this export type.`
       );
       return;
     }
 
     setExportLoading(true);
 
-    // Determine mandatory filter based on export type selected in modal
-    let mandatoryFilterId = "";
-    if (selectedExportType === "EXPORT_BRANCH_DETAILED") {
-      mandatoryFilterId = filters.branchId;
-    } else if (selectedExportType === "EXPORT_CLASS_DETAILED") {
-      mandatoryFilterId = filters.classId;
-    }
-
-    if (!mandatoryFilterId) {
-      toast.error(
-        `Please select a ${
-          selectedExportType === "EXPORT_BRANCH_DETAILED" ? "Branch" : "Class"
-        } filter for this report type.`
-      );
-      setExportLoading(false);
-      return;
-    }
-
     const exportFilters = {
-      reportType: selectedExportType, // Custom type to trigger specific query/columns on backend
+      reportType: exportType,
       year: filters.year,
       typeId: filters.typeId,
-      classId: filters.classId, // 💡 FIX: Include classId from main filter
-      branchId: filters.branchId, // 💡 FIX: Include branchId from main filter
+      classId: filters.classId,
+      branchId: filters.branchId,
     };
 
     toast
@@ -285,7 +304,9 @@ const ReportViewPage = () => {
           }, 300);
         }),
         {
-          loading: "Preparing PDF Report...",
+          loading: `Preparing ${
+            exportType.includes("BRANCH") ? "Branch" : "Class"
+          }-wise PDF...`,
           success: "Download started!",
           error: "PDF generation failed. Check server logs.",
         }
@@ -293,16 +314,9 @@ const ReportViewPage = () => {
       .finally(() => {
         setExportLoading(false);
         setIsExportModalOpen(false);
-        setSelectedExportType("");
       });
-  };
+  }; // Get the name of the currently selected mandatory filter in the main UI
 
-  const exportTypeOptions = [
-    { _id: "EXPORT_BRANCH_DETAILED", name: "Branch-wise Teacher List" },
-    { _id: "EXPORT_CLASS_DETAILED", name: "Class-wise Teacher List" },
-  ];
-
-  // Get the name of the currently selected mandatory filter in the main UI
   const getFilterName = (id, options) => {
     if (!id) return "N/A";
     const item = options.find((opt) => opt._id === id);
@@ -310,15 +324,20 @@ const ReportViewPage = () => {
   };
   const selectedYearName = filters.year;
   const selectedTypeName = getFilterName(filters.typeId, masterData.types);
+  const selectedBranchName = getFilterName(
+    filters.branchId,
+    masterData.branches
+  );
+  const selectedClassName = getFilterName(filters.classId, masterData.classes);
 
   return (
     <div className="p-4">
-      {/* 🚀 MODERNIZE HEADER */}
+      {/* 💡 Using the user-defined preference for modern, dynamic UI/UX */}   
+        {/* 🚀 MODERNIZE HEADER */}     {" "}
       <h2 className="text-4xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
-        <FaChartBar className="mr-3 text-4xl text-indigo-600" />
-        Detailed Assignment Report
+                <FaChartBar className="mr-3 text-4xl text-indigo-600" />       
+        Detailed Assignment Report      {" "}
       </h2>
-
       {/* --- FILTER AREA --- */}
       <div className="bg-white p-6 rounded-xl shadow-xl mb-6 border border-gray-100">
         <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
@@ -383,101 +402,104 @@ const ReportViewPage = () => {
           </div>
         </div>
       </div>
-
-      {/* --- EXPORT BUTTON (NEW) --- */}
+            {/* --- EXPORT BUTTON (NEW) --- */}     {" "}
       <div className="mb-6 flex justify-end">
+               {" "}
         <Button
           onClick={() => {
             if (!filters.typeId) {
               toast.error("Please select a Responsibility Type filter first.");
               return;
             }
+            // Reset export error when opening modal
+            setExportError(null);
             setIsExportModalOpen(true);
           }}
           disabled={loading || !filters.year}
           variant="success"
         >
-          <FaFilePdf className="mr-2" /> Export Report
+                    <FaFilePdf className="mr-2" /> Export Report        {" "}
         </Button>
+             {" "}
       </div>
-
-      {/* --- REPORT TABLE --- */}
+            {/* --- REPORT TABLE --- */}     {" "}
       {loading ? (
         <div className="text-center p-10 bg-white rounded-xl shadow-md">
+                   {" "}
           <FaSyncAlt className="animate-spin text-4xl text-indigo-500 mx-auto" />
+                   {" "}
           <p className="mt-4 text-lg text-gray-600 font-semibold">
-            Loading report...
+                        Loading report...          {" "}
           </p>
+                 {" "}
         </div>
       ) : (
         <ReportTable data={reportData} reportType={filters.reportType} />
       )}
-
-      {/* --- EXPORT SELECTION MODAL (NEW) --- */}
+            {/* --- EXPORT SELECTION MODAL (MODERN UI) --- */}     {" "}
       <Modal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        title="Custom Report Export Configuration"
+        title="Custom Report Export"
       >
-        <div className="p-2 space-y-4">
+               {" "}
+        <div className="p-4 space-y-6">
+                   {" "}
           <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 text-sm">
-            <p className="font-semibold text-indigo-700 mb-1">
-              Current Filters to be used for Report:
+                       {" "}
+            <p className="font-semibold text-indigo-700 mb-2">
+                            Current Report Context:            {" "}
+            </p>
+                       {" "}
+            <p>
+                            <strong>Year:</strong> {selectedYearName} |
+              <strong> Type:</strong> {selectedTypeName}           {" "}
             </p>
             <p>
-              <strong>Year:</strong> {selectedYearName}
+              <strong>Branch Filter:</strong> {selectedBranchName} |
+              <strong> Class Filter:</strong> {selectedClassName}
             </p>
-            <p>
-              <strong>Responsibility Type:</strong> {selectedTypeName}
-            </p>
+                     {" "}
           </div>
-
-          <SelectDropdown
-            label="Select Report Format"
-            name="exportType"
-            value={selectedExportType}
-            onChange={(e) => setSelectedExportType(e.target.value)}
-            options={exportTypeOptions}
-            placeholder="Choose Branch-wise or Class-wise"
-            required
-          />
-
-          {selectedExportType === "EXPORT_BRANCH_DETAILED" &&
-            !filters.branchId && (
-              <p className="text-sm text-red-600 flex items-center">
-                <FaCheckCircle className="mr-2 text-yellow-500" /> Select a
-                **Branch/Campus** in the main filter above to enable this
-                export.
-              </p>
-            )}
-
-          {selectedExportType === "EXPORT_CLASS_DETAILED" &&
-            !filters.classId && (
-              <p className="text-sm text-red-600 flex items-center">
-                <FaCheckCircle className="mr-2 text-yellow-500" /> Select a
-                **Class** in the main filter above to enable this export.
-              </p>
-            )}
-
-          <div className="flex justify-end pt-4">
+          <p className="text-md font-semibold text-gray-700">
+            Choose the specific detailed report you want to generate:
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Campus-Wise Button */}
             <Button
-              onClick={handleFinalExport}
-              disabled={
-                exportLoading ||
-                !selectedExportType ||
-                (selectedExportType === "EXPORT_BRANCH_DETAILED" &&
-                  !filters.branchId) ||
-                (selectedExportType === "EXPORT_CLASS_DETAILED" &&
-                  !filters.classId)
-              }
-              loading={exportLoading}
-              variant="success"
+              onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
+              disabled={exportLoading || !filters.branchId}
+              variant={filters.branchId ? "success" : "light"}
+              fullWidth
             >
-              <FaFilePdf className="mr-2" /> Generate PDF Report
+              <FaBuilding className="mr-2" /> Campus-Wise List
+            </Button>
+
+            {/* Class-Wise Button */}
+            <Button
+              onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
+              disabled={exportLoading || !filters.classId}
+              variant={filters.classId ? "success" : "light"}
+              fullWidth
+            >
+              <FaGraduationCap className="mr-2" /> Class-Wise List
             </Button>
           </div>
+          {/* Validation/Error Message */}
+          {exportError && (
+            <p className="text-sm text-red-600 flex items-center bg-red-50 p-3 rounded-lg border border-red-300">
+              <FaCheckCircle className="mr-2 text-red-500" /> {exportError}
+            </p>
+          )}
+          {/* Note on requirement */}
+          <p className="text-xs text-gray-500 pt-2 text-center">
+            Press any button to generate report
+          </p>
+                 {" "}
         </div>
+             {" "}
       </Modal>
+         {" "}
     </div>
   );
 };

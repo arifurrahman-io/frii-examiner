@@ -13,7 +13,7 @@ export default defineConfig({
       // যখনই ফ্রন্টএন্ড '/api' দিয়ে শুরু করে কোনো রিকোয়েস্ট করবে...
       "/api": {
         // ...তখন রিকোয়েস্টটি আপনার লাইভ ব্যাকএন্ড টার্গেটে পাঠিয়ে দেওয়া হবে।
-        target: "http://localhost:5000",
+        target: "https://frii-examiner-back.onrender.com",
         changeOrigin: true,
         // secure: false লাইনটি বাদ দেওয়া হলো, কারণ Render এর বৈধ SSL সার্টিফিকেট রয়েছে।
       },
