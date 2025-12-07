@@ -14,9 +14,10 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   }
 
   return (
-    // ১. ব্যাকড্রপ: পুরো স্ক্রিন কভার করে এবং ক্লিক করলে বন্ধ হয়
+    // 🚀 FIX: Updated the backdrop class to use backdrop-blur for a blurred effect
+    //        instead of a solid black overlay.
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity duration-300" // FIX APPLIED HERE: bg-black/30 backdrop-blur-sm
       onClick={onClose} // ব্যাকড্রপে ক্লিক করলে বন্ধ হয়
       aria-modal="true"
       role="dialog"

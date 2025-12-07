@@ -1,6 +1,6 @@
 // arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/RoutineSetupPage.jsx
 
-import React, { useState, useCallback } from "react"; // Added useCallback for drag events
+import React, { useState, useCallback } from "react";
 import {
   FaCalendarAlt,
   FaFileExcel,
@@ -18,11 +18,15 @@ import SelectDropdown from "../components/ui/SelectDropdown";
 // ✅ IMPORT the API function for bulk upload
 import { uploadRoutineExcel } from "../api/apiService";
 
+// 🚀 CLEANUP: Remove useDebounce import
+
 const RoutineSetupPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [isDragOver, setIsDragOver] = useState(false); // NEW STATE for drag styling
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // 🚀 CLEANUP: Remove searchTerm and debouncedSearchTerm states
 
   // --- ১. এক্সেল ফাইল হ্যান্ডলিং ---
   const handleFileChange = (e) => {
@@ -120,7 +124,12 @@ const RoutineSetupPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* বাম কলাম: ম্যানুয়াল এন্ট্রি (Uses clean styling from AddRoutineForm) */}
         <div className="lg:col-span-1">
-          <AddRoutineForm onSaveSuccess={handleManualSaveSuccess} />
+          {/* 🚀 CLEANUP: Removed the search bar JSX from here */}
+
+          <AddRoutineForm
+            onSaveSuccess={handleManualSaveSuccess}
+            // 🚀 CLEANUP: Removed searchTerm prop
+          />
         </div>
 
         {/* ডান কলাম: এক্সেল আপলোড (Modernized Card) */}

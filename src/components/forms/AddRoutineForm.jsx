@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { FaCalendarAlt, FaSave } from "react-icons/fa";
+import { FaCalendarAlt, FaSave, FaSearch, FaSyncAlt } from "react-icons/fa";
 // Reusable UI Components
 import SelectDropdown from "../ui/SelectDropdown";
 
@@ -12,35 +12,46 @@ import {
   getSubjects,
 } from "../../api/apiService";
 
-const getInitialState = (initialData) => ({
+// 🚀 NEW: Import useDebounce (Path relative to src/components/forms)
+import useDebounce from "../../hooks/useDebounce";
+
+const getInitialState = (initialData, defaultTeacherId) => ({
   _id: initialData?._id || "",
-  // Teacher is the MongoDB ObjectId, passed from the teacher profile view
-  teacher: initialData?.teacher || initialData?.teacherId || "",
+  teacher:
+    initialData?.teacher || initialData?.teacherId || defaultTeacherId || "",
   year: initialData?.year || new Date().getFullYear(),
-  // For editing, these fields come as IDs, correctly mapped from the Routine model's subdocument.
   className: initialData?.classNameId || "",
   subject: initialData?.subjectId || "",
 });
 
-const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
-  const [formData, setFormData] = useState(getInitialState(initialData));
+// 🚀 UPDATED: Removed searchTerm prop as logic is now local
+const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
+  // 🚀 NEW: Local search state and debounce logic
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const [formData, setFormData] = useState(
+    getInitialState(initialData, defaultTeacherId)
+  );
   const [teachers, setTeachers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const currentYear = new Date().getFullYear();
 
-  // CRITICAL FIX: Reset or initialize form state when initialData changes (for modal reuse/editing)
+  // CRITICAL FIX: Reset or initialize form state when initialData or defaultTeacherId changes
   useEffect(() => {
-    setFormData(getInitialState(initialData));
-  }, [initialData]);
+    setFormData(getInitialState(initialData, defaultTeacherId));
+  }, [initialData, defaultTeacherId]);
 
   // Load master data (Teacher, Class, Subject)
+  // 🚀 UPDATED: useEffect now listens to local debouncedSearchTerm
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
+        // 🚀 FIX: Use debouncedSearchTerm for filtering teachers
         const [teachersRes, classesRes, subjectsRes] = await Promise.all([
-          getTeachers(),
+          getTeachers(debouncedSearchTerm),
           getClasses(),
           getSubjects(),
         ]);
@@ -48,7 +59,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
         // Teacher data formatting for dropdown: ensuring it has _id, name, and teacherId
         const formattedTeachers = teachersRes.data.map((t) => ({
           ...t,
-          name: `${t.name} (${t.teacherId})`, // Dropdown এ নাম ও আইডি একসাথে দেখানো
+          name: `${t.name} (${t.teacherId})`,
         }));
 
         setTeachers(formattedTeachers);
@@ -60,8 +71,9 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
         );
       }
     };
+    // Run fetch on mount and whenever debouncedSearchTerm changes
     fetchMasterData();
-  }, []);
+  }, [debouncedSearchTerm]);
 
   const handleChange = (e) => {
     setFormData({
@@ -114,7 +126,8 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
 
       // Reset form if adding a new entry
       if (!isUpdating) {
-        setFormData(getInitialState(null));
+        // Only reset fields that aren't pre-populated by defaultTeacherId
+        setFormData(getInitialState(null, defaultTeacherId));
       }
     } catch (error) {
       const errorMessage =
@@ -135,9 +148,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
   const buttonText = initialData ? "SAVE CHANGES" : "SAVE ROUTINE";
 
   return (
-    // 💡 ELEGANT FIX: Removed shadows. Used border-gray-200 for a lighter border.
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200">
-      {/* 🚀 MODERNIZE: Cleaner header with reduced border contrast */}
       <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
         <FaCalendarAlt className="mr-3 text-3xl text-indigo-600" />
         {formTitle}
@@ -160,17 +171,44 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           disabled={!!initialData}
         />
 
-        {/* Select Teacher */}
+        {/* 🚀 NEW: Stylized Search Bar UI injected inside the form */}
+        <div className="space-y-1">
+          <label
+            htmlFor="teacher-search"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Search Teacher
+          </label>
+          <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-300 flex items-center">
+            <FaSearch className="text-indigo-500 mr-3 text-lg" />
+            <div className="h-6 w-px bg-gray-300 mr-3" aria-hidden="true" />
+            <input
+              type="text"
+              id="teacher-search"
+              placeholder="Search Teacher by Name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 text-base outline-none border-none p-0 focus:ring-0"
+            />
+            <FaSyncAlt className="text-gray-400 ml-3 text-lg cursor-pointer" />
+          </div>
+        </div>
+
+        {/* Select Teacher (The dropdown displays the filtered results) */}
         <SelectDropdown
-          label="Select Teacher"
+          label="Select Teacher (Filtered List)"
           name="teacher"
           value={formData.teacher}
           onChange={handleChange}
           options={teachers}
-          placeholder="Choose Teacher (Name & ID)"
+          placeholder={
+            debouncedSearchTerm
+              ? `Searching for "${debouncedSearchTerm}"...`
+              : "Choose Teacher (Name & ID)"
+          }
           required
-          // Disable teacher selector during edit
-          disabled={!!initialData}
+          // Disable teacher selector during edit OR when defaultTeacherId is provided
+          disabled={!!initialData || !!defaultTeacherId}
         />
 
         {/* Select Class */}
@@ -195,7 +233,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData }) => {
           required
         />
 
-        {/* 💡 ELEGANT BUTTON: Removed shadow, maintained clean hover effect. */}
+        {/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 flex items-center justify-center disabled:opacity-50 focus:ring-4 focus:ring-indigo-300 focus:outline-none"

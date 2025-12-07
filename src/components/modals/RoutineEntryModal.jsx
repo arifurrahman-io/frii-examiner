@@ -11,8 +11,15 @@ import AddRoutineForm from "../forms/AddRoutineForm";
  * @param {function} onClose - Function to close the modal.
  * @param {function} onSaveSuccess - Function to refresh the profile list after a successful save.
  * @param {object} routineData - Optional: Data object (including class/subject IDs and _id) for editing.
+ * @param {string} teacherIdForNewEntry - NEW: The MongoDB ID of the teacher to pre-select for new entries.
  */
-const RoutineEntryModal = ({ isOpen, onClose, onSaveSuccess, routineData }) => {
+const RoutineEntryModal = ({
+  isOpen,
+  onClose,
+  onSaveSuccess,
+  routineData,
+  teacherIdForNewEntry,
+}) => {
   // Determine the title based on whether routineData is provided (editing) or null (adding)
   const title = routineData
     ? `Edit Routine: ${routineData.display}`
@@ -35,6 +42,8 @@ const RoutineEntryModal = ({ isOpen, onClose, onSaveSuccess, routineData }) => {
           }}
           // CRITICAL FIX: Pass routineData as initialData for editing
           initialData={routineData}
+          // 🚀 FIX: Pass the teacher ID down to the form for auto-selection
+          defaultTeacherId={teacherIdForNewEntry}
         />
       </div>
     </Modal>

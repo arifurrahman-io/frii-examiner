@@ -347,6 +347,7 @@ const TeacherProfile = ({ teacherId }) => {
         }}
         onSaveSuccess={fetchProfile}
         routineData={routineToEdit}
+        teacherIdForNewEntry={teacherDetails._id}
       />
     </>
   );
