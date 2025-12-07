@@ -133,6 +133,12 @@ export const checkLeaveConflict = (filters) =>
 
 export const exportCustomReportToPDF = (filters) => {
   const params = new URLSearchParams(filters).toString();
-  // Assumes backend handles custom report generation and columns (S.L, Class, Subject, Teacher name, Branch/Campus name)
-  return window.open(`/api/reports/export/custom-pdf?${params}`, "_blank");
+
+  // 🚀 FIX: Dynamically determine the correct API endpoint based on reportType
+  const endpoint =
+    filters.reportType === "YEARLY_SUMMARY"
+      ? `/api/reports/export/yearly-pdf?${params}`
+      : `/api/reports/export/custom-pdf?${params}`;
+
+  return window.open(endpoint, "_blank");
 };
