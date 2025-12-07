@@ -339,8 +339,8 @@ const ReportViewPage = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-4xl font-extrabold text-indigo-800 flex items-center">
-          <FaChartBar className="mr-3 text-4xl text-indigo-600" />
+        <h2 className="text-xl font-extrabold text-indigo-800 flex items-center">
+          <FaChartBar className="mr-3 text-xl text-indigo-600" />
           {filters.reportType === "YEARLY_SUMMARY"
             ? "Yearly Assignment Summary"
             : "Detailed Assignment Report"}

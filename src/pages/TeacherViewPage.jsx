@@ -43,8 +43,8 @@ const TeacherViewPage = () => {
   return (
     <div className="p-4">
       {/* 🚀 MODERNIZE HEADER */}
-      <h1 className="text-2xl font-extrabold text-indigo-800 mb-6 flex items-center border-b-4 border-indigo-300 pb-2">
-        <FaUserPlus className="mr-3 text-2xl text-indigo-600" />
+      <h1 className="text-xl font-extrabold text-indigo-800 mb-6 flex items-center border-b-4 border-indigo-300 pb-2">
+        <FaUserPlus className="mr-3 text-xl text-indigo-600" />
         Teacher Management
       </h1>
 

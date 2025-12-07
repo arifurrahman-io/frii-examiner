@@ -160,8 +160,8 @@ const AssignDutyPage = () => {
   return (
     <div className="p-4">
       {/* 📐 MODERNIZE HEADER */}
-      <h2 className="text-2xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-200 pb-2">
-        <FaTasks className="mr-3 text-2xl text-indigo-600" />
+      <h2 className="text-xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-200 pb-2">
+        <FaTasks className="mr-3 text-xl text-indigo-600" />
         Responsibility Assignment
       </h2>
 

@@ -49,8 +49,8 @@ const MasterSetupPage = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* 🚀 PROFESSIONAL HEADER: Large, prominent, and clean */}
-      <h2 className="text-2xl font-extrabold text-indigo-800 mb-10 flex items-center border-b-4 border-indigo-200 pb-3">
-        <pageConfig.icon className="mr-4 text-2xl text-indigo-600" />
+      <h2 className="text-xl font-extrabold text-indigo-800 mb-10 flex items-center border-b-4 border-indigo-200 pb-3">
+        <pageConfig.icon className="mr-4 text-xl text-indigo-600" />
         {pageConfig.title}
       </h2>
 

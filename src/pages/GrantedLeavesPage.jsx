@@ -49,7 +49,7 @@ const GrantedLeavesPage = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-8 flex items-center">
+      <h2 className="text-xl font-bold text-indigo-800 mb-8 flex items-center">
         <FaCalendarTimes className="mr-3" />
         Granted Leaves Report ({leavesData.length})
       </h2>

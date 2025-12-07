@@ -112,8 +112,8 @@ const RoutineSetupPage = () => {
   return (
     <div className="p-4">
       {/* 🚀 MODERNIZE HEADER */}
-      <h2 className="text-4xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
-        <FaCalendarAlt className="mr-3 text-4xl text-indigo-600" />
+      <h2 className="text-xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
+        <FaCalendarAlt className="mr-3 text-xl text-indigo-600" />
         Academic Routine Setup
       </h2>
 
