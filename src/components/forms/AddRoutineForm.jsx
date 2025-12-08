@@ -60,10 +60,11 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         // 🚀 CRITICAL FIX 2: paginated response object থেকে 'teachers' array অ্যাক্সেস করা
         const teacherList = teachersRes.data.teachers || [];
 
-        // Teacher data formatting for dropdown: ensuring it has _id, name, and teacherId
+        // 🚀 FIX 3: Teacher data formatting for dropdown: Teacher Name | Campus Name
         const formattedTeachers = teacherList.map((t) => ({
           ...t,
-          name: `${t.name} (${t.teacherId})`,
+          // 🚀 UPDATED FORMATTING: Name | Campus Name
+          name: `${t.name} | ${t.campus?.name || "N/A"}`,
         }));
 
         setTeachers(formattedTeachers);
@@ -210,7 +211,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
           placeholder={
             debouncedSearchTerm
               ? `Searching for "${debouncedSearchTerm}"...`
-              : "Choose Teacher (Name & ID)"
+              : "Choose Teacher (Name | Campus)"
           }
           required
           // Disable teacher selector during edit OR when defaultTeacherId is provided
