@@ -12,9 +12,10 @@ import {
   getSubjects,
 } from "../../api/apiService";
 
-// 🚀 NEW: Import useDebounce (Path relative to src/components/forms)
+// 🚀 NEW: Import useDebounce
 import useDebounce from "../../hooks/useDebounce";
 
+// ... (omitted getInitialState function)
 const getInitialState = (initialData, defaultTeacherId) => ({
   _id: initialData?._id || "",
   teacher:
@@ -24,7 +25,7 @@ const getInitialState = (initialData, defaultTeacherId) => ({
   subject: initialData?.subjectId || "",
 });
 
-// 🚀 UPDATED: Removed searchTerm prop as logic is now local
+// 🚀 UPDATED: Add defaultTeacherId to the props list
 const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
   // 🚀 NEW: Local search state and debounce logic
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,15 +50,18 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
-        // 🚀 FIX: Use debouncedSearchTerm for filtering teachers
+        // 🚀 FIX 1: getTeachers-এ একটি উচ্চ limit (যেমন 999) পাস করা যাতে সমস্ত শিক্ষক তালিকাভুক্ত হয়।
         const [teachersRes, classesRes, subjectsRes] = await Promise.all([
-          getTeachers(debouncedSearchTerm),
+          getTeachers(debouncedSearchTerm, 1, 999),
           getClasses(),
           getSubjects(),
         ]);
 
+        // 🚀 CRITICAL FIX 2: paginated response object থেকে 'teachers' array অ্যাক্সেস করা
+        const teacherList = teachersRes.data.teachers || [];
+
         // Teacher data formatting for dropdown: ensuring it has _id, name, and teacherId
-        const formattedTeachers = teachersRes.data.map((t) => ({
+        const formattedTeachers = teacherList.map((t) => ({
           ...t,
           name: `${t.name} (${t.teacherId})`,
         }));
@@ -66,6 +70,8 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         setClasses(classesRes.data);
         setSubjects(subjectsRes.data);
       } catch (error) {
+        // ❌ Error occurs here if teachersRes.data is not { teachers: [...] }
+        console.error("Routine Form Master Data Load Error:", error);
         toast.error(
           "Failed to load necessary lists (Teachers/Classes/Subjects)."
         );

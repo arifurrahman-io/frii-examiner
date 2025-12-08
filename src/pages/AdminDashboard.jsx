@@ -261,21 +261,21 @@ const AdminDashboard = () => {
       {/* Main Grid: Stacks on mobile, splits on large screens */}
       <div className="grid grid-cols-12 gap-8">
         {/* --- A. KPI ROW (Responsive 1/2/5 columns) --- */}
-        <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-4">
-          {KPI_CONFIG.map((kpi) => (
-            <IconKpiCard
-              key={kpi.key}
-              title={kpi.title}
-              value={totals[kpi.key]}
-              icon={kpi.icon}
-              colorClass={kpi.colorClass}
-              bgClass={kpi.bgClass}
-            />
-          ))}
-        </div>
 
         {/* --- B. MAIN ANALYTICS & ACTIVITY (Left Column: Full on mobile, 8/12 on large) --- */}
         <div className="col-span-12 lg:col-span-8 space-y-8">
+          <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+            {KPI_CONFIG.map((kpi) => (
+              <IconKpiCard
+                key={kpi.key}
+                title={kpi.title}
+                value={totals[kpi.key]}
+                icon={kpi.icon}
+                colorClass={kpi.colorClass}
+                bgClass={kpi.bgClass}
+              />
+            ))}
+          </div>
           {/* DUAL CHART CONTAINER (Responsive 1/2 columns) */}
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 relative">
             <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center border-b pb-3">

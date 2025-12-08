@@ -165,24 +165,38 @@ const TeacherProfile = ({ teacherId }) => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto space-y-8 p-6 bg-gray-50 rounded-xl">
-        <div className="flex justify-between items-start border-b pb-4 mb-6 border-indigo-200">
-          <h1 className="text-3xl font-bold text-indigo-700 flex items-center">
+      <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 lg:p-8 bg-gray-50 rounded-xl">
+        {/* 🚀 RESPONSIVE HEADER: Flex on lg, stacks buttons on sm */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6 border-indigo-200">
+          <h1 className="text-xl font-bold text-indigo-700 flex items-center mb-4 sm:mb-0">
             <FaUserGraduate className="mr-3" />
-            Profile: {teacherDetails.name} ({teacherDetails.teacherId})
+            {teacherDetails.name} ({teacherDetails.teacherId})
           </h1>
 
-          <div className="flex space-x-3">
-            <Button onClick={() => setIsLeaveModalOpen(true)} variant="warning">
+          {/* Button Group: Stacks vertically on small screens */}
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+            <Button
+              onClick={() => setIsLeaveModalOpen(true)}
+              variant="warning"
+              className="w-full sm:w-auto"
+            >
               Grant Leave
             </Button>
 
-            <Button onClick={() => setIsEditing(!isEditing)} variant="primary">
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant="primary"
+              className="w-full sm:w-auto"
+            >
               <FaEdit className="mr-2" />
               {isEditing ? "Cancel Edit" : "Edit Profile"}
             </Button>
 
-            <Button onClick={() => navigate("/teachers")} variant="secondary">
+            <Button
+              onClick={() => navigate("/teachers")}
+              variant="secondary"
+              className="w-full sm:w-auto"
+            >
               Back
             </Button>
           </div>
@@ -197,8 +211,9 @@ const TeacherProfile = ({ teacherId }) => {
             }}
           />
         ) : (
+          /* 🚀 MAIN CONTENT GRID: Stacks on mobile, splits 1/3 and 2/3 on md and up */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* BASIC & LEAVES */}
+            {/* BASIC & LEAVES (1/3 width) */}
             <div className="md:col-span-1 space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-xl font-bold mb-4">Basic Details</h3>
@@ -250,7 +265,7 @@ const TeacherProfile = ({ teacherId }) => {
               </div>
             </div>
 
-            {/* RESPONSIBILITIES & ROUTINES */}
+            {/* RESPONSIBILITIES & ROUTINES (2/3 width) */}
             <div className="md:col-span-2 space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-xl font-bold flex items-center mb-4">
@@ -275,7 +290,7 @@ const TeacherProfile = ({ teacherId }) => {
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-bold flex justify-between mb-4">
+                <h3 className="text-xl font-bold flex justify-between items-center mb-4">
                   <span>
                     <FaBook className="mr-2 inline" /> {currentYear} Routine
                     Schedule
@@ -284,7 +299,7 @@ const TeacherProfile = ({ teacherId }) => {
                   <Button
                     onClick={handleAddRoutine}
                     variant="primary"
-                    className="py-1 px-3 text-sm"
+                    className="py-1 px-3 text-sm flex-shrink-0"
                   >
                     <FaPlus className="mr-1" /> Add Routine
                   </Button>

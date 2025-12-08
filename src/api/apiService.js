@@ -51,8 +51,10 @@ export const updateLeave = (leaveId, payload) =>
 
 // --- ২. শিক্ষক ম্যানেজমেন্ট API ---
 
-export const getTeachers = (searchQuery) =>
-  api.get("/teachers", { params: { search: searchQuery } });
+// 🚀 ফিক্স: getTeachers ফাংশনে পেজিনেশন প্যারামিটার যুক্ত করা
+export const getTeachers = (searchQuery, page = 1, limit = 20) =>
+  api.get("/teachers", { params: { search: searchQuery, page, limit } });
+
 export const getTeacherProfile = (teacherId) =>
   api.get(`/teachers/${teacherId}`);
 export const addTeacher = (teacherData) => api.post("/teachers", teacherData);
@@ -132,9 +134,8 @@ export const checkLeaveConflict = (filters) =>
   api.get("/leaves/conflict-check", { params: filters });
 
 export const exportCustomReportToPDF = (filters) => {
-  const params = new URLSearchParams(filters).toString();
+  const params = new URLSearchParams(filters).toString(); // 🚀 ফিক্স: Dynamically determine the correct API endpoint based on reportType
 
-  // 🚀 FIX: Dynamically determine the correct API endpoint based on reportType
   const endpoint =
     filters.reportType === "YEARLY_SUMMARY"
       ? `/api/reports/export/yearly-pdf?${params}`
