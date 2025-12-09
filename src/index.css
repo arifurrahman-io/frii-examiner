@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+/* src/index.css বা আপনার গ্লোবাল স্টাইলশীটে যোগ করুন */
+@media print {
+  /* Navbar, Buttons and Modals are hidden during printing */
+  nav,
+  .print-hidden,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure main content takes full width and has clean background */
+  body,
+  #root {
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove box-shadows and borders that look messy on paper */
+  .shadow-lg,
+  .shadow-md,
+  .border {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure text is black and readable */
+  .text-gray-800,
+  .text-indigo-700 {
+    color: black !important;
+  }
+}
