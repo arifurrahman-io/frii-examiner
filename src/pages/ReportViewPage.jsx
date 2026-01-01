@@ -13,6 +13,8 @@ import {
   FaCalendarAlt,
   FaAngleLeft,
   FaAngleRight,
+  FaListUl,
+  FaTable,
 } from "react-icons/fa";
 
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -29,12 +31,9 @@ import {
 
 const ArrayOfData = (data) => Array.isArray(data) && data.length > 0;
 
-// ------------------------------
-// Table with pagination & limited columns
-// ------------------------------
+// --- 1. Table Component (আপনার পূর্বের Pagination ও Label লজিক সহ) ---
 const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-
   const displayedHeaders = ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
 
   const headerLabel = (key) => {
@@ -54,44 +53,39 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
     }
   };
 
-  // Paginated data
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
     return data.slice(start, start + rowsPerPage);
   }, [data, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
 
   if (!ArrayOfData(data)) {
     return (
       <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
         <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-4" />
         <p className="text-lg text-gray-600 font-medium">
-          No records found matching your current filter criteria.
-        </p>
-        <p className="text-sm text-gray-500 mt-2">
-          Try adjusting your filters and fetching again.
+          No records found matching criteria.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-xl p-5 border border-gray-100">
+    <div className="overflow-x-auto bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gradient-to-r from-indigo-600 to-indigo-500 sticky top-0">
           <tr>
-            {displayedHeaders.map((headerKey, index) => (
+            {displayedHeaders.map((header, index) => (
               <th
                 key={index}
                 className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
               >
-                {headerLabel(headerKey)}
+                {headerLabel(header)}
               </th>
             ))}
           </tr>
         </thead>
-
         <tbody className="bg-white divide-y divide-gray-100">
           {paginatedData.map((row, rowIndex) => (
             <tr
@@ -100,7 +94,6 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
             >
               {displayedHeaders.map((key, colIndex) => {
                 let cellValue = row[key];
-
                 if (key === "Sl.")
                   cellValue = (currentPage - 1) * rowsPerPage + rowIndex + 1;
                 if (typeof cellValue === "object" && cellValue !== null) {
@@ -108,14 +101,9 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
                     cellValue.name ||
                     cellValue.label ||
                     JSON.stringify(cellValue);
-                } else if (
-                  cellValue === null ||
-                  cellValue === undefined ||
-                  cellValue === ""
-                ) {
+                } else if (!cellValue) {
                   cellValue = "-";
                 }
-
                 return (
                   <td
                     key={colIndex}
@@ -129,10 +117,8 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
           ))}
         </tbody>
       </table>
-
-      {/* Pagination controls */}
       <div className="flex justify-between items-center mt-4 px-4">
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 font-medium">
           Page {currentPage} of {totalPages}
         </span>
         <div className="flex space-x-2">
@@ -156,23 +142,13 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   );
 };
 
-// ------------------------------
-// Main Page
-// ------------------------------
+// --- 2. Main Page Component ---
 const ReportViewPage = () => {
   const currentYear = new Date().getFullYear();
   const yearOptions = [
     { _id: currentYear, name: `${currentYear}` },
     { _id: currentYear - 1, name: `${currentYear - 1}` },
     { _id: currentYear - 2, name: `${currentYear - 2}` },
-  ];
-
-  const reportTypeOptions = [
-    {
-      _id: "DETAILED_ASSIGNMENT",
-      name: "Detailed Assignments (Current Filters)",
-    },
-    { _id: "YEARLY_SUMMARY", name: "Teacher Yearly Summary (2 Years)" },
   ];
 
   const [filters, setFilters] = useState({
@@ -184,13 +160,16 @@ const ReportViewPage = () => {
     status: "Assigned",
   });
 
+  // নতুন স্টেটসমূহ
+  const [includePrevious, setIncludePrevious] = useState(true);
+  const [selectedRespTypes, setSelectedRespTypes] = useState([]);
+
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
     classes: [],
     types: [],
     branches: [],
   });
-
   const [loading, setLoading] = useState(false);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
@@ -198,6 +177,7 @@ const ReportViewPage = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
 
+  // আপনার পূর্বের Master Data Fetching লজিক
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
@@ -206,33 +186,33 @@ const ReportViewPage = () => {
           getResponsibilityTypes(),
           getBranches(),
         ]);
-
+        const types = Array.isArray(typesRes.data) ? typesRes.data : [];
         setMasterData({
           classes: Array.isArray(classesRes.data) ? classesRes.data : [],
-          types: Array.isArray(typesRes.data) ? typesRes.data : [],
+          types: types,
           branches: Array.isArray(branchesRes.data) ? branchesRes.data : [],
         });
+        // Default: Yearly Summary এর জন্য সব টাইপ সিলেক্ট থাকবে
+        setSelectedRespTypes(types.map((t) => t.name));
         setFetchTrigger((p) => p + 1);
       } catch (error) {
-        console.error("Master data load error:", error);
         toast.error("Failed to load filter options.");
       }
     };
-
     fetchMasterData();
   }, []);
 
+  // আপনার পূর্বের Data Fetching লজিক
   const fetchReport = useCallback(async () => {
     if (fetchTrigger === 0) return;
     setLoading(true);
     try {
       const { data } = await getReportData(filters);
       setReportData(Array.isArray(data) ? data : []);
-      if (!ArrayOfData(data))
-        toast.info("No records found matching your filters.");
+      if (!ArrayOfData(data)) toast("No records found.", { icon: "ℹ️" });
     } catch (error) {
-      console.error("Fetch Report Data Error:", error);
-      toast.error("Error fetching report data. Check console for details.");
+      console.error("Fetch Error:", error);
+      toast.error("Error fetching report data.");
     } finally {
       setLoading(false);
     }
@@ -255,124 +235,108 @@ const ReportViewPage = () => {
     });
   };
 
-  const handleFetchData = () => setFetchTrigger((p) => p + 1);
-  const isFetchDisabled = loading;
+  const toggleType = (name) => {
+    setSelectedRespTypes((prev) =>
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
+    );
+  };
 
+  // আপনার পূর্বের Export লজিক এবং নতুন ফিচারগুলোর সমন্বয়
   const handleExportAction = async (exportType) => {
     setExportError(null);
-
     if (!filters.year) {
       setExportError("Year filter must be selected.");
       return;
     }
 
     const exportFilters = {
-      reportType: filters.reportType,
-      year: filters.year,
-      typeId: filters.typeId,
-      classId: filters.classId,
-      branchId: filters.branchId,
+      ...filters,
+      includePrevious: includePrevious.toString(),
     };
 
+    // আপনার ছবির ফরম্যাট অনুযায়ী রুটিন এক্সপোর্ট
+    if (exportType === "EXPORT_CAMPUS_ROUTINE") {
+      if (!filters.branchId) {
+        toast.error("Please select a Campus first.");
+        return;
+      }
+      window.open(
+        `/api/reports/export/campus-routine?branchId=${filters.branchId}&year=${filters.year}`,
+        "_blank"
+      );
+      setIsExportModalOpen(false);
+      return;
+    }
+
     if (exportType === "EXPORT_YEARLY_SUMMARY") {
+      if (selectedRespTypes.length === 0) {
+        setExportError("Select at least one column.");
+        return;
+      }
       exportFilters.reportType = "YEARLY_SUMMARY";
+      exportFilters.selectedTypes = selectedRespTypes.join(",");
     } else {
       if (!filters.typeId) {
-        setExportError(
-          "Responsibility Type must be selected for detailed exports."
-        );
+        setExportError("Responsibility Type required.");
         return;
       }
       exportFilters.reportType = exportType;
-
       if (exportType === "EXPORT_CLASS_DETAILED" && !filters.classId) {
-        setExportError("Please select Class for Class-Wise export.");
+        setExportError("Select Class.");
         return;
-      } else if (exportType === "EXPORT_BRANCH_DETAILED" && !filters.branchId) {
-        setExportError("Please select Branch/Campus for Campus-Wise export.");
+      }
+      if (exportType === "EXPORT_BRANCH_DETAILED" && !filters.branchId) {
+        setExportError("Select Campus.");
         return;
       }
     }
 
     setExportLoading(true);
-    const exportPromise = new Promise((resolve, reject) => {
-      try {
-        exportCustomReportToPDF(exportFilters);
-        resolve();
-      } catch (err) {
-        console.error("Export trigger error:", err);
-        reject(err);
-      }
-    });
-
-    toast
-      .promise(exportPromise, {
-        loading: `Preparing ${
-          exportType.includes("YEARLY") ? "Yearly" : "Detailed"
-        } PDF...`,
-        success: "Download started!",
-        error: "PDF generation failed. Check server logs.",
-      })
-      .finally(() => {
-        setExportLoading(false);
-        setIsExportModalOpen(false);
-      });
+    try {
+      await exportCustomReportToPDF(exportFilters);
+      toast.success("PDF Download Started!");
+      setIsExportModalOpen(false);
+    } catch (err) {
+      toast.error("PDF generation failed.");
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const getFilterName = (id, options) => {
-    if (!id) return "N/A";
     const found = options.find((o) => o._id === id || o.id === id);
-    return found
-      ? found.name || found.label || found.title || "Selected"
-      : "N/A";
+    return found ? found.name || found.label || "Selected" : "N/A";
   };
 
-  const selectedYearName = filters.year;
-  const selectedTypeName = getFilterName(filters.typeId, masterData.types);
-  const selectedBranchName = getFilterName(
-    filters.branchId,
-    masterData.branches
-  );
-  const selectedClassName = getFilterName(filters.classId, masterData.classes);
-
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto min-h-screen">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-indigo-800 flex items-center">
-          <FaChartBar className="mr-3 text-xl text-indigo-600" />
+      <div className="mb-8 flex items-center justify-between">
+        <h2 className="text-2xl font-black text-indigo-900 flex items-center tracking-tight">
+          <FaChartBar className="mr-3 text-indigo-600" />
           {filters.reportType === "YEARLY_SUMMARY"
             ? "Yearly Assignment Summary"
             : "Detailed Assignment Report"}
         </h2>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-xl mb-6 border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-700 flex items-center">
-            <FaFilter className="mr-2 text-indigo-500" /> Filter Report Data
-          </h3>
-        </div>
-
-        <div className="flex items-center space-x-3 mb-4">
+      {/* Filter Section */}
+      <div className="bg-white p-6 rounded-2xl mb-6 shadow-sm border border-gray-100">
+        <div className="flex items-center space-x-3 mb-6">
           <Button
             onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
-                reportType: "DETAILED_ASSIGNMENT",
-              }))
+              setFilters((p) => ({ ...p, reportType: "DETAILED_ASSIGNMENT" }))
             }
             variant={
               filters.reportType === "DETAILED_ASSIGNMENT" ? "primary" : "light"
             }
           >
-            Detailed
+            Detailed View
           </Button>
           <Button
             onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
+              setFilters((p) => ({
+                ...p,
                 reportType: "YEARLY_SUMMARY",
                 typeId: "",
                 classId: "",
@@ -383,32 +347,25 @@ const ReportViewPage = () => {
               filters.reportType === "YEARLY_SUMMARY" ? "primary" : "light"
             }
           >
-            Yearly
+            Yearly Summary
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5 gap-6 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6 items-end">
           <SelectDropdown
-            label="Year"
+            label="Academic Year"
             name="year"
             value={filters.year}
             onChange={handleChange}
             options={yearOptions}
-            className="xl:col-span-1"
           />
-
           <SelectDropdown
-            label="Branch/Campus"
+            label="Campus"
             name="branchId"
             value={filters.branchId}
             onChange={handleChange}
             options={masterData.branches}
-            placeholder={
-              filters.reportType === "YEARLY_SUMMARY"
-                ? "All Campuses (For Full Report)"
-                : "Select Campus"
-            }
-            className="xl:col-span-1"
+            placeholder="Select Campus"
           />
 
           {filters.reportType === "DETAILED_ASSIGNMENT" && (
@@ -419,8 +376,7 @@ const ReportViewPage = () => {
                 value={filters.typeId}
                 onChange={handleChange}
                 options={masterData.types}
-                placeholder="All Responsibility Types"
-                className="xl:col-span-1"
+                placeholder="All Types"
               />
               <SelectDropdown
                 label="Class"
@@ -429,147 +385,131 @@ const ReportViewPage = () => {
                 onChange={handleChange}
                 options={masterData.classes}
                 placeholder="All Classes"
-                className="xl:col-span-1"
               />
             </>
           )}
 
-          <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
-            <Button
-              onClick={handleFetchData}
-              disabled={isFetchDisabled}
-              fullWidth
-              variant="primary"
-            >
-              <FaSearch className={`mr-2 ${loading ? "animate-spin" : ""}`} />{" "}
-              Fetch Data
-            </Button>
-          </div>
+          <Button
+            onClick={() => setFetchTrigger((p) => p + 1)}
+            disabled={loading}
+            variant="primary"
+            fullWidth
+            className="h-11 shadow-md shadow-indigo-100"
+          >
+            <FaSearch className={`mr-2 ${loading ? "animate-spin" : ""}`} />{" "}
+            Fetch Data
+          </Button>
         </div>
       </div>
 
-      {/* Export */}
+      {/* Export Section */}
       <div className="mb-6 flex justify-end">
         <Button
-          onClick={() => {
-            if (
-              filters.reportType === "DETAILED_ASSIGNMENT" &&
-              !filters.typeId
-            ) {
-              toast.error(
-                "Please select a Responsibility Type filter first for detailed export."
-              );
-              return;
-            }
-            setExportError(null);
-            setIsExportModalOpen(true);
-          }}
+          onClick={() => setIsExportModalOpen(true)}
           disabled={loading || !filters.year}
           variant="success"
+          className="shadow-lg shadow-green-100"
         >
-          <FaFilePdf className="mr-2" /> Export Report
+          <FaFilePdf className="mr-2" /> Export Options
         </Button>
       </div>
 
-      {/* Table */}
+      {/* Results Table */}
       {loading ? (
-        <div className="text-center p-10 bg-white rounded-xl">
-          <FaSyncAlt className="animate-spin text-4xl text-indigo-500 mx-auto" />
-          <p className="mt-4 text-lg text-gray-600 font-semibold">
-            Loading report...
+        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-2xl shadow-sm border border-gray-50">
+          <FaSyncAlt className="animate-spin text-5xl text-indigo-500 mb-4" />
+          <p className="text-gray-500 font-bold animate-pulse">
+            Loading reports...
           </p>
         </div>
       ) : (
-        <ReportTable
-          data={reportData}
-          reportType={filters.reportType}
-          rowsPerPage={10}
-        />
+        <ReportTable data={reportData} reportType={filters.reportType} />
       )}
 
-      {/* Export Modal */}
+      {/* Export Modal (সব ফাংশনালিটির সমন্বয়) */}
       <Modal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        title="Custom Report Export"
+        title="Export Management"
       >
         <div className="p-4 space-y-6">
-          {filters.reportType === "DETAILED_ASSIGNMENT" && (
-            <>
-              <p className="text-md font-semibold text-gray-700">
-                Detailed Assignment Report Export (Mandatory Filters: Type)
-              </p>
-              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 text-sm mb-4">
-                <p>
-                  <strong>Year:</strong> {selectedYearName} |
-                  <strong> Type:</strong> {selectedTypeName}
-                </p>
-                <p>
-                  <strong>Branch:</strong> {selectedBranchName} |
-                  <strong> Class:</strong> {selectedClassName}
-                </p>
+          {filters.reportType === "YEARLY_SUMMARY" ? (
+            <div className="space-y-5">
+              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between shadow-inner">
+                <div>
+                  <p className="text-sm font-bold text-indigo-900">
+                    Include Previous Year
+                  </p>
+                  <p className="text-xs text-indigo-500">
+                    Compare with {filters.year - 1}
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="w-6 h-6 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  checked={includePrevious}
+                  onChange={(e) => setIncludePrevious(e.target.checked)}
+                />
               </div>
-
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-gray-700 flex items-center">
+                  <FaListUl className="mr-2" /> Select Column Responsibilities:
+                </p>
+                <div className="grid grid-cols-2 gap-2 p-3 border rounded-xl bg-gray-50 max-h-40 overflow-y-auto">
+                  {masterData.types.map((t) => (
+                    <label
+                      key={t._id}
+                      className="flex items-center space-x-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-indigo-600"
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedRespTypes.includes(t.name)}
+                        onChange={() => toggleType(t.name)}
+                      />
+                      <span className="uppercase">{t.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button
+                onClick={() => handleExportAction("EXPORT_YEARLY_SUMMARY")}
+                fullWidth
+                variant="warning"
+                loading={exportLoading}
+                className="py-3 font-bold"
+              >
+                <FaCalendarAlt className="mr-2" /> Generate Yearly PDF
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
-                  disabled={
-                    exportLoading || !filters.branchId || !filters.typeId
-                  }
-                  variant={
-                    filters.branchId && filters.typeId ? "success" : "light"
-                  }
-                  fullWidth
+                  variant="primary"
                 >
-                  <FaBuilding className="mr-2" /> Campus-Wise List
+                  <FaBuilding className="mr-2" /> Campus List
                 </Button>
-
                 <Button
                   onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
-                  disabled={
-                    exportLoading || !filters.classId || !filters.typeId
-                  }
-                  variant={
-                    filters.classId && filters.typeId ? "success" : "light"
-                  }
-                  fullWidth
+                  variant="primary"
                 >
-                  <FaGraduationCap className="mr-2" /> Class-Wise List
+                  <FaGraduationCap className="mr-2" /> Class List
                 </Button>
               </div>
-            </>
+              <Button
+                onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
+                variant="light"
+                className="border-2 border-dashed border-indigo-200 text-indigo-700 py-3 font-bold hover:bg-indigo-50"
+              >
+                <FaTable className="mr-2" /> Export Routine (Image Format)
+              </Button>
+            </div>
           )}
-
-          {filters.reportType === "YEARLY_SUMMARY" && (
-            <>
-              <p className="text-md font-semibold text-gray-700">
-                Teacher Yearly Assignment Summary (Current Year vs Previous
-                Year)
-              </p>
-              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 text-sm mb-4">
-                <p>
-                  <strong>Base Year:</strong> {selectedYearName}
-                </p>
-                <p>
-                  <strong>Filtered Campus:</strong> {selectedBranchName}
-                </p>
-              </div>
-              <div className="flex justify-center">
-                <Button
-                  onClick={() => handleExportAction("EXPORT_YEARLY_SUMMARY")}
-                  disabled={exportLoading || !filters.year}
-                  loading={exportLoading}
-                  variant="warning"
-                >
-                  <FaCalendarAlt className="mr-2" /> Generate Yearly Summary PDF
-                </Button>
-              </div>
-            </>
-          )}
-
           {exportError && (
-            <p className="text-sm text-red-600 flex items-center bg-red-50 p-3 rounded-lg border border-red-300">
-              <FaCheckCircle className="mr-2 text-red-500" /> {exportError}
+            <p className="text-xs text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 flex items-center font-bold">
+              <FaCheckCircle className="mr-2 text-red-400" /> {exportError}
             </p>
           )}
         </div>

@@ -75,11 +75,6 @@ const Navbar = () => {
 
           {/* ডান অংশ: ইউজার অ্যাকশন */}
           <div className="hidden md:flex md:items-center space-x-4">
-            {/* User Info: Minimalist text-only display */}
-            <div className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition">
-              {user?.name || "Admin"} ({user?.role?.toUpperCase()})
-            </div>
-
             {/* Logout Button: Clean button style with subtle icon */}
             <button
               onClick={handleLogout}
@@ -137,11 +132,6 @@ const Navbar = () => {
               </Link>
             );
           })}
-
-          {/* User Info on mobile: Clear separator and text treatment */}
-          <div className="text-base font-medium text-gray-700 px-3 py-3 border-t border-gray-200 mt-3 pt-3">
-            {user?.name || "Admin"} ({user?.role?.toUpperCase()})
-          </div>
 
           {/* Mobile Logout Button (Clean, full-width) */}
           <button
