@@ -1,15 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaBars, FaTimes, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaBars,
+  FaTimes,
+  FaSignOutAlt,
+  FaUserCircle,
+  FaShieldAlt,
+} from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
 
-  // Navigation items simplified (icons removed)
+  // স্ক্রল করলে নেভিগেশন বার কিছুটা স্বচ্ছ (blur) হবে
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // নেভিগেশন আইটেমস
   const NavItems = [
     { name: "Dashboard", path: "/" },
     { name: "Setup", path: "/setup/branch" },
@@ -19,128 +33,144 @@ const Navbar = () => {
     { name: "Reports", path: "/report" },
   ];
 
+  // অ্যাডমিন হলে "Users" অপশনটি যুক্ত হবে
+  if (user?.role === "admin") {
+    NavItems.push({ name: "Users", path: "/users" });
+  }
+
   const handleLogout = async () => {
     await logout();
     setIsOpen(false);
     navigate("/login");
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // --- DESKTOP নেভিগেশন লিঙ্ক কম্পোনেন্ট (Minimal Style) ---
-  const NavLink = ({ item, onClick }) => {
-    const isActive =
-      location.pathname === item.path ||
-      (item.path !== "/" && location.pathname.startsWith(item.path));
-
-    // Active style: Dark text, Indigo bottom border on white background
-    const activeStyle = isActive
-      ? "text-indigo-700 font-semibold border-b-2 border-indigo-600"
-      : "text-gray-700 hover:text-indigo-700 hover:bg-gray-100";
-
-    return (
-      <Link
-        to={item.path}
-        onClick={onClick}
-        className={`px-3 py-1.5 text-sm transition duration-150 ${activeStyle}`}
-      >
-        <span>{item.name}</span>
-      </Link>
-    );
-  };
+  if (!isAuthenticated) return null;
 
   return (
-    // Adjusted max-width for a sleeker look
-    <nav className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200">
+    <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 backdrop-blur-md shadow-lg border-b border-indigo-50 py-2"
+          : "bg-white py-4 border-b border-transparent"
+      }`}
+    >
       <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* বাম অংশ: লোগো/ব্র্যান্ডিং ও ডেস্কটপ মেনু */}
+        <div className="flex items-center justify-between">
+          {/* লোগো সেকশন */}
           <div className="flex items-center">
-            {/* 💡 MODERN LOGO: Text-only for elegance */}
-            <Link to="/" className="flex items-center flex-shrink-0">
-              <span className="text-xl font-bold tracking-wider text-gray-800">
-                EXAM MANAGER
+            <Link to="/" className="group flex items-center space-x-2">
+              <div className="bg-indigo-600 p-2 rounded-lg group-hover:rotate-12 transition-transform duration-300">
+                <FaShieldAlt className="text-white text-lg" />
+              </div>
+              <span className="text-xl font-black tracking-tighter text-gray-900 uppercase">
+                Exam<span className="text-indigo-600">Manager</span>
               </span>
             </Link>
 
-            {/* ডেস্কটপ মেনু আইটেম (Compact links) */}
-            <div className="hidden md:ml-10 md:flex md:space-x-4">
-              {NavItems.map((item) => (
-                <NavLink key={item.name} item={item} />
-              ))}
+            {/* ডেস্কটপ মেনু */}
+            <div className="hidden md:ml-12 md:flex items-center space-x-1">
+              {NavItems.map((item) => {
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path !== "/" &&
+                    location.pathname.startsWith(item.path));
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
+                      isActive
+                        ? "bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100"
+                        : "text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          {/* ডান অংশ: ইউজার অ্যাকশন */}
-          <div className="hidden md:flex md:items-center space-x-4">
-            {/* Logout Button: Clean button style with subtle icon */}
+          {/* ইউজার সেকশন */}
+          <div className="hidden md:flex items-center space-x-6">
+            <div className="flex items-center space-x-3 pr-4 border-r border-gray-200">
+              <div className="text-right">
+                <p className="text-xs font-black text-gray-900 leading-tight">
+                  {user?.name || "User Name"}
+                </p>
+                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+                  {user?.role}
+                </p>
+              </div>
+              <FaUserCircle className="text-2xl text-gray-400" />
+            </div>
+
             <button
               onClick={handleLogout}
-              className="flex items-center px-3 py-1.5 bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 text-white text-sm shadow-md"
-              title="Logout"
+              className="group flex items-center px-4 py-2 bg-gray-900 rounded-xl font-black text-white text-xs hover:bg-indigo-600 transition-all duration-300 shadow-md hover:shadow-indigo-200"
             >
-              <FaSignOutAlt className="mr-1.5 text-xs" />
+              <FaSignOutAlt className="mr-2 group-hover:translate-x-1 transition-transform" />
               LOGOUT
             </button>
           </div>
 
-          {/* মোবাইল মেনু টগল বাটন */}
+          {/* মোবাইল মেনু বাটন */}
           <div className="flex md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+              className="p-2 rounded-xl text-gray-900 hover:bg-gray-100 transition-colors"
             >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? (
-                <FaTimes className="block h-6 w-6" />
-              ) : (
-                <FaBars className="block h-6 w-6" />
-              )}
+              {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* --- MOBILE MENU (ELEGANT & SPACIOUS) --- */}
+      {/* মোবাইল ড্রপডাউন মেনু */}
       <div
-        // 💡 ELEGANT FIX: Use soft shadow and consistent background
-        className={`${
-          isOpen ? "block" : "hidden"
-        } md:hidden bg-white border-t border-gray-100 shadow-md`}
+        className={`md:hidden absolute w-full transition-all duration-300 ease-in-out ${
+          isOpen
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-10 pointer-events-none"
+        }`}
       >
-        <div className="px-2 pt-3 pb-4 space-y-1 sm:px-3">
+        <div className="mx-4 mt-2 p-4 bg-white rounded-3xl shadow-2xl border border-gray-100 space-y-2">
           {NavItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
               (item.path !== "/" && location.pathname.startsWith(item.path));
-
-            const mobileLinkStyle = isActive
-              ? "bg-indigo-50 text-indigo-700 font-semibold"
-              : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700";
-
             return (
-              // 💡 Block link with increased vertical padding
               <Link
                 key={item.name}
                 to={item.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-3 py-2.5 rounded-md text-base transition duration-150 ${mobileLinkStyle}`}
+                className={`block px-4 py-3 rounded-2xl text-base font-bold transition-all ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-lg"
+                    : "text-gray-700 hover:bg-indigo-50"
+                }`}
               >
                 {item.name}
               </Link>
             );
           })}
 
-          {/* Mobile Logout Button (Clean, full-width) */}
-          <button
-            onClick={handleLogout}
-            className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 mt-2"
-          >
-            <FaSignOutAlt className="mr-2" />
-            Logout
-          </button>
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="flex items-center px-4 mb-4">
+              <div className="flex-1">
+                <p className="text-sm font-black text-gray-900">{user?.name}</p>
+                <p className="text-xs font-bold text-indigo-600 uppercase">
+                  {user?.role}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center px-4 py-4 rounded-2xl bg-red-50 text-red-600 font-black hover:bg-red-100 transition-all"
+            >
+              <FaSignOutAlt className="mr-2" /> Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>

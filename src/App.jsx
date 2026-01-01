@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 // --- Global Context & Layouts ---
 import { AuthProvider } from "./context/AuthContext.jsx";
 import LayoutContainer from "./components/layouts/LayoutContainer";
-import ProtectedRoute from "./components/ProtectedRoute"; // ✅ নতুন ইমপোর্ট
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // --- Page Components ---
 import AdminDashboard from "./pages/AdminDashboard";
@@ -16,6 +16,7 @@ import ReportViewPage from "./pages/ReportViewPage";
 import TeacherViewPage from "./pages/TeacherViewPage";
 import LoginPage from "./pages/LoginPage";
 import GrantedLeavesPage from "./pages/GrantedLeavesPage";
+import UserManagementPage from "./pages/UserManagementPage"; // ✅ নতুন ইমপোর্ট
 
 function App() {
   return (
@@ -23,30 +24,35 @@ function App() {
       <AuthProvider>
         <LayoutContainer>
           <Routes>
-            {/* PUBLIC ROUTE: লগইন পেজ সবার জন্য উন্মুক্ত */}
+            {/* PUBLIC ROUTE */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* 🔒 PROTECTED ROUTES: লগইন করা না থাকলে এটি দেখা যাবে না */}
-
-            {/* ড্যাশবোর্ড রুট */}
+            {/* 🔒 PROTECTED ROUTES */}
             <Route
               path="/"
               element={<ProtectedRoute element={<AdminDashboard />} />}
             />
 
-            {/* মাস্টার সেটআপ রুট */}
+            {/* 🛡️ ADMIN ONLY: User Management */}
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute
+                  element={<UserManagementPage />}
+                  allowedRoles={["admin"]} // ✅ শুধুমাত্র অ্যাডমিন এক্সেস পাবে
+                />
+              }
+            />
+
             <Route
               path="/setup/:type"
               element={<ProtectedRoute element={<MasterSetupPage />} />}
             />
-
-            {/* রুটিন সেটআপ রুট */}
             <Route
               path="/routine"
               element={<ProtectedRoute element={<RoutineSetupPage />} />}
             />
 
-            {/* শিক্ষক তালিকা ও প্রোফাইল */}
             <Route
               path="/teachers"
               element={<ProtectedRoute element={<TeacherViewPage />} />}
@@ -56,7 +62,6 @@ function App() {
               element={<ProtectedRoute element={<TeacherViewPage />} />}
             />
 
-            {/* অ্যাসাইনমেন্ট ও রিপোর্টিং */}
             <Route
               path="/assign"
               element={<ProtectedRoute element={<AssignDutyPage />} />}
@@ -66,11 +71,11 @@ function App() {
               element={<ProtectedRoute element={<ReportViewPage />} />}
             />
             <Route
-              path="/leaves/granted" // ✅ NEW ROUTE
+              path="/leaves/granted"
               element={<ProtectedRoute element={<GrantedLeavesPage />} />}
             />
 
-            {/* ফলব্যাক রুট (404 Not Found) */}
+            {/* 404 Not Found */}
             <Route
               path="*"
               element={
@@ -82,7 +87,6 @@ function App() {
           </Routes>
         </LayoutContainer>
       </AuthProvider>
-
       <Toaster position="top-right" />
     </Router>
   );

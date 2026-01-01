@@ -8,6 +8,9 @@ import {
   FaPhone,
   FaIdCard,
   FaSave,
+  FaTerminal,
+  FaShieldAlt,
+  FaToggleOn,
 } from "react-icons/fa";
 
 // Reusable UI Components
@@ -35,11 +38,9 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // --- ১. প্রাথমিক ডেটা লোড করা (শিক্ষকের বর্তমান তথ্য ও ব্রাঞ্চ তালিকা) ---
   useEffect(() => {
     const fetchInitialData = async () => {
       if (!teacherId) return;
-
       try {
         const [teacherRes, branchesRes] = await Promise.all([
           getTeacherProfile(teacherId),
@@ -47,21 +48,19 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
         ]);
 
         const teacherDetails = teacherRes.data.teacherDetails;
-
-        // 폼 ডেটা সেট করা
         setFormData({
           teacherId: teacherDetails.teacherId,
           name: teacherDetails.name,
           phone: teacherDetails.phone,
-          campus: teacherDetails.campus._id, // ObjectId
+          campus: teacherDetails.campus._id,
           designation: teacherDetails.designation || "",
           isActive: teacherDetails.isActive,
         });
 
         setBranches(branchesRes.data);
-        setLoading(false);
       } catch (error) {
-        toast.error("Failed to load initial data.");
+        toast.error("Failed to load initial data buffer.");
+      } finally {
         setLoading(false);
       }
     };
@@ -71,20 +70,17 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
   const handleChange = (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
-    setErrors({ ...errors, [e.target.name]: null }); // ত্রুটি পরিষ্কার করা
+    setFormData({ ...formData, [e.target.name]: value });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null });
   };
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = "Teacher Name is required.";
-    if (!formData.phone) newErrors.phone = "Phone Number is required.";
-    if (!formData.campus) newErrors.campus = "Campus selection is required.";
+    if (!formData.name) newErrors.name = "Required";
+    if (!formData.phone) newErrors.phone = "Required";
+    if (!formData.campus) newErrors.campus = "Required";
     if (formData.phone && !/^\d+$/.test(formData.phone))
-      newErrors.phone = "Phone number must contain only digits.";
+      newErrors.phone = "Digits only";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -93,144 +89,176 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
-      toast.error("Please correct the validation errors.");
+      toast.error("Review highlighted parameters.");
       return;
     }
     setSubmitting(true);
 
     try {
       const response = await updateTeacher(teacherId, formData);
-
-      // ✅ সফল নোটিফিকেশন
-      toast.success(
-        `Profile for ${response.data.teacher.name} updated successfully!`
-      );
-
-      // প্যারেন্ট কম্পোনেন্টকে আপডেট নিশ্চিত করা
-      if (onUpdateSuccess) {
-        onUpdateSuccess(response.data.teacher);
-      }
+      toast.success(`Profile updated: ${response.data.teacher.name}`);
+      if (onUpdateSuccess) onUpdateSuccess(response.data.teacher);
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "An unknown error occurred during update.";
-
-      // ডুপ্লিকেট ত্রুটির জন্য
-      if (errorMessage.includes("already in use by another teacher")) {
-        setErrors({ phone: "This phone/ID is already in use." });
-      }
-
-      // ❌ ত্রুটির নোটিফিকেশন
-      toast.error(errorMessage);
+      const msg = error.response?.data?.message || "Update failed.";
+      if (msg.includes("already in use"))
+        setErrors({ phone: "Conflict detected" });
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    // 💡 Using the modernized spinner component (now larger and darker by default)
     return (
-      <div className="text-center p-10">
-        <FaSyncAlt className="animate-spin text-5xl text-indigo-700 mx-auto" />
-        <p className="mt-4 text-lg text-gray-600">Loading teacher data...</p>
+      <div className="flex flex-col items-center justify-center p-20 bg-white/40 backdrop-blur-md rounded-[3rem]">
+        <FaSyncAlt className="animate-spin text-6xl text-indigo-500/20 mb-6" />
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">
+          Synchronizing Registry
+        </p>
       </div>
     );
   }
 
   return (
-    // 💡 ELEGANT FIX: Removed shadow-2xl. Using light gray border for clean, flat design.
-    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl border border-gray-200">
-      {/* 🚀 MODERNIZE: Cleaner header with soft bottom border */}
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
-        <FaUserEdit className="mr-3 text-3xl text-indigo-600" />
-        Update Teacher Profile ({formData.teacherId})
-      </h2>
+    <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-1 shadow-sm border border-slate-100 group transition-all duration-500 hover:shadow-indigo-100/50">
+      <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8">
+        {/* --- HEADER --- */}
+        <div className="flex items-center justify-between border-b border-slate-50 pb-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 transition-transform group-hover:rotate-0">
+              <FaUserEdit size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                Modify Profile
+              </h2>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+                <FaTerminal className="text-indigo-500" /> Node:{" "}
+                {formData.teacherId}
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            <div
+              className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors ${
+                formData.isActive
+                  ? "bg-green-50 text-green-600 border-green-100"
+                  : "bg-rose-50 text-rose-600 border-rose-100"
+              }`}
+            >
+              {formData.isActive ? "Status: Active" : "Status: Dormant"}
+            </div>
+          </div>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Teacher Name (Using InputField) */}
+        {/* --- INPUT GRID --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputField
+            label="Neural Identifier (Locked)"
+            name="teacherId"
+            icon={FaIdCard}
+            value={formData.teacherId}
+            disabled
+            className="bg-slate-100/50 border-slate-100 text-slate-400 rounded-2xl font-bold cursor-not-allowed"
+          />
+
+          <InputField
+            label="Full Legal Name"
+            name="name"
+            icon={FaUser}
+            placeholder="Edit Name"
+            value={formData.name}
+            onChange={handleChange}
+            error={errors.name}
+            required
+            className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+          />
+
+          <SelectDropdown
+            label="Primary Station"
+            name="campus"
+            icon={FaBuilding}
+            options={branches}
+            value={formData.campus}
+            onChange={handleChange}
+            error={errors.campus}
+            required
+          />
+
+          <InputField
+            label="Contact String"
+            name="phone"
+            icon={FaPhone}
+            placeholder="Numerical Code"
+            value={formData.phone}
+            onChange={handleChange}
+            error={errors.phone}
+            required
+          />
+        </div>
+
         <InputField
-          label="Teacher Name"
-          type="text"
-          name="name"
-          icon={FaUser}
-          placeholder="Teacher Name"
-          value={formData.name}
-          onChange={handleChange}
-          error={errors.name}
-          required
-        />
-
-        {/* Teacher ID (Read-only) */}
-        <InputField
-          label="Teacher ID"
-          type="text"
-          name="teacherId"
-          icon={FaIdCard}
-          value={formData.teacherId}
-          placeholder="Teacher ID"
-          disabled
-          // Using a standard, clean disabled style
-          className="bg-gray-50 opacity-90"
-        />
-
-        {/* Select Branch (Using SelectDropdown) */}
-        <SelectDropdown
-          label="Select Campus/Branch"
-          name="campus"
-          placeholder="Select Branch"
-          options={branches}
-          value={formData.campus}
-          onChange={handleChange}
-          error={errors.campus}
-          required
-        />
-
-        {/* Phone Number (Using InputField) */}
-        <InputField
-          label="Phone Number"
-          type="text"
-          name="phone"
-          icon={FaPhone}
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
-          error={errors.phone}
-          required
-        />
-
-        {/* Designation (Using InputField) */}
-        <InputField
-          label="Designation (Optional)"
-          type="text"
+          label="Institutional Designation"
           name="designation"
-          placeholder="Designation"
+          placeholder="Metadata: e.g. Senior Faculty"
           value={formData.designation}
           onChange={handleChange}
         />
 
-        {/* isActive Status Checkbox */}
-        <div className="flex items-center">
+        {/* --- TOGGLE AREA --- */}
+        <div className="bg-indigo-50/30 p-6 rounded-[2rem] border border-indigo-100/50 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+                formData.isActive
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "bg-slate-200 text-slate-400"
+              }`}
+            >
+              <FaToggleOn size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">
+                Active Availability
+              </p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                Toggle readiness for responsibility matrix
+              </p>
+            </div>
+          </div>
           <input
             type="checkbox"
             name="isActive"
             id="isActive"
             checked={formData.isActive}
             onChange={handleChange}
-            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            className="w-12 h-6 rounded-full appearance-none bg-slate-200 checked:bg-indigo-600 transition-all cursor-pointer relative after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all checked:after:translate-x-6 shadow-inner"
           />
-          <label
-            htmlFor="isActive"
-            className="ml-2 block text-sm text-gray-900"
-          >
-            Is Active (Can be assigned responsibilities)
-          </label>
         </div>
 
-        {/* Submit Button (Using Button Component) */}
-        <Button type="submit" fullWidth loading={submitting} variant="success">
-          <FaSave className="mr-2" />
-          UPDATE PROFILE
-        </Button>
+        {/* --- ACTION BUTTON --- */}
+        <div className="pt-4 flex flex-col md:flex-row items-center gap-6">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full md:w-2/3 py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:shadow-indigo-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {submitting ? (
+              <FaSyncAlt className="animate-spin" />
+            ) : (
+              <>
+                <FaSave className="text-xs" /> Finalize Registry
+              </>
+            )}
+          </button>
+
+          <div className="flex items-center gap-3 text-slate-400">
+            <FaShieldAlt size={14} />
+            <p className="text-[9px] font-bold uppercase tracking-widest leading-tight">
+              Encrypted write <br /> Authorization required.
+            </p>
+          </div>
+        </div>
       </form>
     </div>
   );

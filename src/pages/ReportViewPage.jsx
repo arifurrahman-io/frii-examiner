@@ -15,6 +15,8 @@ import {
   FaAngleRight,
   FaListUl,
   FaTable,
+  FaFileExport,
+  FaCubes,
 } from "react-icons/fa";
 
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -31,26 +33,20 @@ import {
 
 const ArrayOfData = (data) => Array.isArray(data) && data.length > 0;
 
-// --- 1. Table Component (আপনার পূর্বের Pagination ও Label লজিক সহ) ---
+// --- 1. Modern Table Component ---
 const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const displayedHeaders = ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
 
   const headerLabel = (key) => {
-    switch (key) {
-      case "Sl.":
-        return "S.L.";
-      case "CLASS":
-        return "Class";
-      case "SUBJECT":
-        return "Assigned Subject";
-      case "TEACHER":
-        return "Teacher Name";
-      case "CAMPUS":
-        return "Campus";
-      default:
-        return key;
-    }
+    const labels = {
+      "Sl.": "S.L.",
+      CLASS: "Class",
+      SUBJECT: "Assigned Subject",
+      TEACHER: "Teacher Name",
+      CAMPUS: "Campus",
+    };
+    return labels[key] || key;
   };
 
   const paginatedData = useMemo(() => {
@@ -62,77 +58,79 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
 
   if (!ArrayOfData(data)) {
     return (
-      <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-        <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-4" />
-        <p className="text-lg text-gray-600 font-medium">
-          No records found matching criteria.
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200 opacity-60">
+        <FaClipboardList className="text-8xl text-slate-200 mb-6" />
+        <p className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">
+          No Records found in Matrix
         </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gradient-to-r from-indigo-600 to-indigo-500 sticky top-0">
-          <tr>
-            {displayedHeaders.map((header, index) => (
-              <th
-                key={index}
-                className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
-              >
-                {headerLabel(header)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
-          {paginatedData.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className="hover:bg-indigo-50 transition duration-150"
-            >
-              {displayedHeaders.map((key, colIndex) => {
-                let cellValue = row[key];
-                if (key === "Sl.")
-                  cellValue = (currentPage - 1) * rowsPerPage + rowIndex + 1;
-                if (typeof cellValue === "object" && cellValue !== null) {
-                  cellValue =
-                    cellValue.name ||
-                    cellValue.label ||
-                    JSON.stringify(cellValue);
-                } else if (!cellValue) {
-                  cellValue = "-";
-                }
-                return (
-                  <td
-                    key={colIndex}
-                    className="px-4 py-3 whitespace-nowrap text-sm text-gray-800"
-                  >
-                    {cellValue}
-                  </td>
-                );
-              })}
+    <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-white overflow-hidden transition-all hover:shadow-indigo-50">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-separate border-spacing-0">
+          <thead>
+            <tr className="bg-slate-50/50">
+              {displayedHeaders.map((header, index) => (
+                <th
+                  key={index}
+                  className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100"
+                >
+                  {headerLabel(header)}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-between items-center mt-4 px-4">
-        <span className="text-sm text-gray-600 font-medium">
-          Page {currentPage} of {totalPages}
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {paginatedData.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className="group hover:bg-indigo-50/30 transition-all"
+              >
+                {displayedHeaders.map((key, colIndex) => {
+                  let cellValue = row[key];
+                  if (key === "Sl.")
+                    cellValue = (currentPage - 1) * rowsPerPage + rowIndex + 1;
+                  if (typeof cellValue === "object" && cellValue !== null) {
+                    cellValue = cellValue.name || cellValue.label || "-";
+                  } else if (!cellValue) cellValue = "-";
+
+                  return (
+                    <td
+                      key={colIndex}
+                      className={`px-6 py-5 text-xs font-bold ${
+                        key === "Sl." ? "text-indigo-400" : "text-slate-600"
+                      } uppercase tracking-tight`}
+                    >
+                      {cellValue}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modern Pagination */}
+      <div className="flex justify-between items-center mt-6 p-4 border-t border-slate-50">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Node {currentPage} / {totalPages}
         </span>
-        <div className="flex space-x-2">
+        <div className="flex gap-3">
           <Button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            variant="light"
+            className="rounded-xl px-4 py-2 border-slate-100 hover:bg-white hover:text-indigo-600 shadow-sm"
           >
             <FaAngleLeft />
           </Button>
           <Button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            variant="light"
+            className="rounded-xl px-4 py-2 border-slate-100 hover:bg-white hover:text-indigo-600 shadow-sm"
           >
             <FaAngleRight />
           </Button>
@@ -145,11 +143,9 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
 // --- 2. Main Page Component ---
 const ReportViewPage = () => {
   const currentYear = new Date().getFullYear();
-  const yearOptions = [
-    { _id: currentYear, name: `${currentYear}` },
-    { _id: currentYear - 1, name: `${currentYear - 1}` },
-    { _id: currentYear - 2, name: `${currentYear - 2}` },
-  ];
+  const yearOptions = [currentYear, currentYear - 1, currentYear - 2].map(
+    (y) => ({ _id: y, name: `${y}` })
+  );
 
   const [filters, setFilters] = useState({
     reportType: "DETAILED_ASSIGNMENT",
@@ -159,11 +155,8 @@ const ReportViewPage = () => {
     branchId: "",
     status: "Assigned",
   });
-
-  // নতুন স্টেটসমূহ
   const [includePrevious, setIncludePrevious] = useState(true);
   const [selectedRespTypes, setSelectedRespTypes] = useState([]);
-
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
     classes: [],
@@ -172,12 +165,10 @@ const ReportViewPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [fetchTrigger, setFetchTrigger] = useState(0);
-
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
 
-  // আপনার পূর্বের Master Data Fetching লজিক
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
@@ -186,33 +177,29 @@ const ReportViewPage = () => {
           getResponsibilityTypes(),
           getBranches(),
         ]);
-        const types = Array.isArray(typesRes.data) ? typesRes.data : [];
+        const types = typesRes.data || [];
         setMasterData({
-          classes: Array.isArray(classesRes.data) ? classesRes.data : [],
+          classes: classesRes.data || [],
           types: types,
-          branches: Array.isArray(branchesRes.data) ? branchesRes.data : [],
+          branches: branchesRes.data || [],
         });
-        // Default: Yearly Summary এর জন্য সব টাইপ সিলেক্ট থাকবে
         setSelectedRespTypes(types.map((t) => t.name));
         setFetchTrigger((p) => p + 1);
       } catch (error) {
-        toast.error("Failed to load filter options.");
+        toast.error("Configuration buffer failed.");
       }
     };
     fetchMasterData();
   }, []);
 
-  // আপনার পূর্বের Data Fetching লজিক
   const fetchReport = useCallback(async () => {
     if (fetchTrigger === 0) return;
     setLoading(true);
     try {
       const { data } = await getReportData(filters);
       setReportData(Array.isArray(data) ? data : []);
-      if (!ArrayOfData(data)) toast("No records found.", { icon: "ℹ️" });
     } catch (error) {
-      console.error("Fetch Error:", error);
-      toast.error("Error fetching report data.");
+      toast.error("Failed to sync report matrix.");
     } finally {
       setLoading(false);
     }
@@ -224,42 +211,31 @@ const ReportViewPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => {
-      const next = { ...prev, [name]: value };
-      if (name === "reportType" && value === "YEARLY_SUMMARY") {
-        next.typeId = "";
-        next.classId = "";
-        next.status = "";
-      }
-      return next;
-    });
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "reportType" && value === "YEARLY_SUMMARY"
+        ? { typeId: "", classId: "", status: "" }
+        : {}),
+    }));
   };
 
-  const toggleType = (name) => {
+  const toggleType = (name) =>
     setSelectedRespTypes((prev) =>
       prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
     );
-  };
 
-  // আপনার পূর্বের Export লজিক এবং নতুন ফিচারগুলোর সমন্বয়
   const handleExportAction = async (exportType) => {
     setExportError(null);
-    if (!filters.year) {
-      setExportError("Year filter must be selected.");
-      return;
-    }
+    if (!filters.year) return setExportError("Year filter required.");
 
     const exportFilters = {
       ...filters,
       includePrevious: includePrevious.toString(),
     };
 
-    // আপনার ছবির ফরম্যাট অনুযায়ী রুটিন এক্সপোর্ট
     if (exportType === "EXPORT_CAMPUS_ROUTINE") {
-      if (!filters.branchId) {
-        toast.error("Please select a Campus first.");
-        return;
-      }
+      if (!filters.branchId) return toast.error("Campus ID required.");
       window.open(
         `/api/reports/export/campus-routine?branchId=${filters.branchId}&year=${filters.year}`,
         "_blank"
@@ -269,251 +245,266 @@ const ReportViewPage = () => {
     }
 
     if (exportType === "EXPORT_YEARLY_SUMMARY") {
-      if (selectedRespTypes.length === 0) {
-        setExportError("Select at least one column.");
-        return;
-      }
+      if (selectedRespTypes.length === 0)
+        return setExportError("Minimum 1 column required.");
       exportFilters.reportType = "YEARLY_SUMMARY";
       exportFilters.selectedTypes = selectedRespTypes.join(",");
     } else {
-      if (!filters.typeId) {
-        setExportError("Responsibility Type required.");
-        return;
-      }
+      if (!filters.typeId) return setExportError("Duty type required.");
       exportFilters.reportType = exportType;
-      if (exportType === "EXPORT_CLASS_DETAILED" && !filters.classId) {
-        setExportError("Select Class.");
-        return;
-      }
-      if (exportType === "EXPORT_BRANCH_DETAILED" && !filters.branchId) {
-        setExportError("Select Campus.");
-        return;
-      }
+      if (exportType === "EXPORT_CLASS_DETAILED" && !filters.classId)
+        return setExportError("Class required.");
+      if (exportType === "EXPORT_BRANCH_DETAILED" && !filters.branchId)
+        return setExportError("Campus required.");
     }
 
     setExportLoading(true);
     try {
       await exportCustomReportToPDF(exportFilters);
-      toast.success("PDF Download Started!");
+      toast.success("PDF Initialized.");
       setIsExportModalOpen(false);
-    } catch (err) {
-      toast.error("PDF generation failed.");
+    } catch {
+      toast.error("Export Protocol Failed.");
     } finally {
       setExportLoading(false);
     }
   };
 
-  const getFilterName = (id, options) => {
-    const found = options.find((o) => o._id === id || o.id === id);
-    return found ? found.name || found.label || "Selected" : "N/A";
-  };
-
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-black text-indigo-900 flex items-center tracking-tight">
-          <FaChartBar className="mr-3 text-indigo-600" />
-          {filters.reportType === "YEARLY_SUMMARY"
-            ? "Yearly Assignment Summary"
-            : "Detailed Assignment Report"}
-        </h2>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
-      {/* Filter Section */}
-      <div className="bg-white p-6 rounded-2xl mb-6 shadow-sm border border-gray-100">
-        <div className="flex items-center space-x-3 mb-6">
-          <Button
-            onClick={() =>
-              setFilters((p) => ({ ...p, reportType: "DETAILED_ASSIGNMENT" }))
-            }
-            variant={
-              filters.reportType === "DETAILED_ASSIGNMENT" ? "primary" : "light"
-            }
-          >
-            Detailed View
-          </Button>
-          <Button
-            onClick={() =>
-              setFilters((p) => ({
-                ...p,
-                reportType: "YEARLY_SUMMARY",
-                typeId: "",
-                classId: "",
-                status: "",
-              }))
-            }
-            variant={
-              filters.reportType === "YEARLY_SUMMARY" ? "primary" : "light"
-            }
-          >
-            Yearly Summary
-          </Button>
+      <div className="max-w-[1600px] mx-auto relative z-10">
+        {/* --- DYNAMIC HEADER --- */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-6">
+            <div className="h-16 w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-indigo-200">
+              <FaChartBar size={28} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                Report Matrix <span className="text-indigo-600">.</span>
+              </h1>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">
+                {filters.reportType === "YEARLY_SUMMARY"
+                  ? "Yearly Session Aggregation"
+                  : "Detailed Allocation Intelligence"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex bg-slate-100/80 p-1.5 rounded-2xl backdrop-blur-sm border border-slate-200/50">
+              <button
+                onClick={() =>
+                  setFilters((p) => ({
+                    ...p,
+                    reportType: "DETAILED_ASSIGNMENT",
+                  }))
+                }
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  filters.reportType === "DETAILED_ASSIGNMENT"
+                    ? "bg-white text-indigo-600 shadow-md scale-105"
+                    : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                Detailed
+              </button>
+              <button
+                onClick={() =>
+                  setFilters((p) => ({
+                    ...p,
+                    reportType: "YEARLY_SUMMARY",
+                    typeId: "",
+                    classId: "",
+                    status: "",
+                  }))
+                }
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  filters.reportType === "YEARLY_SUMMARY"
+                    ? "bg-white text-indigo-600 shadow-md scale-105"
+                    : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                Summary
+              </button>
+            </div>
+            <Button
+              onClick={() => setIsExportModalOpen(true)}
+              className="bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl px-6 font-black text-[10px] tracking-[0.2em] shadow-xl shadow-slate-200 flex items-center gap-3"
+            >
+              <FaFilePdf size={14} /> EXPORT
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6 items-end">
-          <SelectDropdown
-            label="Academic Year"
-            name="year"
-            value={filters.year}
-            onChange={handleChange}
-            options={yearOptions}
-          />
-          <SelectDropdown
-            label="Campus"
-            name="branchId"
-            value={filters.branchId}
-            onChange={handleChange}
-            options={masterData.branches}
-            placeholder="Select Campus"
-          />
+        {/* --- FILTER PANEL --- */}
+        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-white mb-10 overflow-hidden relative transition-all hover:shadow-indigo-100">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
 
-          {filters.reportType === "DETAILED_ASSIGNMENT" && (
-            <>
-              <SelectDropdown
-                label="Type"
-                name="typeId"
-                value={filters.typeId}
-                onChange={handleChange}
-                options={masterData.types}
-                placeholder="All Types"
-              />
-              <SelectDropdown
-                label="Class"
-                name="classId"
-                value={filters.classId}
-                onChange={handleChange}
-                options={masterData.classes}
-                placeholder="All Classes"
-              />
-            </>
-          )}
-
-          <Button
-            onClick={() => setFetchTrigger((p) => p + 1)}
-            disabled={loading}
-            variant="primary"
-            fullWidth
-            className="h-11 shadow-md shadow-indigo-100"
-          >
-            <FaSearch className={`mr-2 ${loading ? "animate-spin" : ""}`} />{" "}
-            Fetch Data
-          </Button>
-        </div>
-      </div>
-
-      {/* Export Section */}
-      <div className="mb-6 flex justify-end">
-        <Button
-          onClick={() => setIsExportModalOpen(true)}
-          disabled={loading || !filters.year}
-          variant="success"
-          className="shadow-lg shadow-green-100"
-        >
-          <FaFilePdf className="mr-2" /> Export Options
-        </Button>
-      </div>
-
-      {/* Results Table */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-2xl shadow-sm border border-gray-50">
-          <FaSyncAlt className="animate-spin text-5xl text-indigo-500 mb-4" />
-          <p className="text-gray-500 font-bold animate-pulse">
-            Loading reports...
-          </p>
-        </div>
-      ) : (
-        <ReportTable data={reportData} reportType={filters.reportType} />
-      )}
-
-      {/* Export Modal (সব ফাংশনালিটির সমন্বয়) */}
-      <Modal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        title="Export Management"
-      >
-        <div className="p-4 space-y-6">
-          {filters.reportType === "YEARLY_SUMMARY" ? (
-            <div className="space-y-5">
-              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between shadow-inner">
-                <div>
-                  <p className="text-sm font-bold text-indigo-900">
-                    Include Previous Year
-                  </p>
-                  <p className="text-xs text-indigo-500">
-                    Compare with {filters.year - 1}
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="w-6 h-6 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                  checked={includePrevious}
-                  onChange={(e) => setIncludePrevious(e.target.checked)}
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8 items-end relative z-10">
+            <SelectDropdown
+              label="Cycle Year"
+              name="year"
+              value={filters.year}
+              onChange={handleChange}
+              options={yearOptions}
+              required
+            />
+            <SelectDropdown
+              label="Campus"
+              name="branchId"
+              value={filters.branchId}
+              onChange={handleChange}
+              options={masterData.branches}
+              placeholder="All Campus"
+            />
+            {filters.reportType === "DETAILED_ASSIGNMENT" && (
+              <>
+                <SelectDropdown
+                  label="Duty Type"
+                  name="typeId"
+                  value={filters.typeId}
+                  onChange={handleChange}
+                  options={masterData.types}
+                  placeholder="All Prototypes"
                 />
-              </div>
-              <div className="space-y-3">
-                <p className="text-sm font-bold text-gray-700 flex items-center">
-                  <FaListUl className="mr-2" /> Select Column Responsibilities:
-                </p>
-                <div className="grid grid-cols-2 gap-2 p-3 border rounded-xl bg-gray-50 max-h-40 overflow-y-auto">
-                  {masterData.types.map((t) => (
-                    <label
-                      key={t._id}
-                      className="flex items-center space-x-2 text-xs font-semibold text-gray-600 cursor-pointer hover:text-indigo-600"
-                    >
-                      <input
-                        type="checkbox"
-                        className="rounded"
-                        checked={selectedRespTypes.includes(t.name)}
-                        onChange={() => toggleType(t.name)}
-                      />
-                      <span className="uppercase">{t.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <Button
-                onClick={() => handleExportAction("EXPORT_YEARLY_SUMMARY")}
-                fullWidth
-                variant="warning"
-                loading={exportLoading}
-                className="py-3 font-bold"
-              >
-                <FaCalendarAlt className="mr-2" /> Generate Yearly PDF
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
-                  variant="primary"
-                >
-                  <FaBuilding className="mr-2" /> Campus List
-                </Button>
-                <Button
-                  onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
-                  variant="primary"
-                >
-                  <FaGraduationCap className="mr-2" /> Class List
-                </Button>
-              </div>
-              <Button
-                onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
-                variant="light"
-                className="border-2 border-dashed border-indigo-200 text-indigo-700 py-3 font-bold hover:bg-indigo-50"
-              >
-                <FaTable className="mr-2" /> Export Routine (Image Format)
-              </Button>
-            </div>
-          )}
-          {exportError && (
-            <p className="text-xs text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 flex items-center font-bold">
-              <FaCheckCircle className="mr-2 text-red-400" /> {exportError}
-            </p>
-          )}
+                <SelectDropdown
+                  label="Class Cohort"
+                  name="classId"
+                  value={filters.classId}
+                  onChange={handleChange}
+                  options={masterData.classes}
+                  placeholder="All Levels"
+                />
+              </>
+            )}
+            <Button
+              onClick={() => setFetchTrigger((p) => p + 1)}
+              disabled={loading}
+              variant="primary"
+              className="h-[52px] rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-100 font-black text-[11px] tracking-widest uppercase flex items-center justify-center gap-3"
+            >
+              <FaSearch className={loading ? "animate-spin" : ""} /> Sync Matrix
+            </Button>
+          </div>
         </div>
-      </Modal>
+
+        {/* --- RESULTS AREA --- */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-40 bg-white/40 backdrop-blur-md rounded-[4rem]">
+            <FaSyncAlt className="animate-spin text-6xl text-indigo-500/20 mb-6" />
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">
+              Synchronizing Intelligence Buffer
+            </p>
+          </div>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <ReportTable data={reportData} reportType={filters.reportType} />
+          </div>
+        )}
+
+        {/* --- EXPORT MODAL --- */}
+        <Modal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          title={
+            <div className="flex items-center gap-3 uppercase font-black text-slate-800 tracking-tighter">
+              <FaFileExport className="text-indigo-600" /> Data Export Engine
+            </div>
+          }
+        >
+          <div className="p-4 space-y-8">
+            {filters.reportType === "YEARLY_SUMMARY" ? (
+              <div className="space-y-8">
+                <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 flex items-center justify-between shadow-inner">
+                  <div>
+                    <p className="text-[11px] font-black text-indigo-900 uppercase">
+                      Dual Session Comparison
+                    </p>
+                    <p className="text-[9px] font-bold text-indigo-400 uppercase mt-1 tracking-widest">
+                      Include {filters.year - 1} archival data
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="w-6 h-6 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    checked={includePrevious}
+                    onChange={(e) => setIncludePrevious(e.target.checked)}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <FaCubes className="text-indigo-600" /> Column Projection
+                    Configuration:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 p-4 border border-slate-100 rounded-[2rem] bg-slate-50/50 max-h-48 overflow-y-auto no-scrollbar">
+                    {masterData.types.map((t) => (
+                      <label
+                        key={t._id}
+                        className="flex items-center gap-3 p-3 bg-white rounded-xl cursor-pointer hover:bg-indigo-50 transition-colors border border-transparent hover:border-indigo-100 shadow-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded text-indigo-600"
+                          checked={selectedRespTypes.includes(t.name)}
+                          onChange={() => toggleType(t.name)}
+                        />
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-tight">
+                          {t.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => handleExportAction("EXPORT_YEARLY_SUMMARY")}
+                  fullWidth
+                  variant="primary"
+                  loading={exportLoading}
+                  className="py-4 rounded-2xl shadow-xl shadow-indigo-100 uppercase font-black tracking-widest"
+                >
+                  <FaFilePdf size={14} className="mr-2" /> Generate Aggregated
+                  PDF
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
+                    className="p-6 bg-slate-50 hover:bg-white border-slate-100 text-slate-900 rounded-[2rem] shadow-sm flex flex-col items-center gap-3 uppercase font-black text-[10px] tracking-widest hover:shadow-xl"
+                  >
+                    <FaBuilding size={24} className="text-indigo-600" /> Campus
+                    View
+                  </Button>
+                  <Button
+                    onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
+                    className="p-6 bg-slate-50 hover:bg-white border-slate-100 text-slate-900 rounded-[2rem] shadow-sm flex flex-col items-center gap-3 uppercase font-black text-[10px] tracking-widest hover:shadow-xl"
+                  >
+                    <FaGraduationCap size={24} className="text-indigo-600" />{" "}
+                    Class View
+                  </Button>
+                </div>
+                <Button
+                  onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
+                  variant="secondary"
+                  className="w-full py-4 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-2xl uppercase font-black text-[10px] tracking-widest flex items-center justify-center gap-3"
+                >
+                  <FaTable /> Initial Campus Routine Map
+                </Button>
+              </div>
+            )}
+            {exportError && (
+              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-3 animate-bounce">
+                <FaCheckCircle size={14} /> {exportError}
+              </div>
+            )}
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 };

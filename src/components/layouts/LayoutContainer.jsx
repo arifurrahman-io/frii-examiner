@@ -1,24 +1,24 @@
 import React from "react";
-import { useLocation } from "react-router-dom"; // ✅ রুট চেক করার জন্য useLocation ইমপোর্ট
-import Navbar from "../ui/Navbar"; // ✅ Navbar কম্পোনেন্ট ইমপোর্ট করা হলো
+import Navbar from "../ui/Navbar";
 
 const LayoutContainer = ({ children }) => {
-  const location = useLocation();
-  // যদি পাথ '/login' হয়, তবে Navbar দেখানোর প্রয়োজন নেই
-  const isLoginPage = location.pathname === "/login";
-
   return (
-    // সম্পূর্ণ অ্যাপ্লিকেশনের কনটেইনার
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* ১. স্থির হেডার (শর্তসাপেক্ষে Navbar রেন্ডার করা) */}
-      {!isLoginPage && <Navbar />}
+    <div className="min-h-screen bg-gray-50">
+      {/* নেভিগেশন বার */}
+      <Navbar />
 
-      {/* ২. মূল কন্টেন্ট কনটেইনার */}
-      <main className="flex-grow">
-        <div className="container mx-auto">{children}</div>
+      {/* 🚀 কন্টেন্ট এরিয়া: 
+        pt-20 (Padding Top) যোগ করা হয়েছে যাতে কন্টেন্ট হেডারের নিচে না যায়। 
+        Header height is covered by this padding.
+      */}
+      <main className="pt-20 md:pt-24 pb-10">
+        <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
       </main>
     </div>
   );
 };
 
 export default LayoutContainer;
+// ✅ Navbar কম্পোনেন্ট ইমপোর্ট করা হলো

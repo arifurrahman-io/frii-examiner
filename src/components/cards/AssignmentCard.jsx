@@ -5,10 +5,13 @@ import {
   FaEdit,
   FaBook,
   FaChevronDown,
-  FaChevronUp,
-  FaTimesCircle, // Conflict/Delete Icon
-  FaSyncAlt, // Loading Icon
+  FaSyncAlt,
+  FaTimesCircle,
   FaExclamationCircle,
+  FaIdBadge,
+  FaUniversity,
+  FaLayerGroup,
+  FaHistory,
 } from "react-icons/fa";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -18,15 +21,6 @@ import {
   deleteAssignmentPermanently,
   checkLeaveConflict,
 } from "../../api/apiService";
-
-// নতুন কালার প্যালেট
-const baseBg = "bg-blue-50";
-const accentColor = "text-indigo-700";
-const detailColor = "text-indigo-800";
-const borderColor = "border-blue-200";
-const dividerColor = "border-blue-200";
-const routinePillBg = "bg-blue-100";
-const routinePillText = "text-blue-800";
 
 const AssignmentCard = ({
   teacher,
@@ -41,23 +35,18 @@ const AssignmentCard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
-  // Conflict Management States
   const [existingAssignments, setExistingAssignments] = useState([]);
   const [conflictLoading, setConflictLoading] = useState(false);
   const [isConflict, setIsConflict] = useState(false);
   const [isLeaveConflict, setIsLeaveConflict] = useState(false);
 
-  // শুধুমাত্র বর্তমান বছরের রুটিন ফিল্টার করা
-  // ✅ FIX: Filter routine data by the 'year' property, not endsWith()
   const routineDataCurrentYear = Array.isArray(routineSchedule)
     ? routineSchedule.filter((item) => item.year === currentYear)
     : [];
 
-  // বছর অনুযায়ী অ্যাসাইনমেন্ট ডেটা বের করা (সুরক্ষিত)
   const assignmentsByYearArray = Array.isArray(assignmentsByYear)
     ? assignmentsByYear
     : [];
@@ -68,283 +57,182 @@ const AssignmentCard = ({
     assignmentsByYearArray.find((a) => a._id === previousYear)
       ?.responsibilities || [];
 
-  // --- A. Leave Conflict Check Logic (NEW) ---
   const checkLeaveStatus = useCallback(async () => {
     if (!teacher._id || !year || !responsibilityType._id) return;
-
-    setConflictLoading(true);
     try {
-      const filters = {
+      const { data } = await checkLeaveConflict({
         teacherId: teacher._id,
         responsibilityTypeId: responsibilityType._id,
-        year: year,
-      };
-      const { data } = await checkLeaveConflict(filters);
-
+        year,
+      });
       setIsLeaveConflict(data.hasConflict);
     } catch (error) {
-      console.error("Error checking leave status:", error);
       setIsLeaveConflict(false);
-    } finally {
-      setConflictLoading(false);
     }
   }, [teacher._id, year, responsibilityType._id]);
 
-  // দায়িত্বের তালিকা আইটেম রেন্ডার
-  const AssignmentList = ({ list }) => (
-    <ul className="text-xs text-gray-700 space-y-0.5">
-      {list.map((assignment, index) => {
-        const className = assignment.class?.name || assignment.class || "N/A";
-        const subjectName =
-          assignment.subject?.name || assignment.subject || "N/A";
-
-        return (
-          <li key={index} className="flex items-start">
-            <span className="w-4">{index + 1}.</span>
-            <span className="flex-1">
-              {assignment.name}
-              <span className="ml-1 text-gray-500">
-                ({className} {subjectName})
-              </span>
-            </span>
-          </li>
-        );
-      })}
-      {list.length === 0 && (
-        <li className="text-gray-500 italic">No data found!</li>
-      )}
-    </ul>
-  );
-
-  // --- ক. মডাল খোলার পর ডেটা লোড করার লজিক (Existing Assignments) ---
   const fetchExistingAssignments = useCallback(async () => {
-    if (!teacher._id || !year || !responsibilityType._id) return;
-
+    if (!teacher._id || !year || !responsibilityType.name) return;
     setConflictLoading(true);
     try {
       const { data } = await getAssignmentsByTeacherAndYear(teacher._id, year);
-
-      // একই ডিউটি টাইপ চেক করা: যদি active assignments এর মধ্যে মেলে
       const hasConflict = data.some(
         (a) =>
           a.responsibilityType.name === responsibilityType.name &&
           a.status === "Assigned"
       );
-
       setExistingAssignments(data);
       setIsConflict(hasConflict);
     } catch (error) {
-      toast.error("Failed to load existing assignments.");
       setExistingAssignments([]);
-      setIsConflict(false);
     } finally {
       setConflictLoading(false);
     }
   }, [teacher._id, year, responsibilityType.name]);
 
-  // মডাল খুললে ডেটা ফেচ করা
   useEffect(() => {
     if (isModalOpen) {
       fetchExistingAssignments();
       checkLeaveStatus();
     }
-  }, [isModalOpen, fetchExistingAssignments]);
+  }, [isModalOpen, fetchExistingAssignments, checkLeaveStatus]);
 
-  // --- খ. বিদ্যমান অ্যাসাইনমেন্ট বাতিল করা (Delete Option) ---
-  const handleCancelExisting = async (assignmentId) => {
-    setLoading(true);
-    try {
-      // স্থায়ী ডিলিট API কল করা
-      await deleteAssignmentPermanently(assignmentId);
-      toast.success("Assignment permanently deleted from the database.");
-
-      // স্থানীয় Modal ডেটা রিফ্রেশ করা
-      await fetchExistingAssignments();
-
-      // গ্লোবাল হিস্টোরি রিফ্রেশ ট্রিগার করা
-      if (onAssignSuccess) onAssignSuccess();
-    } catch (error) {
-      toast.error(
-        "Failed to permanently delete assignment. Check permissions."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- গ. নতুন দায়িত্ব অ্যাসাইন করার লজিক ---
   const handleAssignDuty = async () => {
     setLoading(true);
-
-    const assignmentData = {
-      teacher: teacher._id,
-      responsibilityType: responsibilityType._id,
-      year: year,
-      targetClass: targetClass._id,
-      targetSubject: targetSubject._id,
-    };
-
     try {
-      await assignDuty(assignmentData);
-
-      toast.success(
-        `'${responsibilityType.name}' assigned to ${teacher.name}.`
-      );
-
-      if (onAssignSuccess) {
-        onAssignSuccess();
-      }
-
+      await assignDuty({
+        teacher: teacher._id,
+        responsibilityType: responsibilityType._id,
+        year,
+        targetClass: targetClass._id,
+        targetSubject: targetSubject._id,
+      });
+      toast.success(`Assigned successfully!`);
+      if (onAssignSuccess) onAssignSuccess();
       setIsModalOpen(false);
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "Assignment failed. Check if already assigned or data integrity.";
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || "Assignment failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- ঘ. মডালের ভেতরের টেবিল রেন্ডার করা ---
-  const ConflictTable = () => {
-    if (conflictLoading)
-      return (
-        <p className="text-center text-indigo-500">
-          <FaSyncAlt className="animate-spin mr-2 inline" /> Checking for
-          conflicts...
+  const CompactList = ({ list, title, icon: Icon, color }) => (
+    <div className="flex flex-col space-y-1">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`text-[8px] ${color}`} />
+        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+          {title}
         </p>
-      );
-
-    const filteredAssignments = existingAssignments.filter(
-      (a) => a.status === "Assigned"
-    );
-
-    return (
-      <div className="mt-4 border-t pt-3">
-        <h5 className="font-semibold text-gray-700 mb-2">
-          Existing Active Assignments in {year} ({filteredAssignments.length})
-        </h5>
-
-        <div className="max-h-40 overflow-y-auto space-y-2">
-          {filteredAssignments.map((a) => (
-            <div
-              key={a._id}
-              className={`flex justify-between items-center p-2 rounded-lg ${
-                a.responsibilityType.name === responsibilityType.name
-                  ? "bg-red-100 border border-red-300"
-                  : "bg-gray-100"
-              }`}
-            >
-              <span className="text-sm font-medium">
-                {a.responsibilityType.name}
-                {a.targetClass &&
-                  ` (${a.targetClass.name} - ${a.targetSubject.name})`}
-              </span>
-
-              <button
-                onClick={() => handleCancelExisting(a._id)}
-                className="text-red-500 hover:text-red-700 text-xs flex items-center disabled:opacity-50"
-                disabled={loading}
-              >
-                <FaTimesCircle className="mr-1" /> Delete
-              </button>
-            </div>
-          ))}
-          {filteredAssignments.length === 0 && (
-            <p className="text-sm italic text-gray-500">
-              No other active assignments found for {year}.
-            </p>
-          )}
-        </div>
       </div>
-    );
-  };
+      <div className="space-y-0.5 max-h-16 overflow-y-auto no-scrollbar">
+        {list.length > 0 ? (
+          list.slice(0, 2).map((a, i) => (
+            <p key={i} className="text-[9px] font-bold text-slate-600 truncate">
+              {a.name}{" "}
+              <span className="text-slate-400 font-medium">
+                ({a.class?.name || "N/A"})
+              </span>
+            </p>
+          ))
+        ) : (
+          <p className="text-[9px] text-slate-300 italic font-bold">
+            Empty Node
+          </p>
+        )}
+        {list.length > 2 && (
+          <p className="text-[8px] font-black text-indigo-400">
+            + {list.length - 2} More
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <>
-      <div
-        className={`p-4 rounded-xl shadow-lg border ${borderColor} ${baseBg} space-y-3`}
-      >
-        {/* --- ১. টপ সেকশন: নাম, আইডি, ক্যাম্পাস, ASSIGN বাটন --- */}
-        <div className="flex justify-between items-center pb-2 border-b border-indigo-200">
-          <div className="flex items-center space-x-3">
-            <FaUserCheck className={`text-xl ${accentColor}`} />
-            <div className="flex flex-col">
-              <h3
-                className={`text-lg font-extrabold ${detailColor} leading-tight`}
-              >
+      <div className="group relative bg-white/80 backdrop-blur-md rounded-[1.5rem] p-4 border border-white shadow-[0_10px_30px_rgba(79,70,229,0.02)] hover:shadow-indigo-100/50 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+        {/* HEADER: COMPACT */}
+        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-50 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform duration-500">
+              <span className="text-xs font-black">
+                {teacher.name.charAt(0)}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-800 tracking-tight leading-none mb-1">
                 {teacher.name}
               </h3>
-              <p className="text-sm font-medium text-gray-600">
-                ID: {teacher.teacherId} | Campus:{" "}
-                {teacher.campus?.name || "N/A"}
-              </p>
+              <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-slate-400">
+                <span className="flex items-center gap-1">
+                  <FaIdBadge className="text-indigo-400" /> {teacher.teacherId}
+                </span>
+                <span className="h-0.5 w-0.5 rounded-full bg-slate-200"></span>
+                <span className="text-indigo-500 flex items-center gap-1">
+                  <FaUniversity className="text-indigo-400" />{" "}
+                  {teacher.campus?.name || "Global"}
+                </span>
+              </div>
             </div>
           </div>
-
-          {/* ASSIGN বাটন */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsModalOpen(true);
-            }}
-            variant="success"
-            className="px-4 py-2"
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all flex items-center gap-2"
           >
-            <FaEdit className="mr-2" />
-            ASSIGN
-          </Button>
+            <FaEdit /> ASSIGN
+          </button>
         </div>
 
-        {/* --- ২. দায়িত্বের ইতিহাস টেবিল (ইতিহাস) --- */}
-        <div
-          className={`grid grid-cols-2 gap-4 mt-2 border-b ${dividerColor} pb-3`}
-        >
-          <div className={`border-r ${dividerColor} pr-2`}>
-            <p className="text-sm font-bold text-gray-800 mb-1">
-              {currentYear} Assignments
-            </p>
-            <AssignmentList list={assignmentsCurrent} />
+        {/* ASSIGNMENT MATRIX: INLINE */}
+        <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-3">
+          <div className="border-r border-slate-50 pr-2">
+            <CompactList
+              list={assignmentsCurrent}
+              title={`Cycle ${currentYear}`}
+              icon={FaLayerGroup}
+              color="text-indigo-500"
+            />
           </div>
-          <div>
-            <p className="text-sm font-bold text-gray-800 mb-1">
-              {previousYear} Assignments
-            </p>
-            <AssignmentList list={assignmentsPrevious} />
+          <div className="pl-1">
+            <CompactList
+              list={assignmentsPrevious}
+              title={`Archive ${previousYear}`}
+              icon={FaHistory}
+              color="text-slate-400"
+            />
           </div>
         </div>
 
-        {/* --- ৩. রুটিন ডিটেইলস টগল --- */}
+        {/* ROUTINE TOGGLE: MINIMAL */}
         <div className="pt-2">
-          <div
+          <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`flex justify-between items-center cursor-pointer ${detailColor} font-bold`}
+            className="w-full flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-indigo-600 transition-colors"
           >
-            <h4 className={`text-md ${detailColor} flex items-center`}>
-              <FaBook className="mr-2" /> Routine Schedule
-            </h4>
-            <span className={`text-xl ${accentColor}`}>
-              {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+            <span className="flex items-center gap-2">
+              <FaBook className="text-indigo-300" /> Routine Sync
             </span>
-          </div>
-
+            <FaChevronDown
+              className={`transition-transform duration-500 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
           {isOpen && (
-            <div className="mt-3">
+            <div className="mt-2 flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-top-1">
               {routineDataCurrentYear.length > 0 ? (
-                <div className="flex flex-wrap gap-2 text-sm">
-                  {routineDataCurrentYear.map((item) => (
-                    <span
-                      key={item._id}
-                      className={`px-2 py-1 ${routinePillBg} ${routinePillText} rounded-full font-medium`}
-                    >
-                      {item.display} {/* ✅ Using the display property */}
-                    </span>
-                  ))}
-                </div>
+                routineDataCurrentYear.map((item) => (
+                  <span
+                    key={item._id}
+                    className="px-2 py-0.5 bg-slate-50 border border-slate-100 text-slate-500 rounded-md text-[8px] font-bold uppercase tracking-tighter"
+                  >
+                    {item.display}
+                  </span>
+                ))
               ) : (
-                <p className="text-sm text-gray-600 italic mt-1">
-                  No detailed routine schedule found for this teacher.
+                <p className="text-[8px] text-slate-300 italic font-bold">
+                  No Neural Routine Data
                 </p>
               )}
             </div>
@@ -352,69 +240,99 @@ const AssignmentCard = ({
         </div>
       </div>
 
-      {/* --- অ্যাসাইনমেন্ট কনফার্মেশন Modal (Conflict Management) --- */}
+      {/* MODERN CONFLICT MODAL */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Confirm Responsibility Assignment"
+        title={
+          <div className="flex items-center gap-2 uppercase tracking-tighter font-black text-slate-800">
+            <FaUserCheck className="text-indigo-600" /> Confirm Induction
+          </div>
+        }
       >
-        <div className="p-4">
-          <p className="text-gray-700 text-lg mb-4">
-            Are you sure you want to assign the following duty?
-          </p>
-
-          <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 space-y-1 text-sm font-medium">
-            <p>
-              <strong>Duty Type:</strong>{" "}
-              <span className="text-indigo-700 font-extrabold">
-                {responsibilityType.name}
-              </span>
+        <div className="p-2 space-y-6">
+          <div className="bg-indigo-50/50 p-5 rounded-[1.5rem] border border-indigo-100 space-y-2">
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+              Selected Prototype
             </p>
-            <p>
-              <strong>Target:</strong> {targetClass.name} - {targetSubject.name}
-            </p>
-            <p>
-              <strong>Year:</strong> {year}
+            <h4 className="text-xl font-black text-indigo-900 leading-none">
+              {responsibilityType.name}
+            </h4>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-tight">
+              {targetClass.name} • {targetSubject.name} ({year})
             </p>
           </div>
 
-          {/* ✅ Conflict Table Section */}
-          <ConflictTable />
+          {/* Conflict Console */}
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <FaSyncAlt className={conflictLoading ? "animate-spin" : ""} />{" "}
+              Active Matrix Sync
+            </p>
+            <div className="max-h-32 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+              {existingAssignments
+                .filter((a) => a.status === "Assigned")
+                .map((a) => (
+                  <div
+                    key={a._id}
+                    className={`flex justify-between items-center p-3 rounded-xl border ${
+                      a.responsibilityType.name === responsibilityType.name
+                        ? "bg-rose-50 border-rose-100"
+                        : "bg-slate-50 border-slate-100"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold text-slate-700 uppercase">
+                      {a.responsibilityType.name}
+                    </span>
+                    <button
+                      onClick={() =>
+                        deleteAssignmentPermanently(a._id).then(
+                          fetchExistingAssignments
+                        )
+                      }
+                      className="text-[8px] font-black text-rose-500 uppercase hover:underline"
+                    >
+                      Delete Node
+                    </button>
+                  </div>
+                ))}
+              {existingAssignments.length === 0 && !conflictLoading && (
+                <p className="text-[10px] text-slate-300 font-bold uppercase italic text-center py-4">
+                  No conflicts detected in sector
+                </p>
+              )}
+            </div>
+          </div>
 
-          {/* ✅ NEW: Leave Conflict Warning Message (Yellow Warning) */}
+          {/* Warnings */}
           {isLeaveConflict && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm font-semibold text-yellow-800 flex items-center">
-              <FaExclamationCircle className="mr-2 text-xl" />
-              LEAVE CONFLICT: This teacher has been granted leave for this duty
-              type in {year}. The assignment will be blocked by the server.
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-3 animate-pulse">
+              <FaExclamationCircle size={14} /> LEAVE CONFLICT DETECTED IN
+              SESSION
             </div>
           )}
-
-          {/* ✅ Conflict Warning Message */}
           {isConflict && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded-lg text-sm font-semibold text-red-800 flex items-center">
-              <FaTimesCircle className="mr-2 text-xl" />
-              CONFLICT: This exact duty type is already assigned for {year}.
-              Please delete the existing entry first.
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-3">
+              <FaTimesCircle size={14} /> DUPLICATE DUTY ASSIGNMENT BLOCKED
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 mt-6">
+          <div className="flex gap-3 pt-4">
             <Button
               onClick={() => setIsModalOpen(false)}
               variant="secondary"
-              disabled={loading}
+              className="flex-1 rounded-xl uppercase font-black text-[10px] tracking-widest"
             >
-              Cancel
+              Abort
             </Button>
             <Button
               onClick={handleAssignDuty}
               variant="primary"
               loading={loading}
-              disabled={loading || isConflict}
+              disabled={isConflict}
+              className="flex-1 rounded-xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
             >
-              <FaUserCheck className="mr-2" />
-              Confirm Assign
+              Authorize induction
             </Button>
           </div>
         </div>

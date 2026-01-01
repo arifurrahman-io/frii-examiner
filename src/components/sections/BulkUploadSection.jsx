@@ -1,28 +1,35 @@
-// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/components/sections/BulkUploadSection.jsx
-
 import React, { useState, useCallback } from "react";
 import toast from "react-hot-toast";
-import { FaUpload, FaFileExcel, FaSyncAlt } from "react-icons/fa";
+import {
+  FaUpload,
+  FaFileExcel,
+  FaSyncAlt,
+  FaCloudUploadAlt,
+  FaExclamationTriangle,
+  FaTerminal,
+  FaInfoCircle,
+} from "react-icons/fa";
 import Button from "../ui/Button";
 import { uploadBulkTeachers } from "../../api/apiService";
 
-// --- C. Bulk Upload Section Component ---
 const BulkUploadSection = ({ onUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [bulkErrors, setBulkErrors] = useState([]);
-  const [isDragOver, setIsDragOver] = useState(false); // NEW STATE for drag styling
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  // Handler for file input change
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && (file.name.endsWith(".xls") || file.name.endsWith(".xlsx"))) {
       setSelectedFile(file);
       setBulkErrors([]);
+      toast.success(`${file.name} ready for induction.`);
+    } else {
+      setSelectedFile(null);
+      toast.error("Invalid file matrix. Use .xlsx only.");
     }
   };
 
-  // DRAG HANDLERS
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -37,13 +44,13 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      handleFileChange({ target: { files: files } });
+      handleFileChange({ target: { files } });
     }
   }, []);
 
   const handleBulkUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select an Excel file first.");
+      toast.error("Selection matrix empty. Provide Excel file.");
       return;
     }
 
@@ -56,113 +63,142 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
       const { data } = await uploadBulkTeachers(formData);
 
       if (data.errors && data.errors.length > 0) {
-        toast.warn(
-          `${data.savedCount} teachers saved, but ${data.errors.length} rows had errors.`
-        );
+        toast.warn(`${data.savedCount} indexed, ${data.errors.length} failed.`);
         setBulkErrors(data.errors);
       } else {
-        toast.success(data.message || "Bulk upload completed successfully.");
+        toast.success(data.message || "Bulk induction completed successfully.");
       }
 
       setSelectedFile(null);
-      onUploadSuccess();
+      if (onUploadSuccess) onUploadSuccess();
     } catch (error) {
-      const msg =
-        error.response?.data?.message ||
-        "Bulk upload failed due to server error.";
-      toast.error(msg);
+      toast.error(error.response?.data?.message || "Critical upload failure.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    // Container: Using border-gray-200 for clean look.
-    <div className="p-6 bg-white rounded-xl border border-gray-200 h-full">
-      <h3 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center">
-        <FaFileExcel className="mr-3 text-green-600" />
-        Bulk Upload Teachers
-      </h3>
+    <div className="bg-white rounded-[3rem] p-1 shadow-sm border border-slate-100 overflow-hidden h-full flex flex-col group transition-all duration-500 hover:shadow-indigo-100/50">
+      <div className="p-8 md:p-10 flex-grow space-y-8">
+        {/* --- UNIFIED HEADER --- */}
+        <div className="flex items-center gap-5 border-b border-slate-50 pb-8">
+          <div className="h-14 w-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-100 rotate-3 transition-transform group-hover:rotate-0">
+            <FaFileExcel size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+              Bulk Induction
+            </h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+              <FaTerminal className="text-emerald-500" /> MATRIX AGGREGATOR
+            </p>
+          </div>
+        </div>
 
-      <div className="space-y-6">
-        {" "}
-        {/* Increased vertical space */}
-        {/* Hidden File Input */}
-        <input
-          id="teacher-excel-upload"
-          type="file"
-          accept=".xlsx, .xls"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        {/* 💡 MODERN DRAG-AND-DROP ZONE */}
-        <div
-          className={`flex flex-col items-center justify-center p-8 border-2 rounded-xl h-40 transition duration-300 cursor-pointer ${
-            isDragOver
-              ? "border-indigo-600 bg-indigo-50/50"
-              : selectedFile
-              ? "border-green-400 bg-green-50"
-              : "border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50"
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() =>
-            document.getElementById("teacher-excel-upload").click()
-          }
-        >
-          {/* Content based on file state */}
-          {selectedFile ? (
-            <>
-              <FaFileExcel className="text-4xl text-green-600 mb-2" />
-              <p className="font-semibold text-gray-800">{selectedFile.name}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Ready for upload. Click Upload button below.
-              </p>
-            </>
-          ) : (
-            <>
-              <FaUpload className="text-4xl text-indigo-500 mb-2" />
-              <p className="text-lg text-gray-600 font-medium">
-                Drag files here or{" "}
-                <span className="text-indigo-600 font-bold hover:text-indigo-700">
-                  browse
+        <div className="space-y-8">
+          <input
+            id="teacher-excel-upload"
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {/* --- MODERN INTERACTIVE DROPZONE --- */}
+          <div
+            className={`relative flex flex-col items-center justify-center p-10 border-2 rounded-[2.5rem] min-h-[220px] transition-all duration-500 cursor-pointer overflow-hidden ${
+              isDragOver
+                ? "border-indigo-600 bg-indigo-50/50 scale-[0.98]"
+                : selectedFile
+                ? "border-emerald-400 bg-emerald-50/30"
+                : "border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50/50"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() =>
+              document.getElementById("teacher-excel-upload").click()
+            }
+          >
+            {selectedFile ? (
+              <div className="text-center animate-in zoom-in-95">
+                <div className="h-20 w-20 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white mx-auto mb-4 shadow-xl shadow-emerald-200 rotate-6">
+                  <FaFileExcel size={30} />
+                </div>
+                <p className="font-black text-slate-800 text-sm uppercase tracking-tighter truncate max-w-[250px]">
+                  {selectedFile.name}
+                </p>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2 block italic">
+                  Verified Matrix Ready
                 </span>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Accepts .xlsx and .xls files
-              </p>
-            </>
-          )}
+              </div>
+            ) : (
+              <div className="text-center group-hover:scale-105 transition-transform duration-500">
+                <div className="h-20 w-20 bg-white rounded-[2rem] flex items-center justify-center text-indigo-500 mx-auto mb-4 shadow-lg border border-slate-50">
+                  <FaCloudUploadAlt size={35} />
+                </div>
+                <p className="text-sm font-black text-slate-700 uppercase tracking-tighter">
+                  Drop Matrix Node or{" "}
+                  <span className="text-indigo-600 underline">Browse</span>
+                </p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-3">
+                  Accepts .XLSX Matrix only
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Button
+            onClick={handleBulkUpload}
+            fullWidth
+            loading={uploading}
+            variant="primary"
+            disabled={!selectedFile || uploading}
+            className="rounded-2xl py-5 bg-slate-900 hover:bg-indigo-600 text-white font-black text-[11px] tracking-[0.2em] shadow-2xl shadow-indigo-100/50 flex items-center justify-center gap-3 transition-all active:scale-95"
+          >
+            {uploading ? (
+              <FaSyncAlt className="animate-spin" />
+            ) : (
+              <>
+                <FaUpload size={14} /> SYNCHRONIZE BULK DATA
+              </>
+            )}
+          </Button>
         </div>
-        <Button
-          onClick={handleBulkUpload}
-          fullWidth
-          loading={uploading}
-          // Changed variant to 'primary' (indigo) for the prominent blue action button
-          variant="primary"
-          disabled={!selectedFile}
-        >
-          <FaUpload className="mr-2" />
-          UPLOAD AND SAVE DATA
-        </Button>
+
+        {/* --- ERROR CONSOLE --- */}
+        {bulkErrors.length > 0 && (
+          <div className="mt-8 bg-rose-50 border border-rose-100 rounded-[2rem] p-6 animate-in slide-in-from-top-4">
+            <div className="flex items-center gap-3 mb-4 text-rose-600">
+              <FaExclamationTriangle />
+              <h4 className="text-[10px] font-black uppercase tracking-widest">
+                Protocol Errors Detected
+              </h4>
+            </div>
+            <ul className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+              {bulkErrors.map((err, index) => (
+                <li
+                  key={index}
+                  className="text-[10px] font-bold text-rose-500 bg-white/50 p-2 rounded-xl flex items-center gap-2"
+                >
+                  <span className="h-1 w-1 rounded-full bg-rose-400"></span>
+                  {err}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-6 flex items-start gap-4 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+          <FaInfoCircle className="text-indigo-400 mt-1" size={14} />
+          <p className="text-[9px] font-bold text-indigo-900 uppercase tracking-widest leading-relaxed">
+            <span className="text-indigo-600">Node Architecture:</span>{" "}
+            teacherId, name, phone, campus, designation. Verify headers match
+            the Neural Database Schema.
+          </p>
+        </div>
       </div>
-
-      {bulkErrors.length > 0 && (
-        <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded-lg max-h-48 overflow-y-auto">
-          <h4 className="font-semibold text-red-700">Upload Errors:</h4>
-          <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
-            {bulkErrors.map((err, index) => (
-              <li key={index}>{err}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <p className="text-sm text-gray-500 mt-6 border-t pt-4 italic">
-        **Required Excel Columns (Headers):** teacherId, name, phone, campus,
-        password (Optional), designation (Optional).
-      </p>
     </div>
   );
 };

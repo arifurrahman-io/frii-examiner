@@ -1,24 +1,18 @@
-// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/RoutineSetupPage.jsx
-
 import React, { useState, useCallback } from "react";
 import {
   FaCalendarAlt,
   FaFileExcel,
   FaUpload,
   FaSyncAlt,
-  FaCloudUploadAlt, // Using a cloud icon for visual appeal
+  FaCloudUploadAlt,
+  FaInfoCircle,
+  FaTerminal,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import AddRoutineForm from "../components/forms/AddRoutineForm";
 import Button from "../components/ui/Button";
-
-// ✅ CORRECTED IMPORT PATH
 import SelectDropdown from "../components/ui/SelectDropdown";
-
-// ✅ IMPORT the API function for bulk upload
 import { uploadRoutineExcel } from "../api/apiService";
-
-// 🚀 CLEANUP: Remove useDebounce import
 
 const RoutineSetupPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -26,27 +20,17 @@ const RoutineSetupPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // 🚀 CLEANUP: Remove searchTerm and debouncedSearchTerm states
-
-  // --- ১. এক্সেল ফাইল হ্যান্ডলিং ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (
-      file &&
-      (file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-        file.name.endsWith(".xls") ||
-        file.name.endsWith(".xlsx"))
-    ) {
+    if (file && (file.name.endsWith(".xls") || file.name.endsWith(".xlsx"))) {
       setSelectedFile(file);
-      toast.success(`${file.name} selected for upload.`);
+      toast.success(`${file.name} selected.`);
     } else {
       setSelectedFile(null);
-      toast.error("Please select a valid .xlsx file.");
+      toast.error("Invalid file format. Use .xlsx");
     }
   };
 
-  // NEW DRAG HANDLERS (Basic implementation for visual feedback)
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -60,162 +44,184 @@ const RoutineSetupPage = () => {
     e.preventDefault();
     setIsDragOver(false);
     const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileChange({ target: { files: files } });
-    }
+    if (files?.length > 0) handleFileChange({ target: { files } });
   }, []);
 
-  // --- ২. এক্সেল ফাইল আপলোড লজিক (INTEGRATED) ---
   const handleExcelUpload = async () => {
-    if (!selectedFile) {
-      toast.error("Please select an Excel file first.");
-      return;
-    }
-
+    if (!selectedFile) return toast.error("Select a file first.");
     setUploading(true);
     const formData = new FormData();
     formData.append("excelFile", selectedFile);
 
     try {
       const response = await uploadRoutineExcel(formData);
-
-      const { savedTeachersCount, savedRoutinesCount, errors } = response.data;
-
-      let successMessage = `Bulk upload complete: ${savedRoutinesCount} routines saved.`;
-
-      if (savedTeachersCount > 0) {
-        successMessage += ` (${savedTeachersCount} new teachers created).`;
-      }
-
-      if (errors.length > 0) {
-        successMessage += ` ${errors.length} records failed due to conflicts or missing data.`;
-        toast.error(successMessage, { duration: 8000 });
-      } else {
-        toast.success(successMessage);
-      }
-
+      const { savedRoutinesCount, errors } = response.data;
+      toast.success(`Success: ${savedRoutinesCount} routines indexed.`);
+      if (errors?.length > 0) toast.error(`${errors.length} records failed.`);
       setSelectedFile(null);
-
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "Bulk upload failed. Check the file format.";
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || "Upload failed.");
     } finally {
       setUploading(false);
     }
   };
 
-  // --- ৩. ম্যানুয়াল সেভ সফল হলে তালিকা রিফ্রেশ করা ---
   const handleManualSaveSuccess = () => {
-    toast.success("Routine added. Refreshing list...");
     setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
-    <div className="p-4">
-      {/* 🚀 MODERNIZE HEADER */}
-      <h2 className="text-xl font-extrabold text-indigo-800 mb-8 flex items-center border-b-4 border-indigo-300 pb-2">
-        <FaCalendarAlt className="mr-3 text-xl text-indigo-600" />
-        Academic Routine Setup
-      </h2>
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 relative overflow-hidden">
+      {/* Background Layer */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* বাম কলাম: ম্যানুয়াল এন্ট্রি (Uses clean styling from AddRoutineForm) */}
-        <div className="lg:col-span-1">
-          {/* 🚀 CLEANUP: Removed the search bar JSX from here */}
-
-          <AddRoutineForm
-            onSaveSuccess={handleManualSaveSuccess}
-            // 🚀 CLEANUP: Removed searchTerm prop
-          />
-        </div>
-
-        {/* ডান কলাম: এক্সেল আপলোড (Modernized Card) */}
-        <div className="lg:col-span-1 p-6 bg-white rounded-xl border border-gray-200 h-full flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-indigo-800 mb-4 flex items-center">
-              <FaFileExcel className="mr-2 text-2xl text-green-600" />
-              Routine Bulk Upload (Excel)
-            </h3>
-
-            <p className="text-gray-600 mb-6">
-              Upload routine data using a pre-defined Excel format to quickly
-              update the system.
-            </p>
-
-            {/* 💡 MODERN FILE UPLOAD SECTION (DRAG/DROP AESTHETIC) */}
-            <div
-              className={`flex flex-col items-center justify-center p-8 border-2 rounded-xl h-40 transition duration-300 cursor-pointer ${
-                isDragOver
-                  ? "border-indigo-600 bg-indigo-50/50"
-                  : selectedFile
-                  ? "border-green-400 bg-green-50"
-                  : "border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50"
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() =>
-                document.getElementById("routine-excel-upload").click()
-              }
-            >
-              <input
-                id="routine-excel-upload"
-                type="file"
-                accept=".xlsx"
-                onChange={handleFileChange}
-                className="hidden" // Hide the default input
-              />
-
-              {/* Content based on file state */}
-              {selectedFile ? (
-                <>
-                  <FaFileExcel className="text-4xl text-green-600 mb-2" />
-                  <p className="font-semibold text-gray-800">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Click to select a different file.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <FaUpload className="text-4xl text-indigo-500 mb-2" />
-                  <p className="text-lg text-gray-600 font-medium">
-                    Drag files here or{" "}
-                    <span className="text-indigo-600 font-bold hover:text-indigo-700">
-                      browse
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Accepts .xlsx files only
-                  </p>
-                </>
-              )}
+      <div className="max-w-[1400px] mx-auto relative z-10">
+        {/* --- DYNAMIC HEADER --- */}
+        <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-6">
+            <div className="h-16 w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-indigo-200">
+              <FaCalendarAlt size={28} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2 uppercase">
+                Schedule Engine <span className="text-indigo-600">.</span>
+              </h1>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+                Initialize Institutional Routines
+              </p>
             </div>
           </div>
 
-          {/* আপলোড বাটন and Footer instructions */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <Button
-              onClick={handleExcelUpload}
-              fullWidth
-              variant="success"
-              loading={uploading}
-              disabled={!selectedFile || uploading}
-            >
-              <FaUpload className="mr-2" />
-              UPLOAD EXCEL ROUTINE
-            </Button>
-
-            <p className="text-xs text-gray-500 mt-3 italic">
-              **Required Format:** TeacherID, Name, **Phone**, BranchName,
-              ClassName, SubjectName. (Ensure master data names match).
-            </p>
+          <div className="px-6 py-3 bg-white rounded-2xl border border-indigo-50 shadow-sm flex items-center gap-4">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              Core Synchronized
+            </span>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* --- LEFT: MANUAL ENTRY --- */}
+          <div className="lg:col-span-6 animate-in slide-in-from-left-10 duration-1000">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-white h-full relative group overflow-hidden">
+              <div className="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
+                <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                  <FaTerminal size={18} />
+                </div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest text-nowrap">
+                  Manual Entry Console
+                </h3>
+              </div>
+              <AddRoutineForm onSaveSuccess={handleManualSaveSuccess} />
+            </div>
+          </div>
+
+          {/* --- RIGHT: BULK UPLOAD --- */}
+          <div className="lg:col-span-6 animate-in slide-in-from-right-10 duration-1000">
+            <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 h-full flex flex-col justify-between group transition-all hover:shadow-indigo-100/50">
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-3">
+                    <FaFileExcel className="text-emerald-500" /> Bulk Induction
+                  </h3>
+                  <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg uppercase tracking-widest">
+                    Excel Support
+                  </span>
+                </div>
+
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-8 leading-relaxed">
+                  Fast-track routine population using system-ready spreadsheet
+                  templates.
+                </p>
+
+                {/* --- MODERN INTERACTIVE DROPZONE --- */}
+                <div
+                  className={`relative flex flex-col items-center justify-center p-10 border-2 rounded-[2.5rem] min-h-[220px] transition-all duration-500 cursor-pointer overflow-hidden ${
+                    isDragOver
+                      ? "border-indigo-600 bg-indigo-50/50 scale-[0.98]"
+                      : selectedFile
+                      ? "border-emerald-400 bg-emerald-50/30"
+                      : "border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50/50"
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() =>
+                    document.getElementById("routine-excel-upload").click()
+                  }
+                >
+                  <input
+                    id="routine-excel-upload"
+                    type="file"
+                    accept=".xlsx"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  {selectedFile ? (
+                    <div className="text-center animate-in zoom-in-95">
+                      <div className="h-20 w-20 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white mx-auto mb-4 shadow-xl shadow-emerald-200 rotate-3">
+                        <FaFileExcel size={30} />
+                      </div>
+                      <p className="font-black text-slate-800 text-sm uppercase tracking-tighter truncate max-w-[250px]">
+                        {selectedFile.name}
+                      </p>
+                      <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2 block italic">
+                        Ready for synchronization
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-center group-hover:scale-105 transition-transform duration-500">
+                      <div className="h-20 w-20 bg-white rounded-[2rem] flex items-center justify-center text-indigo-500 mx-auto mb-4 shadow-lg border border-slate-50">
+                        <FaCloudUploadAlt size={35} />
+                      </div>
+                      <p className="text-sm font-black text-slate-700 uppercase tracking-tighter">
+                        Drop Excel Node or{" "}
+                        <span className="text-indigo-600 underline">
+                          Browse
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-3">
+                        Accepts .XLSX Matrix only
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* --- ACTION AREA --- */}
+              <div className="mt-10">
+                <Button
+                  onClick={handleExcelUpload}
+                  fullWidth
+                  variant="success"
+                  loading={uploading}
+                  disabled={!selectedFile || uploading}
+                  className="rounded-[1.5rem] py-5 bg-slate-900 hover:bg-indigo-600 text-white font-black text-[11px] tracking-[0.2em] shadow-2xl shadow-indigo-100 transition-all active:scale-95 border-none"
+                >
+                  <FaUpload className="mr-3" /> INITIALIZE BULK UPLOAD
+                </Button>
+
+                <div className="mt-6 flex items-start gap-3 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                  <FaInfoCircle className="text-indigo-400 mt-0.5" size={14} />
+                  <p className="text-[9px] font-bold text-indigo-900 uppercase tracking-widest leading-relaxed">
+                    <span className="text-indigo-600">Format Requirement:</span>{" "}
+                    TeacherID, Name, Phone, Branch, Class, Subject. Ensure
+                    master data matches perfectly.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Branding */}
+      <div className="mt-20 text-center opacity-20 group">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[1em] group-hover:tracking-[1.2em] transition-all duration-1000">
+          Authorized Governance Matrix
+        </p>
       </div>
     </div>
   );

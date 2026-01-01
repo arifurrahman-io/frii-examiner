@@ -1,7 +1,13 @@
-// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/components/cards/TeacherCard.jsx
-
 import React, { useState } from "react";
-import { FaChevronDown, FaChevronUp, FaBook } from "react-icons/fa";
+import {
+  FaChevronDown,
+  FaBook,
+  FaIdBadge,
+  FaUniversity,
+  FaLayerGroup,
+  FaHistory,
+  FaArrowRight,
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const TeacherCard = ({ teacher, assignmentsByYear, routineSchedule }) => {
@@ -11,7 +17,7 @@ const TeacherCard = ({ teacher, assignmentsByYear, routineSchedule }) => {
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
-  // --- RENDER DATA PREPARATION ---
+  // --- ডাটা ফিল্টারিং ও প্রসেসিং ---
   const routineDataCurrentYear = Array.isArray(routineSchedule)
     ? routineSchedule.filter((item) => item.year === currentYear)
     : [];
@@ -23,44 +29,44 @@ const TeacherCard = ({ teacher, assignmentsByYear, routineSchedule }) => {
   const assignmentsCurrent =
     assignmentsByYearArray.find((a) => a._id === currentYear)
       ?.responsibilities || [];
+
   const assignmentsPrevious =
     assignmentsByYearArray.find((a) => a._id === previousYear)
       ?.responsibilities || [];
 
-  // --- MODERN/MINIMAL UI STYLES ---
-  const baseBg = "bg-white";
-  const accentColor = "text-indigo-700";
-  const detailColor = "text-gray-800";
-  const borderColor = "border-gray-200";
-  const dividerColor = "border-gray-100";
-  const routinePillBg = "bg-indigo-50";
-  const routinePillText = "text-indigo-700";
-
-  // Responsibility List Component (Cleaned up for minimal display)
-  const AssignmentList = ({ list, title }) => (
-    <div>
-      <p className="text-sm font-semibold text-gray-700 mb-1">{title}</p>
-      <ul className="text-xs text-gray-700 space-y-0.5 max-h-24 overflow-y-auto">
+  // মডার্ন অ্যাসাইনমেন্ট লিস্ট সাব-কম্পোনেন্ট
+  const AssignmentList = ({ list, title, icon: Icon, colorClass }) => (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-3">
+        <div
+          className={`p-1.5 rounded-lg bg-white shadow-sm border border-slate-50 ${colorClass}`}
+        >
+          <Icon size={10} />
+        </div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          {title}
+        </p>
+      </div>
+      <ul className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
         {list.length > 0 ? (
-          list.map((assignment, index) => {
-            const className =
-              assignment.class?.name || assignment.class || "N/A";
-            const subjectName =
-              assignment.subject?.name || assignment.subject || "N/A";
-
-            return (
-              <li key={index} className="flex items-start text-gray-600">
-                <span className="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-                  {assignment.name}
-                </span>
-                <span className="w-1/2 text-gray-400">
-                  ({className} {subjectName})
-                </span>
-              </li>
-            );
-          })
+          list.map((assignment, index) => (
+            <li
+              key={index}
+              className="flex flex-col p-2.5 rounded-xl bg-slate-50/50 border border-white hover:bg-white hover:shadow-sm transition-all duration-300 group/item"
+            >
+              <span className="text-[11px] font-bold text-slate-700 leading-tight truncate group-hover/item:text-indigo-600 transition-colors">
+                {assignment.name}
+              </span>
+              <span className="text-[9px] font-semibold text-slate-400 uppercase mt-1">
+                {assignment.class?.name || assignment.class} •{" "}
+                {assignment.subject?.name || assignment.subject}
+              </span>
+            </li>
+          ))
         ) : (
-          <li className="text-gray-500 italic">No data found!</li>
+          <li className="text-[10px] text-slate-300 font-bold uppercase italic p-3 border border-dashed border-slate-100 rounded-xl text-center">
+            Zero Active Nodes
+          </li>
         )}
       </ul>
     </div>
@@ -68,90 +74,123 @@ const TeacherCard = ({ teacher, assignmentsByYear, routineSchedule }) => {
 
   return (
     <div
-      // REDUCED PADDING: p-4 for better mobile density
-      className={`w-full p-4 rounded-xl shadow-sm border ${borderColor} cursor-pointer ${baseBg} hover:shadow-md transition duration-200`}
-      onClick={() => navigate(`/teacher/profile/${teacher._id}`)} // Navigate on click
+      onClick={() => navigate(`/teacher/profile/${teacher._id}`)}
+      className="group relative bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white shadow-[0_20px_50px_rgba(79,70,229,0.03)] hover:shadow-indigo-100 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden"
     >
-      {/* --- 1. TOP SECTION: Name, ID, Campus --- */}
-      <div className="flex justify-between items-start pb-3 border-b border-indigo-100">
-        {/* Left: Name and ID */}
-        <div className="flex flex-col">
-          <h3 className={`text-xl font-extrabold ${accentColor} leading-tight`}>
-            {teacher.name}
-          </h3>
-          <p className="text-sm font-medium text-gray-600">
-            ID: {teacher.teacherId}
-          </p>
+      {/* Background dynamic glow */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-3xl transition-transform group-hover:scale-150 duration-1000"></div>
+
+      {/* --- ১. হেডার: ইনফরমেশন ও মেটা ডাটা --- */}
+      <div className="flex justify-between items-start mb-6 relative z-10">
+        <div className="flex items-center gap-5">
+          {/* প্রোফাইল এভার্টার (ইনিশিয়াল) */}
+          <div className="h-14 w-14 bg-gradient-to-tr from-slate-900 to-indigo-900 rounded-2xl flex items-center justify-center text-white shadow-2xl group-hover:rotate-3 transition-transform duration-500 overflow-hidden relative">
+            <span className="text-xl font-black relative z-10">
+              {teacher.name.charAt(0)}
+            </span>
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-2 group-hover:text-indigo-600 transition-colors">
+              {teacher.name}
+            </h3>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <FaIdBadge className="text-indigo-400" /> {teacher.teacherId}
+              </span>
+              <span className="h-1 w-1 rounded-full bg-slate-200"></span>
+              <span className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-md">
+                <FaUniversity size={8} /> {teacher.campus?.name || "Global"}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Right: Campus and Toggle */}
-        <div className="flex flex-col items-end space-y-1">
-          <span className={`text-md font-semibold text-gray-700`}>
-            {teacher.campus?.name || "N/A"}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent navigation
-              setIsOpen(!isOpen);
-            }}
-            // Toggler icon is minimal
-            className={`text-xl ${accentColor} hover:text-indigo-900 transition p-1`}
-            title="Toggle Details"
-          >
-            {isOpen ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-        </div>
+        {/* এক্সপেনশন টগল */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-500 ${
+            isOpen
+              ? "bg-indigo-600 text-white shadow-lg"
+              : "bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+          }`}
+        >
+          <FaChevronDown
+            size={14}
+            className={`transition-transform duration-500 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
       </div>
 
-      {/* --- 2. ASSIGNMENT SUMMARY (Vertical Divider Added) --- */}
-      {/* Removed gap-4 from grid to manually control spacing */}
-      <div className={`grid grid-cols-2 mt-3 border-b ${dividerColor} pb-3`}>
-        {/* Current Year Assignments: Add right border and padding-right (p-1) */}
-        <div className={`pr-1 border-r ${dividerColor}`}>
+      {/* --- ২. ডাইনামিক ডাটা গ্রিড (অ্যাসাইনমেন্টস) --- */}
+      <div className="grid grid-cols-2 gap-6 relative z-10 border-t border-slate-50 pt-6">
+        <div className="border-r border-slate-50 pr-2">
           <AssignmentList
             list={assignmentsCurrent}
-            title={`Assignments (${currentYear})`}
+            title={`Session ${currentYear}`}
+            icon={FaLayerGroup}
+            colorClass="text-indigo-600"
           />
         </div>
-
-        {/* Previous Year Assignments: Add padding-left (p-1) */}
         <div className="pl-1">
           <AssignmentList
             list={assignmentsPrevious}
-            title={`Assignments (${previousYear})`}
+            title={`Archived ${previousYear}`}
+            icon={FaHistory}
+            colorClass="text-slate-400"
           />
         </div>
       </div>
 
-      {/* --- 3. ROUTINE DETAILS (Toggled) --- */}
-      {isOpen && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <h4
-            className={`text-md font-bold ${detailColor} flex items-center mb-3`}
-          >
-            <FaBook className="mr-2 text-indigo-500" /> Routine Schedule (
-            {currentYear}):
-          </h4>
+      {/* --- ৩. রুটিন শিডিউল (স্মুথ এনিমেশন সহ) --- */}
+      <div
+        className={`overflow-hidden transition-all duration-700 ease-in-out ${
+          isOpen ? "max-h-64 mt-8 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="pt-6 border-t border-slate-50 relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-[0.3em] flex items-center">
+              <FaBook className="mr-2 text-indigo-500" size={12} /> Neural
+              Schedule Matrix ({currentYear})
+            </h4>
+          </div>
 
           {routineDataCurrentYear.length > 0 ? (
-            <div className="flex flex-wrap gap-2 text-sm max-h-24 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 p-1">
               {routineDataCurrentYear.map((item) => (
                 <span
                   key={item._id}
-                  // Minimal pill styling
-                  className={`px-3 py-1 ${routinePillBg} ${routinePillText} rounded-full text-xs font-medium border border-indigo-100`}
+                  className="px-3 py-1.5 bg-white border border-slate-100 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-tight shadow-sm hover:border-indigo-200 hover:text-indigo-600 transition-all cursor-default"
                 >
                   {item.display}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">
-              No detailed routine schedule found for the current year.
-            </p>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                No schedule nodes detected in current cycle
+              </p>
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      {/* হোভার অ্যাকশন ইন্ডিকেটর */}
+      <div className="absolute bottom-4 right-8 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 flex items-center gap-2">
+        <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">
+          Expand Intelligence
+        </span>
+        <FaArrowRight size={10} className="text-indigo-600" />
+      </div>
     </div>
   );
 };

@@ -1,23 +1,24 @@
-// arifurrahman-io/frii-examiner/frii-examiner-94b444a3277f392cde2a42af87c32a9043a874f2/src/pages/GrantedLeavesPage.jsx
-
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { FaCalendarTimes, FaFileExcel } from "react-icons/fa";
 import {
-  getAllGrantedLeavesForReport,
-  // ❌ REMOVED: exportLeavesReportToExcel import
-} from "../api/apiService";
-import LoadingSpinner from "../components/ui/LoadingSpinner"; // Assuming this is the correct component name
+  FaCalendarTimes,
+  FaSearch,
+  FaUniversity,
+  FaUserTie,
+  FaHistory,
+} from "react-icons/fa";
+import { getAllGrantedLeavesForReport } from "../api/apiService";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 const GrantedLeavesPage = () => {
   const [leavesData, setLeavesData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaves = async () => {
       setLoading(true);
       try {
-        // Fetch data from the base /api/leaves endpoint with status=Granted
         const { data } = await getAllGrantedLeavesForReport();
         setLeavesData(data);
       } catch (error) {
@@ -30,99 +31,178 @@ const GrantedLeavesPage = () => {
     fetchLeaves();
   }, []);
 
-  // ❌ REMOVED: handleExportExcel function
+  // ডাইনামিক সার্চ ফিল্টারিং
+  const filteredLeaves = leavesData.filter(
+    (leave) =>
+      leave.teacher?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      leave.teacher?.teacherId?.includes(searchTerm)
+  );
 
   if (loading) {
     return (
-      <div className="p-4">
-        <h2 className="text-3xl font-bold text-indigo-800 mb-8 flex items-center">
-          <FaCalendarTimes className="mr-3" />
-          Granted Leaves Report
-        </h2>
-        {/* Placeholder for LoadingSpinner */}
-        <div className="text-center p-20">
-          <LoadingSpinner message="Loading all granted leave records..." />
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <LoadingSpinner message="Accessing Leave Archive..." />
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold text-indigo-800 mb-8 flex items-center">
-        <FaCalendarTimes className="mr-3" />
-        Granted Leaves Report ({leavesData.length})
-      </h2>
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 relative overflow-hidden">
+      {/* Background Subtle Pattern */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
-      {/* ❌ REMOVED: Export and Actions Area (including Export to Excel button) */}
+      <div className="max-w-[1600px] mx-auto relative z-10">
+        {/* --- HEADER & SEARCH BAR --- */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-12 w-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
+                <FaCalendarTimes size={24} />
+              </div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">
+                Leave Archive <span className="text-rose-500">.</span>
+              </h1>
+            </div>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] ml-16">
+              Neural Database: {leavesData.length} Granted Records
+            </p>
+          </div>
 
-      {/* --- Report Table --- */}
-      <div className="overflow-x-auto bg-white rounded-xl border border-gray-100">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-indigo-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                S.N.
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Teacher's Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Campus
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Leave Responsibility
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Year
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                Date Granted
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {leavesData.length > 0 ? (
-              leavesData.map((leave, index) => (
-                <tr key={leave._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {index + 1}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {leave.teacher?.name} ({leave.teacher?.teacherId})
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {leave.teacher?.campus?.name || "N/A"}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {leave.responsibilityType?.name || "N/A"}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {leave.year}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {leave.reason || "N/A"}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                    {new Date(leave.createdAt).toLocaleDateString()}
-                  </td>
+          {/* Search Input */}
+          <div className="relative group w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <FaSearch className="text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search Teacher Name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-sm outline-none"
+            />
+          </div>
+        </div>
+
+        {/* --- REPORT TABLE AREA --- */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-white overflow-hidden transition-all hover:shadow-indigo-50">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-separate border-spacing-0">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    S.N.
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Teacher Intel
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Station
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Leave Scope
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">
+                    Session
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Reason / Narrative
+                  </th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Authorization Date
+                  </th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="7"
-                  className="text-center text-gray-500 py-10 bg-white"
-                >
-                  No granted leave records found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredLeaves.length > 0 ? (
+                  filteredLeaves.map((leave, index) => (
+                    <tr
+                      key={leave._id}
+                      className="group hover:bg-indigo-50/30 transition-all"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-xs font-black text-slate-300 group-hover:text-indigo-400">
+                        {String(index + 1).padStart(2, "0")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black text-xs uppercase shadow-inner">
+                            {leave.teacher?.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-800 uppercase tracking-tighter">
+                              {leave.teacher?.name}
+                            </p>
+                            <p className="text-[10px] font-bold text-indigo-400 uppercase">
+                              ID: {leave.teacher?.teacherId}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <FaUniversity className="text-slate-300" size={12} />
+                          <span className="text-xs font-bold uppercase">
+                            {leave.teacher?.campus?.name || "Global"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-3 py-1.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded-lg uppercase border border-rose-100 tracking-tighter">
+                          {leave.responsibilityType?.name || "Standard"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
+                          {leave.year}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-xs text-slate-500 font-medium line-clamp-1 italic max-w-xs group-hover:line-clamp-none transition-all">
+                          {leave.reason || "Not specified"}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-slate-400">
+                          <FaHistory size={10} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">
+                            {new Date(leave.createdAt).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="text-center py-24">
+                      <div className="flex flex-col items-center justify-center opacity-30 grayscale">
+                        <FaCalendarTimes
+                          size={80}
+                          className="text-slate-200 mb-4"
+                        />
+                        <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em]">
+                          No Archival Data Found
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* --- FOOTER INFO --- */}
+        <div className="mt-8 flex justify-center">
+          <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">
+            Authorized Data Entry Only
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,31 +1,47 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // AuthContext থেকে useAuth হুক ইমপোর্ট করুন
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 /**
- * এই কম্পোনেন্টটি সুরক্ষিত রুটগুলিকে রেন্ডার করার জন্য ব্যবহৃত হয়।
- * যদি ইউজার লগইন না করে থাকে, তবে তাকে '/login' এ রিডাইরেক্ট করে।
- * * @param {object} props - props containing the element (the target page component)
+ * @param {JSX.Element} element - যে পেজটি ইউজার দেখতে চাচ্ছেন
+ * @param {Array} allowedRoles - কোন কোন রোলের ইউজার এই পেজটি দেখতে পারবেন (ঐচ্ছিক)
  */
-const ProtectedRoute = ({ element }) => {
-  // ধরে নেওয়া হচ্ছে useAuth() হুকটি isAuthenticated এবং loading স্টেট প্রদান করে
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ element, allowedRoles }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
 
-  // অথেন্টিকেশন চেক করার সময় Loading স্টেট থাকলে
+  // ১. অথেন্টিকেশন চেক করার সময় Loading স্টেট থাকলে
   if (loading) {
     return (
-      <div className="text-center p-20 text-xl text-indigo-500">
-        Loading user session...
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-20 text-xl font-bold text-indigo-500 animate-pulse">
+          Loading user session...
+        </div>
       </div>
     );
   }
 
-  // যদি ইউজার লগইন না করে থাকে, তবে তাকে /login পেজে নেভিগেট করা
+  // ২. যদি ইউজার লগইন না করে থাকে, তবে তাকে '/login' এ রিডাইরেক্ট করা
+  // 'state' ব্যবহার করা হয়েছে যাতে লগইন করার পর ইউজার আবার আগের পেজেই ফিরে আসতে পারেন
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // ইউজার লগইন করে থাকলে, অনুরোধ করা পেজটি রেন্ডার করা
+  // ৩. রোল ভিত্তিক অ্যাক্সেস কন্ট্রোল (Admin, Teacher, Incharge)
+  // যদি allowedRoles পাঠানো হয় এবং ইউজারের রোল তার সাথে না মিলে
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <h1 className="text-4xl font-black text-red-500 mb-2">Access Denied</h1>
+        <p className="text-gray-600 font-medium">
+          You do not have permission to view this page.
+        </p>
+        <Navigate to="/" replace />
+      </div>
+    );
+  }
+
+  // ৪. সব চেক পাস করলে অনুরোধ করা পেজটি রেন্ডার করা
   return element;
 };
 

@@ -2,35 +2,30 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import {
   FaPlus,
-  FaSave,
-  FaEdit,
   FaBuilding,
   FaList,
   FaBookOpen,
   FaTasks,
-  FaTag,
+  FaTerminal,
+  FaInfoCircle,
+  FaSyncAlt,
 } from "react-icons/fa";
 import { addMasterData } from "../../api/apiService";
 
 // Reusable UI Components
 import InputField from "../ui/InputField";
-import Button from "../ui/Button";
 import SelectDropdown from "../ui/SelectDropdown";
 
 const MasterEntryForm = ({ type, onSaveSuccess }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
-  // Additional fields for specific types
   const [level, setLevel] = useState("");
   const [code, setCode] = useState("");
   const [category, setCategory] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Category Options (Mirroring the ResponsibilityTypeModel enum)
   const categoryOptions = [
     { _id: "Examination", name: "Examination" },
     { _id: "Administrative", name: "Administrative" },
@@ -39,206 +34,174 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
     { _id: "Other", name: "Other" },
   ];
 
-  // ফর্মের হেডিং এবং প্ল্যাসহোল্ডার সেট করার জন্য লজিক
   const titles = {
     branch: {
-      title: "New Branch/Campus",
-      placeholder: "Branch Name (e.g., Dhaka Campus)",
+      title: "New Campus",
+      placeholder: "e.g., Dhaka Campus",
       icon: FaBuilding,
     },
-    class: {
-      title: "New Class/Level",
-      placeholder: "Class Name (e.g., Class 9)",
-      icon: FaList,
-      extraFields: ["level"],
-    },
+    class: { title: "New Class", placeholder: "e.g., Class 9", icon: FaList },
     subject: {
       title: "New Subject",
-      placeholder: "Subject Name (e.g., Mathematics)",
+      placeholder: "e.g., Mathematics",
       icon: FaBookOpen,
-      extraFields: ["code"],
     },
     responsibility: {
-      title: "New Responsibility Type",
-      placeholder: "Responsibility Name (e.g., Annual Exam Coordinator)",
+      title: "New Duty Prototype",
+      placeholder: "e.g., Coordinator",
       icon: FaTasks,
-      extraFields: ["category"],
     },
   };
 
   const currentConfig = titles[type] || {
     title: "Master Entry",
     placeholder: "Name",
-    icon: FaEdit,
+    icon: FaPlus,
   };
-
-  const FormIcon = currentConfig.icon;
 
   const validate = () => {
     const errors = {};
-    if (!name.trim()) errors.name = "Name is required.";
-
-    if (type === "class" && (!level || isNaN(level))) {
-      errors.level = "Level (number) is required.";
-    }
-    if (type === "subject" && !code.trim()) {
-      errors.code = "Subject Code is required.";
-    }
-    // Responsibility-র জন্য Category ভ্যালিডেশন
-    if (type === "responsibility" && !category) {
-      errors.category = "Category selection is required.";
-    }
-
+    if (!name.trim()) errors.name = "Required";
+    if (type === "class" && (!level || isNaN(level))) errors.level = "Required";
+    if (type === "subject" && !code.trim()) errors.code = "Required";
+    if (type === "responsibility" && !category) errors.category = "Required";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setFieldErrors({});
-
     if (!validate()) {
-      toast.error("Please fill in all required fields.");
+      toast.error("Validation failed. Check required fields.");
       return;
     }
 
     setLoading(true);
-
     try {
-      // API Payload তৈরি
       const payload = {
         name: name.trim(),
         description: description.trim(),
-
-        // Add conditional fields
         ...(type === "class" && { level: parseInt(level) }),
         ...(type === "subject" && { code: code.trim() }),
         ...(type === "responsibility" && { category: category }),
       };
 
       await addMasterData(type, payload);
+      toast.success(`${type.toUpperCase()} indexed successfully!`);
 
-      toast.success(`${currentConfig.title} added successfully!`);
-
-      // রিসেট করা
       setName("");
       setDescription("");
       setLevel("");
       setCode("");
       setCategory("");
-
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      }
+      if (onSaveSuccess) onSaveSuccess();
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || `Failed to add ${type}.`;
-      toast.error(errorMessage);
-
-      if (errorMessage.includes("E11000 duplicate key")) {
-        setError(
-          `${currentConfig.title} already exists or the Code/Level is duplicated.`
-        );
-      }
+      toast.error(err.response?.data?.message || "Operation failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    // 💡 ELEGANT FIX: Removed shadow-2xl. Using light gray border (border-gray-200) for clean, flat design.
-    <div className="p-6 bg-white rounded-xl border border-gray-200 max-w-lg mx-auto">
-      {/* 🚀 MODERNIZE: Cleaner header with reduced border contrast */}
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center border-b border-indigo-50 pb-3">
-        <FaPlus className="mr-3 text-3xl text-indigo-600" />
-        {currentConfig.title}
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name Input */}
-        <InputField
-          label={currentConfig.title}
-          type="text"
-          name="name"
-          icon={FormIcon}
-          placeholder={currentConfig.placeholder}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={fieldErrors.name || error}
-          required
-        />
-
-        {/* --- কন্ডিশনাল ফিল্ড --- */}
-        {type === "class" && (
-          <InputField
-            label="Class Level (for sorting)"
-            type="number"
-            name="level"
-            icon={FaList}
-            placeholder="Enter numerical level (e.g., 9 for Class 9)"
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            error={fieldErrors.level}
-            required
-          />
-        )}
-
-        {type === "subject" && (
-          <InputField
-            label="Subject Code"
-            type="text"
-            name="code"
-            icon={FaBookOpen}
-            placeholder="Enter subject code (e.g., PHY, MTH)"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            error={fieldErrors.code}
-            required
-          />
-        )}
-
-        {/* Responsibility Type এর জন্য Category Dropdown */}
-        {type === "responsibility" && (
-          <SelectDropdown
-            label="Responsibility Category"
-            name="category"
-            icon={FaTag}
-            placeholder="Select Category (Required)"
-            options={categoryOptions}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            error={fieldErrors.category}
-            required
-          />
-        )}
-        {/* --- কন্ডিশনাল ফিল্ড শেষ --- */}
-
-        {/* Description/Note Input (Textarea) */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description / Note (Optional)
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add a brief description or note (Optional)"
-            rows="3"
-            // Retaining the focus styles for accessibility and clean feedback
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-          />
+    <div className="bg-white rounded-[3rem] p-1 shadow-sm border border-slate-100 overflow-hidden">
+      <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8">
+        {/* --- UNIFIED SINGLE HEADER --- */}
+        <div className="flex items-center gap-5 border-b border-slate-50 pb-8">
+          <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 transition-transform hover:rotate-0">
+            <currentConfig.icon size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+              {currentConfig.title}
+            </h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+              <FaTerminal className="text-indigo-500" /> INITIALIZE NEURAL
+              RECORD
+            </p>
+          </div>
         </div>
 
-        {/* Submit Button */}
-        <Button type="submit" fullWidth loading={loading} variant="primary">
-          <FaSave className="mr-2" />
-          SAVE {type.toUpperCase()}
-        </Button>
+        {/* --- INPUT ROW 1 --- */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+          <div
+            className={`${
+              type === "branch" ? "md:col-span-12" : "md:col-span-8"
+            }`}
+          >
+            <InputField
+              label={currentConfig.title}
+              type="text"
+              placeholder={currentConfig.placeholder}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={fieldErrors.name}
+              className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+            />
+          </div>
+
+          {type !== "branch" && (
+            <div className="md:col-span-4">
+              {type === "class" && (
+                <InputField
+                  label="Level"
+                  type="number"
+                  placeholder="ID (e.g. 9)"
+                  value={level}
+                  onChange={(e) => setLevel(e.target.value)}
+                  error={fieldErrors.level}
+                />
+              )}
+              {type === "subject" && (
+                <InputField
+                  label="Code"
+                  type="text"
+                  placeholder="e.g. MAT"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  error={fieldErrors.code}
+                />
+              )}
+              {type === "responsibility" && (
+                <SelectDropdown
+                  label="Category"
+                  options={categoryOptions}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  error={fieldErrors.category}
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* --- INPUT ROW 2 + BUTTON --- */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+          <div className="md:col-span-9">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">
+              NARRATIVE DESCRIPTION (OPTIONAL)
+            </label>
+            <div className="relative">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Contextual metadata..."
+                rows="1"
+                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-sm outline-none resize-none"
+              />
+              <FaInfoCircle className="absolute right-4 top-4 text-slate-200" />
+            </div>
+          </div>
+
+          <div className="md:col-span-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loading ? <FaSyncAlt className="animate-spin" /> : "INDEXING"}
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );
