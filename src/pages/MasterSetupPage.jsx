@@ -90,7 +90,7 @@ const MasterSetupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10  px-4 sm:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 mt-10 px-4 sm:px-8 relative overflow-hidden">
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       <div className="max-w-[1200px] mx-auto relative z-10">

@@ -19,11 +19,33 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --- ১. অথেন্টিকেশন ও ড্যাশবোর্ড API (Year-Based Updated) ---
+/**
+ * 🔐 ROLE & USER HELPERS
+ * ফ্রন্টএন্ডে বাটন বা ফিচার কন্ডিশনাল রেন্ডার করার জন্য।
+ */
+export const getUserRole = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user?.role || "guest";
+  } catch (e) {
+    return "guest";
+  }
+};
+
+export const getAuthUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch (e) {
+    return null;
+  }
+};
+
+// --- ১. অথেন্টিকেশন API ---
 export const apiLogin = (credentials) => api.post("/auth/login", credentials);
 export const apiLogout = () => api.post("/auth/logout");
 
-// ড্যাশবোর্ড সামারি এখন নির্দিষ্ট বছরের ডাটা ফিল্টার করতে পারবে
+// --- ২. ড্যাশবোর্ড API ---
+// ইনচার্জ হলে ব্যাকএন্ড অটোমেটিক তাঁর ক্যাম্পাসের ডাটা দিবে (টোকেন থেকে)
 export const getDashboardSummary = (year) =>
   api.get("/dashboard/summary", { params: { year } });
 
@@ -33,25 +55,20 @@ export const getTopResponsibleTeachers = (year) =>
 export const getRecentGrantedLeaves = (year) =>
   api.get("/dashboard/recent-granted-leaves", { params: { year } });
 
-export const getAssignmentAnalytics = (year) =>
-  api.get("/dashboard/assignment-analytics", { params: { year } });
-
-// Charts: বছর ভিত্তিক এনালাইসিস
 export const getAssignmentByDutyType = (year) =>
   api.get("/dashboard/assignment-by-type", { params: { year } });
 
 export const getAssignmentByBranch = (year) =>
   api.get("/dashboard/assignment-by-branch", { params: { year } });
 
-// --- ২. লিভ ম্যানেজমেন্ট API ---
+// --- ৩. লিভ ম্যানেজমেন্ট API ---
 export const grantLeaveRequest = (payload) => api.post("/leaves", payload);
-
-// টিচারের প্রোফাইলে লিভ হিস্ট্রি দেখার জন্য (বছর ও টাইপ অনুযায়ী ফিল্টার সহ)
 export const getGrantedLeavesByTeacher = (teacherId, year) =>
   api.get(`/leaves`, {
     params: { teacher: teacherId, status: "Granted", year },
   });
 
+// Admin Only
 export const getAllGrantedLeavesForReport = (filters) =>
   api.get("/leaves", { params: { ...filters, status: "Granted" } });
 
@@ -61,15 +78,16 @@ export const updateLeave = (leaveId, payload) =>
 export const checkLeaveConflict = (filters) =>
   api.get("/leaves/conflict-check", { params: filters });
 
-// --- ৩. শিক্ষক ম্যানেজমেন্ট API ---
-export const getTeachers = (searchQuery, page = 1, limit = 20) =>
-  api.get("/teachers", { params: { search: searchQuery, page, limit } });
+// --- ৪. শিক্ষক ম্যানেজমেন্ট API ---
+// campusId প্যারামিটারটি ইনচার্জদের জন্য ফিল্টার হিসেবে কাজ করবে
+export const getTeachers = (searchQuery, page = 1, limit = 20, campusId = "") =>
+  api.get("/teachers", {
+    params: { search: searchQuery, page, limit, campus: campusId },
+  });
 
 export const getTeacherProfile = (teacherId) =>
   api.get(`/teachers/${teacherId}`);
-
 export const addTeacher = (teacherData) => api.post("/teachers", teacherData);
-
 export const updateTeacher = (teacherId, updateData) =>
   api.put(`/teachers/${teacherId}`, updateData);
 
@@ -78,22 +96,18 @@ export const uploadBulkTeachers = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// ইনচার্জ এবং অ্যাডমিনদের জন্য অ্যানুয়াল রিপোর্ট এন্ট্রি
 export const addAnnualReport = (teacherId, data) =>
   api.post(`/teachers/${teacherId}/report`, data);
 
-// --- ৪. রুটিন ও ফিল্টারিং API ---
+// --- ৫. রুটিন API ---
 export const addRoutine = (routineData) => api.post("/routines", routineData);
-
 export const updateRoutine = (routineId, routineData) =>
   api.put(`/routines/${routineId}`, routineData);
-
-export const getEligibleTeachers = (filters) =>
-  api.get("/routines/filter", { params: filters });
-
 export const deleteRoutine = (routineId) =>
   api.delete(`/routines/${routineId}`);
 
+export const getEligibleTeachers = (filters) =>
+  api.get("/routines/filter", { params: filters });
 export const getTeacherRoutines = (teacherId, year) =>
   api.get(`/routines/teacher/${teacherId}`, { params: { year } });
 
@@ -102,20 +116,22 @@ export const uploadRoutineExcel = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// --- ৫. দায়িত্ব অ্যাসাইনমেন্ট API ---
+// --- ৬. দায়িত্ব অ্যাসাইনমেন্ট API (অ্যাডমিনদের জন্য সীমাবদ্ধ) ---
 export const assignDuty = (assignmentData) =>
   api.post("/assignments", assignmentData);
-
 export const deleteAssignmentPermanently = (assignmentId) =>
   api.delete(`/assignments/${assignmentId}`);
-
-export const getReportData = (filters) =>
-  api.get("/reports/data", { params: filters });
-
 export const getAssignmentsByTeacherAndYear = (teacherId, year) =>
   api.get(`/assignments/teacher/${teacherId}`, { params: { year } });
 
-// --- ৬. মাস্টার ডেটা ম্যানেজমেন্ট (ডায়নামিক ও ক্যাশ ফ্রেন্ডলি) ---
+// --- ৭. মাস্টার ডেটা ম্যানেজমেন্ট (SyntaxError ফিক্সড) ---
+// এগুলো এখন সরাসরি এক্সপোর্ট করা হয়েছে যাতে ইমপোর্ট করতে সমস্যা না হয়
+export const getBranches = () => api.get("/branches");
+export const getClasses = () => api.get("/classes");
+export const getSubjects = () => api.get("/subjects");
+export const getResponsibilityTypes = () => api.get("/responsibility-types");
+
+// ডায়নামিক মাস্টার ডাটা ফাংশন (Internal Use)
 const getMasterUrl = (type, id = "") => {
   const routes = {
     branch: "/branches",
@@ -129,18 +145,16 @@ const getMasterUrl = (type, id = "") => {
 };
 
 export const getMasterDataList = (type) => api.get(getMasterUrl(type));
-export const getBranches = () => api.get("/branches");
-export const getClasses = () => api.get("/classes");
-export const getSubjects = () => api.get("/subjects");
-export const getResponsibilityTypes = () => api.get("/responsibility-types");
-
 export const addMasterData = (type, data) => api.post(getMasterUrl(type), data);
 export const updateMasterData = (type, id, data) =>
   api.put(getMasterUrl(type, id), data);
 export const deleteMasterData = (type, id) =>
   api.delete(getMasterUrl(type, id));
 
-// --- ৭. ইউজার ও রিপোর্ট এক্সপোর্ট API ---
+// --- ৮. রিপোর্ট ও ইউজার ম্যানেজমেন্ট ---
+export const getReportData = (filters) =>
+  api.get("/reports/data", { params: filters });
+
 export const exportCustomReportToPDF = (filters) => {
   const params = new URLSearchParams(filters).toString();
   const endpoint =

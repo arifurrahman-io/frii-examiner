@@ -8,14 +8,23 @@ import {
   FaUserTag,
   FaEdit,
   FaTrashAlt,
+  FaUniversity,
+  FaTerminal,
 } from "react-icons/fa";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import SelectDropdown from "../components/ui/SelectDropdown";
-import { getUsers, addUser, updateUser, deleteUser } from "../api/apiService";
+import {
+  getUsers,
+  addUser,
+  updateUser,
+  deleteUser,
+  getBranches,
+} from "../api/apiService";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -24,26 +33,29 @@ const UserManagementPage = () => {
     email: "",
     password: "",
     role: "teacher",
+    campus: "",
   });
 
   const roleOptions = [
-    { _id: "admin", name: "Admin" },
-    { _id: "teacher", name: "Teacher" },
-    { _id: "incharge", name: "Incharge" },
+    { _id: "admin", name: "Administrator" },
+    { _id: "teacher", name: "Global Teacher" },
+    { _id: "incharge", name: "Campus Incharge" },
   ];
 
-  // Wrapped in useCallback to prevent unnecessary re-renders
-  const fetchUsers = useCallback(async () => {
+  const fetchUsersAndBranches = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getUsers();
-      setUsers(Array.isArray(response.data) ? response.data : []);
+      const [userRes, branchRes] = await Promise.all([
+        getUsers(),
+        getBranches(),
+      ]);
+      setUsers(Array.isArray(userRes.data) ? userRes.data : []);
+      setBranches(Array.isArray(branchRes.data) ? branchRes.data : []);
     } catch (error) {
-      // Improved error messaging for 403 Forbidden
       if (error.response?.status === 403) {
-        toast.error("Access Denied: You do not have administrator privileges.");
+        toast.error("Access Revoked: Administrative privileges required.");
       } else {
-        toast.error("Failed to load users from server.");
+        toast.error("Buffer Sync Error: Failed to fetch records.");
       }
     } finally {
       setLoading(false);
@@ -51,12 +63,18 @@ const UserManagementPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsersAndBranches();
+  }, [fetchUsersAndBranches]);
 
   const openAddModal = () => {
     setEditingUser(null);
-    setFormData({ name: "", email: "", password: "", role: "teacher" });
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      role: "teacher",
+      campus: "",
+    });
     setIsModalOpen(true);
   };
 
@@ -67,220 +85,270 @@ const UserManagementPage = () => {
       email: u.email || "",
       password: "",
       role: u.role || "teacher",
+      campus: u.campus?._id || u.campus || "",
     });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email) {
-      toast.error("Name and Email are required.");
-      return;
-    }
+    if (!formData.name || !formData.email)
+      return toast.error("Identity data incomplete.");
+    if (formData.role === "incharge" && !formData.campus)
+      return toast.error("Campus assignment required for Incharge.");
 
     try {
       if (editingUser) {
         await updateUser(editingUser._id, formData);
-        toast.success("User profile updated!");
+        toast.success("User Node re-indexed successfully.");
       } else {
-        if (!formData.password) {
-          toast.error("Password is required for new users.");
-          return;
-        }
+        if (!formData.password) return toast.error("Security key missing.");
         await addUser(formData);
-        toast.success("New user registered successfully!");
+        toast.success("New access node established.");
       }
       setIsModalOpen(false);
-      fetchUsers();
+      fetchUsersAndBranches();
     } catch (error) {
-      const msg = error.response?.data?.message || "Operation failed.";
-      toast.error(msg);
+      toast.error(error.response?.data?.message || "Protocol failure.");
     }
   };
 
   const handleDelete = async (id) => {
-    if (
-      window.confirm("Are you sure you want to permanently remove this user?")
-    ) {
+    if (window.confirm("Authorize permanent removal of this access node?")) {
       try {
         await deleteUser(id);
-        toast.success("User removed from system.");
-        fetchUsers();
+        toast.success("Node terminated.");
+        fetchUsersAndBranches();
       } catch (error) {
-        toast.error("Delete operation failed.");
+        toast.error("Operation aborted.");
       }
     }
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto min-h-screen">
-      {/* --- HEADER SECTION --- */}
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-indigo-900 flex items-center tracking-tight">
-            <FaUserShield className="mr-3 text-indigo-600" /> User Management
-          </h2>
-          <p className="text-gray-500 mt-1 font-medium">
-            Control system access and user privileges
-          </p>
+    <div className="p-8 max-w-7xl mx-auto min-h-screen pt-10">
+      {/* --- HEADER --- */}
+      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-sm border border-white mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-indigo-100/50">
+        <div className="flex items-center gap-6">
+          <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
+            <FaUserShield size={24} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase leading-none mb-2">
+              User Registry
+            </h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2">
+              <FaTerminal className="text-indigo-500" /> SYSTEM ACCESS
+              GOVERNANCE
+            </p>
+          </div>
         </div>
         <Button
           onClick={openAddModal}
           variant="primary"
-          className="shadow-lg shadow-indigo-100 px-8 py-3"
+          className="rounded-2xl px-10 py-5 bg-indigo-600 shadow-xl shadow-indigo-100 uppercase font-black text-[11px] tracking-widest flex items-center gap-3"
         >
-          <FaUserPlus className="mr-2" /> New User
+          <FaUserPlus size={14} /> Initialize New Node
         </Button>
       </div>
-
-      {/* --- USER TABLE SECTION --- */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">
-                User Details
-              </th>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">
-                Role
-              </th>
-              <th className="px-8 py-5 text-center text-xs font-black text-gray-400 uppercase tracking-widest">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {loading ? (
-              <tr>
-                <td colSpan="3" className="py-20 text-center">
-                  <FaSyncAlt className="animate-spin text-4xl text-indigo-500 mx-auto" />
-                </td>
+      {/* --- USER MATRIX TABLE --- */}
+      <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-4 shadow-sm border border-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-separate border-spacing-0">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
+                  Identity Nodes
+                </th>
+                <th className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
+                  Privilege Level
+                </th>
+                <th className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
+                  Assigned Campus
+                </th>
+                <th className="px-8 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
+                  Operations
+                </th>
               </tr>
-            ) : users.length > 0 ? (
-              users.map((u) => (
-                <tr
-                  key={u._id}
-                  className="hover:bg-indigo-50/30 transition-all duration-200"
-                >
-                  <td className="px-8 py-5">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-4 uppercase">
-                        {/* 🛡️ Defensive fix for charAt error */}
-                        {u.name ? u.name.charAt(0) : "U"}
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm uppercase">
-                          {u.name || "Unknown User"}
-                        </p>
-                        <p className="text-xs text-gray-400 flex items-center mt-0.5">
-                          <FaEnvelope className="mr-1 text-[10px]" /> {u.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black bg-white border border-gray-200 text-indigo-600 uppercase tracking-widest shadow-sm">
-                      <FaUserTag className="mr-1.5" /> {u.role}
-                    </span>
-                  </td>
-                  <td className="px-8 py-5 text-center">
-                    <div className="flex items-center justify-center space-x-4">
-                      <button
-                        onClick={() => openEditModal(u)}
-                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit User"
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(u._id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Remove User"
-                      >
-                        <FaTrashAlt size={16} />
-                      </button>
-                    </div>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="py-32 text-center animate-pulse uppercase font-black text-slate-300 tracking-[0.5em]"
+                  >
+                    Synchronizing Matrix...
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="3" className="py-20 text-center text-gray-500">
-                  No users found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ) : (
+                users.map((u) => (
+                  <tr
+                    key={u._id}
+                    className="group hover:bg-indigo-50/30 transition-all"
+                  >
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs uppercase tracking-tighter shadow-lg group-hover:rotate-6 transition-transform">
+                          {u.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-800 text-sm uppercase tracking-tight">
+                            {u.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-bold flex items-center mt-0.5">
+                            <FaEnvelope className="mr-1 text-[8px]" /> {u.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                          u.role === "admin"
+                            ? "bg-rose-50 border-rose-100 text-rose-600"
+                            : u.role === "incharge"
+                            ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                            : "bg-slate-50 border-slate-200 text-slate-500"
+                        }`}
+                      >
+                        <FaUserTag className="mr-1.5" /> {u.role}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      {u.role === "incharge" ? (
+                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                          <FaUniversity className="text-indigo-400" />{" "}
+                          {u.campus?.name || "Unassigned"}
+                        </div>
+                      ) : (
+                        <span className="text-[9px] font-bold text-slate-300 uppercase italic tracking-tighter">
+                          Global Accessibility
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center justify-center gap-4">
+                        <button
+                          onClick={() => openEditModal(u)}
+                          className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <FaEdit size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u._id)}
+                          className="h-8 w-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                        >
+                          <FaTrashAlt size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+      {/* --- DYNAMIC ADD/EDIT MODAL --- */}
 
-      {/* --- ADD/EDIT MODAL --- */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingUser ? "Modify User Access" : "Register New Access"}
       >
-        <div className="space-y-5 p-2">
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-              Full Identity
-            </label>
-            <input
-              className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm"
-              value={formData.name}
-              placeholder="e.g. Arifur Rahman"
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-              Email Address
-            </label>
-            <input
-              className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm"
-              value={formData.email}
-              placeholder="email@campus.com"
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
-          {!editingUser && (
+        <div className="space-y-6 p-2">
+          {/* নাম এবং ইমেইল ফিল্ড (আগের মতোই থাকবে) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-                Security Key
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Full Identity
               </label>
               <input
-                className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm"
+                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
+                value={formData.name}
+                placeholder="Name"
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Network Email
+              </label>
+              <input
+                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
+                value={formData.email}
+                placeholder="Email"
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          {/* পাসওয়ার্ড এবং রোল ফিল্ড */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="text-[9px] font-black text-indigo-500 uppercase tracking-widest ml-1">
+                {editingUser ? "New Security Key (Optional)" : "Security Key"}
+              </label>
+              <input
+                className="w-full p-4 bg-slate-50 border border-indigo-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
                 type="password"
-                placeholder="••••••••"
+                placeholder={
+                  editingUser ? "Leave blank to keep old password" : "••••••••"
+                }
+                value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
               />
+              {editingUser && (
+                <p className="text-[8px] text-slate-400 ml-1 font-bold italic">
+                  * Blank input retains current matrix key
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Privilege Role
+              </label>
+              <SelectDropdown
+                options={roleOptions}
+                value={formData.role}
+                onChange={(e) =>
+                  setFormData({ ...formData, role: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          {/* ক্যাম্পাস ড্রপডাউন (ইনচার্জের জন্য) */}
+          {formData.role === "incharge" && (
+            <div className="space-y-1 animate-in slide-in-from-top-2">
+              <label className="text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">
+                Campus Node Selection
+              </label>
+              <SelectDropdown
+                options={branches}
+                value={formData.campus}
+                onChange={(e) =>
+                  setFormData({ ...formData, campus: e.target.value })
+                }
+                placeholder="Link to Branch"
+              />
             </div>
           )}
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-              System Privilege
-            </label>
-            <SelectDropdown
-              options={roleOptions}
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
-            />
-          </div>
+
           <div className="pt-4">
             <Button
               onClick={handleSubmit}
               fullWidth
               variant="primary"
-              className="py-4 rounded-2xl font-black tracking-widest uppercase"
+              className="py-5 rounded-2xl font-black text-[11px] tracking-widest uppercase bg-slate-900 shadow-2xl hover:bg-indigo-600 transition-all"
             >
-              {editingUser ? "Save Changes" : "Confirm Registration"}
+              {editingUser ? "Push Updates to Matrix" : "Establish Node Access"}
             </Button>
           </div>
         </div>

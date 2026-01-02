@@ -72,7 +72,7 @@ const RoutineSetupPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-10 px-4 sm:px-8 relative overflow-hidden">
       {/* Background Layer */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
@@ -123,7 +123,7 @@ const RoutineSetupPage = () => {
               <div>
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-3">
-                    <FaFileExcel className="text-emerald-500" /> Bulk Induction
+                    <FaFileExcel className="text-emerald-500" /> Bulk Add
                   </h3>
                   <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg uppercase tracking-widest">
                     Excel Support

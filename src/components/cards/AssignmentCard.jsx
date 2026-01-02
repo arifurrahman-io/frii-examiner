@@ -246,7 +246,7 @@ const AssignmentCard = ({
         onClose={() => setIsModalOpen(false)}
         title={
           <div className="flex items-center gap-2 uppercase tracking-tighter font-black text-slate-800">
-            <FaUserCheck className="text-indigo-600" /> Confirm Induction
+            <FaUserCheck className="text-indigo-600" /> Confirm Add
           </div>
         }
       >
@@ -332,7 +332,7 @@ const AssignmentCard = ({
               disabled={isConflict}
               className="flex-1 rounded-xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
             >
-              Authorize induction
+              Authorize
             </Button>
           </div>
         </div>

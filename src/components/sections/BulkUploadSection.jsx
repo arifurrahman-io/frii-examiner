@@ -23,7 +23,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
     if (file && (file.name.endsWith(".xls") || file.name.endsWith(".xlsx"))) {
       setSelectedFile(file);
       setBulkErrors([]);
-      toast.success(`${file.name} ready for induction.`);
+      toast.success(`${file.name} ready for add.`);
     } else {
       setSelectedFile(null);
       toast.error("Invalid file matrix. Use .xlsx only.");
@@ -66,7 +66,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
         toast.warn(`${data.savedCount} indexed, ${data.errors.length} failed.`);
         setBulkErrors(data.errors);
       } else {
-        toast.success(data.message || "Bulk induction completed successfully.");
+        toast.success(data.message || "Bulk add completed successfully.");
       }
 
       setSelectedFile(null);
@@ -88,7 +88,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
           </div>
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
-              Bulk Induction
+              Bulk Add
             </h2>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
               <FaTerminal className="text-emerald-500" /> MATRIX AGGREGATOR

@@ -7,18 +7,17 @@ import {
   FaSyncAlt,
   FaRegWindowClose,
   FaBook,
-  FaCalendarTimes,
   FaPlus,
   FaPrint,
   FaChevronLeft,
-  FaHistory,
   FaPhoneAlt,
   FaUniversity,
   FaUserTag,
   FaCalendarCheck,
   FaChartLine,
   FaQuoteLeft,
-  FaSuitcase,
+  FaTrashAlt,
+  FaHistory,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -44,12 +43,12 @@ const TeacherProfile = ({ teacherId }) => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
 
-  const lastThreeYears = useMemo(
-    () => [currentYear, currentYear - 1, currentYear - 2],
-    [currentYear]
-  );
+  const dynamicYears = useMemo(() => {
+    const years = [];
+    for (let y = currentYear; y >= 2024; y--) years.push(y);
+    return years;
+  }, [currentYear]);
 
-  // --- States ---
   const [activeTab, setActiveTab] = useState(currentYear);
   const [teacherData, setTeacherData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,342 +63,516 @@ const TeacherProfile = ({ teacherId }) => {
   const [routineSchedule, setRoutineSchedule] = useState([]);
 
   const isAdmin = user?.role === "admin";
-  const canManage = isAdmin || user?.role === "incharge";
+  const isIncharge = user?.role === "incharge";
+  const canManageRoutine = isAdmin || isIncharge;
 
-  const toggleModal = (type, state) =>
-    setModals((prev) => ({ ...prev, [type]: state }));
+  // --- 🛠️ UNIQUE ROUTINE LOGIC (Filters out duplicates for both Screen & Print) ---
+  const uniqueRoutineSchedule = useMemo(() => {
+    const seen = new Set();
+    return routineSchedule.filter((item) => {
+      const key = `${item.year}-${item.display.toLowerCase().trim()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [routineSchedule]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const [profileRes, leavesRes, routinesRes] = await Promise.all([
+      const promises = [
         getTeacherProfile(teacherId),
-        getGrantedLeavesByTeacher(teacherId),
         getTeacherRoutines(teacherId),
-      ]);
+      ];
+      if (isAdmin || isIncharge)
+        promises.push(getGrantedLeavesByTeacher(teacherId));
+      const [profileRes, routinesRes, leavesRes] = await Promise.all(promises);
       setTeacherData(profileRes.data);
-      setGrantedLeaves(leavesRes.data);
-      setRoutineSchedule(routinesRes.data);
+      setRoutineSchedule(routinesRes.data || []);
+      if (leavesRes) setGrantedLeaves(leavesRes.data || []);
     } catch (error) {
-      toast.error("Failed to load profile data.");
+      toast.error("Buffer Sync Fail.");
     } finally {
       setLoading(false);
     }
-  }, [teacherId]);
+  }, [teacherId, isAdmin, isIncharge]);
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
+  const toggleModal = (type, state) =>
+    setModals((prev) => ({ ...prev, [type]: state }));
+
   const filteredAssignments = useMemo(() => {
-    if (
-      !teacherData?.assignmentsByYear ||
-      !Array.isArray(teacherData.assignmentsByYear)
-    )
-      return [];
+    if (!teacherData?.assignmentsByYear) return [];
     const yearData = teacherData.assignmentsByYear.find(
       (a) => String(a._id) === String(activeTab)
     );
-    return yearData && Array.isArray(yearData.responsibilities)
-      ? yearData.responsibilities
-      : [];
+    return yearData?.responsibilities || [];
   }, [teacherData, activeTab]);
 
-  const handleDutyDelete = async (id) => {
-    if (!isAdmin) return toast.error("Only admins can remove assignments.");
-    if (!window.confirm("Permanently remove this assignment?")) return;
+  const handleAssignmentDelete = async (id) => {
+    if (!isAdmin) return toast.error("Admin only action.");
+    if (!window.confirm("Purge assignment?")) return;
     try {
       await deleteAssignmentPermanently(id);
-      toast.success("Assignment removed.");
+      toast.success("Purged.");
       fetchProfile();
     } catch {
-      toast.error("Operation failed.");
+      toast.error("Fail.");
     }
   };
 
-  const handleDeleteLeave = async (leaveId) => {
-    if (!window.confirm("Permanently delete this leave record?")) return;
+  const handleRoutineDelete = async (id) => {
+    if (!window.confirm("Remove routine?")) return;
     try {
-      await deleteLeave(leaveId);
-      toast.success("Leave record deleted.");
+      await deleteRoutine(id);
+      toast.success("Deleted.");
       fetchProfile();
     } catch {
-      toast.error("Failed to delete leave.");
+      toast.error("Fail.");
+    }
+  };
+
+  const handleLeaveDelete = async (id) => {
+    if (!isAdmin) return;
+    if (!window.confirm("Delete leave?")) return;
+    try {
+      await deleteLeave(id);
+      toast.success("Removed.");
+      fetchProfile();
+    } catch {
+      toast.error("Error.");
     }
   };
 
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <div className="relative">
-          <FaSyncAlt className="animate-spin text-6xl text-indigo-500" />
-          <div className="absolute inset-0 blur-2xl bg-indigo-500 opacity-20"></div>
-        </div>
-        <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.5em] mt-6">
-          Syncing Neural Profile
-        </h2>
+        <FaSyncAlt className="animate-spin text-5xl text-indigo-500" />
       </div>
     );
-
-  if (!teacherData)
-    return (
-      <div className="text-center p-20 mt-20 text-red-500 font-bold uppercase">
-        Profile Unavailable
-      </div>
-    );
-
+  if (!teacherData) return null;
   const { teacherDetails } = teacherData;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 pt-10 print:pt-0">
+      <style>
+        {`
+          @media print {
+            @page { 
+              size: A4 portrait; 
+              margin: 15mm 15mm 20mm 15mm; 
+            }
+            body { 
+              background: white !important; 
+              margin: 0 !important; 
+              padding: 0 !important; 
+              -webkit-print-color-adjust: exact; 
+            }
+            .screen-layout, nav, .fixed, button, .no-print { display: none !important; }
+            
+            .print-container { 
+              display: block !important; 
+              width: 100% !important;
+              position: absolute;
+              top: 0;
+              left: 0;
+            }
 
-      <div className="max-w-[1600px] mx-auto relative z-10">
-        {/* --- HEADER --- */}
-        <div className="bg-white/70 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-white flex flex-col md:flex-row justify-between items-center gap-8 mb-10 transition-all hover:shadow-indigo-100 print:shadow-none">
+            .print-header { 
+              border-bottom: 2px solid #000; 
+              padding-bottom: 10px; 
+              margin-bottom: 25px; 
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            
+            .print-section { 
+              margin-bottom: 25px; 
+              width: 100%; 
+              page-break-inside: avoid;
+            }
+            
+            table { 
+              width: 100% !important; 
+              border-collapse: collapse !important; 
+              table-layout: fixed; 
+              margin-top: 5px;
+              border: 1px solid #000 !important;
+            }
+            th { 
+              background-color: #d9d2e9 !important; 
+              font-weight: 900; 
+              text-transform: uppercase; 
+              font-size: 10px; 
+              border: 1px solid #000 !important; 
+              padding: 8px 12px; 
+              text-align: left !important;
+            }
+            td { 
+              border: 1px solid #000 !important; 
+              padding: 8px 12px; 
+              font-size: 10px; 
+              text-align: left !important;
+              word-wrap: break-word; 
+              vertical-align: top;
+            }
+
+            .print-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              font-size: 8px;
+              color: #000;
+              border-top: 1px solid #000;
+              padding-top: 5px;
+              display: flex !important;
+              justify-content: space-between;
+              width: 100%;
+            }
+            .page-number::after { content: counter(page); }
+          }
+          .print-container { display: none; }
+        `}
+      </style>
+
+      {/* --- 📄 PDF LAYOUT --- */}
+      <div className="print-container">
+        <div className="print-header">
+          <div>
+            <h1 className="text-xl font-black text-slate-900 uppercase">
+              {teacherDetails.name}
+            </h1>
+            <p className="text-[10px] font-bold text-slate-700 tracking-widest uppercase">
+              {teacherDetails.designation} | ID: {teacherDetails.teacherId}
+            </p>
+            <p className="text-[9px] text-slate-600 font-bold mt-1 uppercase">
+              CAMPUS:{" "}
+              <span className="text-blue-600">
+                {teacherDetails.campus?.name}
+              </span>{" "}
+              | PHONE:{" "}
+              <span className="text-blue-600">{teacherDetails.phone}</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <h2 className="text-sm font-black text-slate-900 uppercase">
+              Teacher's Exam Duty Report
+            </h2>
+            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+              Confidential Record
+            </p>
+          </div>
+        </div>
+
+        {/* ১. রেসপন্সিবিলিটি আর্কাইভ */}
+        <div className="print-section">
+          <h3 className="text-[9px] font-black bg-slate-100 border border-black px-2 py-1 inline-block mb-2 uppercase tracking-widest">
+            1. Responsibility Archive
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "12%" }}>Session</th> {/* প্রস্থ ১২% */}
+                <th style={{ width: "38%" }}>Duty Title</th>
+                <th style={{ width: "25%" }}>Class</th>
+                <th style={{ width: "25%" }}>Subject</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teacherData.assignmentsByYear?.map((year) =>
+                year.responsibilities.map((res, idx) => (
+                  <tr key={`${year._id}-${idx}`}>
+                    <td className="font-bold">{idx === 0 ? year._id : ""}</td>
+                    <td className="uppercase font-semibold">{res.name}</td>
+                    <td>{res.class}</td>
+                    <td>{res.subject}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ২. লিভ ও পারফরম্যান্স গ্রিড */}
+        <div className="print-section">
+          <div>
+            <h3 className="text-[9px] font-black bg-slate-100 border border-black px-2 py-1 inline-block mb-2 uppercase tracking-widest">
+              2. Leave Records
+            </h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: "12%" }}>Year</th>{" "}
+                  {/* গ্রিডের কারণে ১২% * ২ = ২৪% */}
+                  <th style={{ width: "88%" }}>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grantedLeaves.map((leave) => (
+                  <tr key={leave._id}>
+                    <td className="font-bold">{leave.year}</td>
+                    <td className="italic">{leave.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h3 className="text-[9px] font-black bg-slate-100 border border-black px-2 py-1 inline-block mb-2 uppercase tracking-widest">
+              3. Performance Review
+            </h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: "12%" }}>Year</th>{" "}
+                  {/* গ্রিডের কারণে ১২% * ২ = ২৪% */}
+                  <th style={{ width: "88%" }}>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teacherDetails.reports?.map((report, idx) => (
+                  <tr key={idx}>
+                    <td className="font-bold">{report.year}</td>
+                    <td className="italic">"{report.performanceReport}"</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ৩. একাডেমিক রুটিন */}
+        <div className="print-section">
+          <h3 className="text-[9px] font-black bg-slate-100 border border-black px-2 py-1 inline-block mb-2 uppercase tracking-widest">
+            4. Academic Routine
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "12%" }}>Year</th>
+                <th style={{ width: "88%" }}>Routine (Class & Subject)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uniqueRoutineSchedule.map((item, i) => (
+                <tr key={i}>
+                  <td className="font-bold">{item.year}</td>
+                  <td className="uppercase font-semibold">{item.display}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* সিগনেচার এরিয়া */}
+        <div className="mt-20 flex justify-between px-10">
+          <div className="text-center border-t border-black pt-1 w-44 text-[8px] font-black uppercase">
+            Incharge
+          </div>
+          <div className="text-center border-t border-black pt-1 w-44 text-[8px] font-black uppercase">
+            Headmaster
+          </div>
+        </div>
+
+        {/* প্রফেশনাল ফুটার */}
+        <div className="print-footer">
+          <div>
+            Printed: {new Date().toLocaleDateString()} |{" "}
+            {new Date().toLocaleTimeString()}
+          </div>
+          <div className="page-number">Page </div>
+        </div>
+      </div>
+
+      {/* --- 🖥️ ORIGINAL SCREEN LAYOUT --- */}
+      <div className="screen-layout max-w-[1600px] mx-auto relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-sm border border-white flex flex-col md:flex-row justify-between items-center gap-6 mb-10 transition-all">
           <div className="flex items-center gap-8">
-            <div className="relative">
-              <div className="h-20 w-20 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white text-4xl font-black shadow-2xl uppercase">
-                {teacherDetails.name?.charAt(0)}
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-green-500 h-5 w-5 rounded-full border-4 border-white"></div>
+            <div className="h-20 w-20 rounded-[2rem] bg-slate-900 flex items-center justify-center text-white text-4xl font-black shadow-2xl uppercase">
+              {teacherDetails.name?.charAt(0)}
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase mb-2">
+              <h1 className="text-2xl font-black text-slate-900 uppercase mb-2">
                 {teacherDetails.name}
               </h1>
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-indigo-600 text-white text-[10px] font-black rounded-lg uppercase tracking-widest shadow-lg shadow-indigo-100">
+              <div className="flex gap-2">
+                <span className="px-3 py-1 bg-indigo-600 text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
                   ID: {teacherDetails.teacherId}
                 </span>
-                <span className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center bg-slate-100 px-3 py-1 rounded-lg">
-                  <FaUserTag className="mr-2 text-indigo-500" />{" "}
+                <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg uppercase tracking-widest">
                   {teacherDetails.designation}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 print:hidden">
-            <Button
-              onClick={() => window.print()}
-              variant="secondary"
-              className="rounded-xl p-4 bg-white shadow-sm border-slate-100"
-            >
-              <FaPrint />
-            </Button>
+          <div className="flex flex-wrap gap-3">
             <Button
               onClick={() => navigate("/teachers")}
               variant="secondary"
-              className="rounded-xl p-4 bg-white shadow-sm border-slate-100"
+              className="rounded-xl p-4 bg-white"
             >
               <FaChevronLeft />
             </Button>
-            <div className="h-10 w-[1.5px] bg-slate-200 mx-2 hidden md:block" />
             <Button
-              onClick={() => toggleModal("yearlyView", true)}
+              onClick={() => window.print()}
               variant="secondary"
-              className="bg-white border-slate-100 text-indigo-600 font-black px-5 rounded-xl"
+              className="rounded-xl px-5 bg-white border-slate-200 text-indigo-600 font-black text-xs"
             >
-              <FaBook className="mr-2" /> ROUTINE
+              <FaPrint className="mr-2" /> PRINT REPORT
             </Button>
-            {canManage && (
+            <Button
+              onClick={() => toggleModal("report", true)}
+              variant="primary"
+              className="bg-indigo-600 shadow-lg px-6 rounded-xl font-black uppercase text-[10px] tracking-widest"
+            >
+              <FaChartLine className="mr-2" /> Report
+            </Button>
+            {isAdmin && (
               <>
-                <Button
-                  onClick={() => toggleModal("report", true)}
-                  variant="primary"
-                  className="bg-indigo-600 shadow-xl shadow-indigo-100 px-6 rounded-xl"
-                >
-                  <FaChartLine className="mr-2" /> REPORT
-                </Button>
                 <Button
                   onClick={() => toggleModal("leave", true)}
                   variant="warning"
-                  className="bg-amber-500 shadow-xl shadow-amber-100 px-6 rounded-xl text-white border-none"
+                  className="bg-amber-500 text-white shadow-lg px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border-none"
                 >
-                  <FaCalendarCheck className="mr-2" /> LEAVE
+                  <FaCalendarCheck className="mr-2" /> Leave
+                </Button>
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`rounded-xl px-6 shadow-xl font-black uppercase text-[10px] tracking-widest ${
+                    isEditing
+                      ? "bg-rose-500 text-white"
+                      : "bg-slate-900 text-white"
+                  }`}
+                >
+                  {isEditing ? (
+                    <FaRegWindowClose />
+                  ) : (
+                    <>
+                      <FaEdit className="mr-2" /> Manage
+                    </>
+                  )}
                 </Button>
               </>
-            )}
-            {isAdmin && (
-              <Button
-                onClick={() => setIsEditing(!isEditing)}
-                className={`rounded-xl px-6 shadow-xl ${
-                  isEditing
-                    ? "bg-rose-500 text-white"
-                    : "bg-slate-900 text-white"
-                }`}
-              >
-                {isEditing ? (
-                  <FaRegWindowClose />
-                ) : (
-                  <>
-                    <FaEdit className="mr-2" /> MANAGE
-                  </>
-                )}
-              </Button>
             )}
           </div>
         </div>
 
-        {isEditing ? (
-          <div className="animate-in zoom-in-95 duration-500">
-            <UpdateTeacherForm
-              teacherId={teacherId}
-              onUpdateSuccess={() => {
-                setIsEditing(false);
-                fetchProfile();
-              }}
-            />
-          </div>
-        ) : (
+        {!isEditing && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* --- SIDEBAR --- */}
+            {/* Sidebar Historial Data */}
             <div className="lg:col-span-4 space-y-10">
-              {/* Intel Card */}
-              <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-8 flex items-center">
-                  <span className="h-1.5 w-10 bg-indigo-600 mr-4 rounded-full" />{" "}
-                  Personal intel
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 flex items-center">
+                  <span className="h-1 w-8 bg-indigo-600 mr-3 rounded-full" />{" "}
+                  Personal Intel
                 </h3>
-                <div className="space-y-6">
-                  <div className="flex items-center gap-5">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <FaPhoneAlt />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
-                        Contact Line
-                      </p>
-                      <p className="text-sm font-bold text-slate-900">
-                        {teacherDetails.phone}
-                      </p>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                    <FaPhoneAlt className="text-indigo-400" />
+                    <p className="text-xs font-bold text-slate-700">
+                      {teacherDetails.phone}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-5">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <FaUniversity />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
-                        Stationed Campus
-                      </p>
-                      <p className="text-sm font-bold text-slate-900">
-                        {teacherDetails.campus?.name}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                    <FaUniversity className="text-indigo-400" />
+                    <p className="text-xs font-bold text-slate-700">
+                      {teacherDetails.campus?.name}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Performance Timeline */}
-              <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-10 flex items-center">
-                  <span className="h-1.5 w-10 bg-indigo-600 mr-4 rounded-full" />{" "}
-                  Annual Reviews
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                <h3 className="text-[10px] font-black text-rose-400 uppercase tracking-[0.3em] mb-6 flex items-center">
+                  <span className="h-1 w-8 bg-rose-500 mr-3 rounded-full" />{" "}
+                  Leave History
                 </h3>
-                {teacherDetails.reports?.length > 0 ? (
-                  <div className="space-y-10 relative">
-                    <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-slate-100"></div>
-                    {teacherDetails.reports.map((report, idx) => (
-                      <div key={idx} className="relative pl-12">
-                        <div className="absolute left-0 top-1 h-[40px] w-[40px] rounded-full bg-white border-[3px] border-indigo-100 flex items-center justify-center z-10">
-                          <FaQuoteLeft className="text-indigo-200 text-[10px]" />
-                        </div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[11px] font-black text-indigo-600 uppercase bg-indigo-50 px-3 py-1 rounded-lg">
-                            Session {report.year}
-                          </span>
-                        </div>
-                        {/* VIEW FIX: Added ResponsibilityType here */}
-                        <div className="p-5 bg-slate-50/50 rounded-3xl border border-slate-100">
-                          <p className="text-[10px] font-black text-slate-400 uppercase mb-2">
-                            Responsibility:{" "}
-                            {report.responsibility?.name || "N/A"}
-                          </p>
-                          <p className="text-xs text-slate-600 leading-relaxed font-semibold italic">
+                <div className="space-y-4">
+                  {grantedLeaves.length > 0 ? (
+                    grantedLeaves.map((leave) => (
+                      <div
+                        key={leave._id}
+                        className="p-4 bg-rose-50/40 border border-rose-100 rounded-2xl relative group"
+                      >
+                        <p className="text-[9px] font-black text-rose-600">
+                          Session {leave.year}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-700">
+                          {leave.reason}
+                        </p>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleLeaveDelete(leave._id)}
+                            className="absolute top-3 right-3 text-rose-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <FaTrashAlt size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center py-4 text-[10px] font-black text-slate-200">
+                      No Records
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* ✅ REPORT HISTORY RESTORED IN SCREEN VIEW */}
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-6 flex items-center">
+                  <span className="h-1 w-8 bg-emerald-500 mr-3 rounded-full" />{" "}
+                  Performance Reviews
+                </h3>
+                <div className="space-y-6">
+                  {teacherDetails.reports?.length > 0 ? (
+                    teacherDetails.reports.map((report, idx) => (
+                      <div
+                        key={idx}
+                        className="pl-6 border-l-2 border-emerald-100 relative"
+                      >
+                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-emerald-500 border-4 border-white"></div>
+                        <span className="text-[9px] font-black text-emerald-600 uppercase bg-emerald-50 px-2 py-0.5 rounded">
+                          Session {report.year}
+                        </span>
+                        <div className="mt-3 p-4 bg-slate-50 rounded-2xl">
+                          <p className="text-[11px] text-slate-600 font-semibold italic">
                             "{report.performanceReport}"
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px]">
-                    No Archival Reviews
-                  </p>
-                )}
-              </div>
-
-              {/* LEAVE HISTORY SECTION */}
-              <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-10 flex items-center">
-                  <span className="h-1.5 w-10 bg-rose-500 mr-4 rounded-full" />{" "}
-                  Leave History
-                </h3>
-                {grantedLeaves.length > 0 ? (
-                  <div className="space-y-8 relative">
-                    <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-slate-100"></div>
-                    {grantedLeaves.map((leave, idx) => (
-                      <div key={idx} className="relative pl-12 group">
-                        <div className="absolute left-0 top-1 h-[40px] w-[40px] rounded-full bg-white border-[3px] border-rose-100 flex items-center justify-center z-10 group-hover:border-rose-500 transition-all">
-                          <FaSuitcase className="text-rose-200 text-xs group-hover:text-rose-500" />
-                        </div>
-                        <div className="p-5 bg-rose-50/30 rounded-3xl border border-rose-100/50">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <p className="text-[10px] font-black text-rose-600 uppercase">
-                                Year {leave.year}
-                              </p>
-                              <h4 className="text-xs font-black text-slate-800 uppercase mt-1">
-                                {leave.responsibilityType?.name}
-                              </h4>
-                            </div>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleDeleteLeave(leave._id)}
-                                className="text-rose-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <FaRegWindowClose size={14} />
-                              </button>
-                            )}
-                          </div>
-                          <div className="pt-2 border-t border-rose-100/50 text-[10px] font-bold text-slate-500 italic">
-                            Reason: {leave.reason || "No reason specified"}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px]">
-                    No leave records found
-                  </p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-center py-6 text-[10px] font-black text-slate-300 uppercase">
+                      No reviews yet
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* --- MAIN MATRIX --- */}
+            {/* Main Sections */}
             <div className="lg:col-span-8 space-y-10">
-              <div className="bg-white p-10 md:p-14 rounded-[4rem] shadow-sm border border-slate-100 min-h-[600px] relative">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-14 gap-8">
-                  <div className="flex items-center gap-5">
-                    <div className="h-14 w-14 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-indigo-100">
-                      <FaClipboardList size={22} />
-                    </div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                      Responsibility Matrix
-                    </h3>
-                  </div>
-                  <div className="flex bg-slate-100 p-2 rounded-[1.5rem]">
-                    {lastThreeYears.map((year) => (
+              <div className="bg-white p-10 rounded-[4rem] shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-12">
+                  <h3 className="text-xl font-black text-slate-900 uppercase">
+                    Responsibility Matrix
+                  </h3>
+                  <div className="flex bg-slate-100 p-1 rounded-2xl">
+                    {dynamicYears.slice(0, 4).map((year) => (
                       <button
                         key={year}
                         onClick={() => setActiveTab(year)}
-                        className={`px-8 py-3 rounded-[1.2rem] text-xs font-black transition-all duration-500 ${
-                          String(activeTab) === String(year)
-                            ? "bg-white text-indigo-600 shadow-xl scale-110"
-                            : "text-slate-400 hover:text-slate-600"
+                        className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${
+                          activeTab === year
+                            ? "bg-white text-indigo-600 shadow-md"
+                            : "text-slate-400"
                         }`}
                       >
                         {year}
@@ -407,86 +580,98 @@ const TeacherProfile = ({ teacherId }) => {
                     ))}
                   </div>
                 </div>
-
-                <div className="animate-in fade-in slide-in-from-bottom-10 duration-700">
-                  {filteredAssignments.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {filteredAssignments.map((assignment, i) => (
-                        <div
-                          key={i}
-                          className="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 flex justify-between items-center group hover:bg-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {filteredAssignments.map((assignment, i) => (
+                    <div
+                      key={i}
+                      className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center gap-4 relative group"
+                    >
+                      <FaUserShield className="text-indigo-500" size={24} />
+                      <div>
+                        <p className="text-sm font-black text-slate-800 uppercase">
+                          {assignment.name}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400">
+                          {assignment.class} | {assignment.subject}
+                        </p>
+                      </div>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleAssignmentDelete(assignment._id)}
+                          className="absolute top-4 right-4 text-slate-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                         >
-                          <div className="flex items-center gap-6">
-                            <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center text-indigo-500 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                              <FaUserShield size={20} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-slate-800 uppercase tracking-tighter mb-1">
-                                {assignment.name}
-                              </p>
-                              <div className="flex gap-2">
-                                <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded uppercase">
-                                  {assignment.class}
-                                </span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">
-                                  {assignment.subject}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleDutyDelete(assignment._id)}
-                              className="text-slate-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <FaRegWindowClose size={18} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                          <FaTrashAlt size={14} />
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-center py-40 opacity-20 font-black uppercase text-sm tracking-widest">
-                      No entries for {activeTab}
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
 
-              {/* Routine Panel */}
-              <div className="bg-slate-900 p-12 rounded-[4rem] text-white flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden relative shadow-2xl">
-                <div className="relative z-10">
-                  <h3 className="text-3xl font-black uppercase leading-none mb-3 tracking-tight">
-                    Academic Routine
+              <div className="bg-white p-10 rounded-[4rem] shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-10">
+                  <h3 className="text-xl font-black text-slate-900 uppercase">
+                    Current Routine
                   </h3>
-                  <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.4em]">
-                    Official Institutional Schedule
-                  </p>
-                </div>
-                <div className="flex gap-5 relative z-10">
-                  <Button
-                    onClick={() => toggleModal("yearlyView", true)}
-                    className="bg-white/10 hover:bg-white/20 border-white/10 text-white rounded-2xl font-black px-10 py-4"
-                  >
-                    ARCHIVE
-                  </Button>
-                  {canManage && (
-                    <Button
+                  {canManageRoutine && (
+                    <button
                       onClick={() => toggleModal("routine", true)}
-                      className="bg-indigo-600 hover:bg-indigo-700 shadow-xl rounded-2xl font-black px-10 py-4"
+                      className="bg-indigo-600 text-white p-3 rounded-xl hover:scale-105 transition-all"
                     >
-                      <FaPlus className="mr-3" /> INITIALIZE
-                    </Button>
+                      <FaPlus />
+                    </button>
                   )}
                 </div>
-                <FaBook className="absolute -bottom-10 -right-10 text-white/[0.03] text-[15rem] transform -rotate-12" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {uniqueRoutineSchedule
+                    .filter((r) => r.year === currentYear)
+                    .map((item, i) => (
+                      <div
+                        key={i}
+                        className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <FaHistory className="text-indigo-500" />
+                          <p className="text-xs font-bold text-slate-700">
+                            {item.display}
+                          </p>
+                        </div>
+                        {canManageRoutine && (
+                          <button
+                            onClick={() => handleRoutineDelete(item._id)}
+                            className="text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <FaTrashAlt />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                </div>
+                <div className="mt-8 pt-8 border-t border-slate-50 flex justify-center">
+                  <button
+                    onClick={() => toggleModal("yearlyView", true)}
+                    className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                  >
+                    <FaHistory /> View Archive
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {isEditing && (
+          <UpdateTeacherForm
+            teacherId={teacherId}
+            onUpdateSuccess={() => {
+              setIsEditing(false);
+              fetchProfile();
+            }}
+          />
+        )}
       </div>
 
-      {/* --- MODALS --- */}
+      {/* MODALS */}
       <AnnualReportModal
         isOpen={modals.report}
         onClose={() => toggleModal("report", false)}

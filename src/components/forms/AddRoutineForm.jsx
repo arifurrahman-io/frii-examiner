@@ -17,6 +17,7 @@ import {
   getSubjects,
 } from "../../api/apiService";
 import useDebounce from "../../hooks/useDebounce";
+import { useAuth } from "../../context/AuthContext"; // Auth Context যোগ করা হয়েছে
 
 const getInitialState = (initialData, defaultTeacherId) => ({
   _id: initialData?._id || "",
@@ -28,8 +29,10 @@ const getInitialState = (initialData, defaultTeacherId) => ({
 });
 
 const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
+  const { user } = useAuth(); // ইউজারের রোল এবং ক্যাম্পাস ডাটা নেওয়া হচ্ছে
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const [formData, setFormData] = useState(
     getInitialState(initialData, defaultTeacherId)
   );
@@ -46,25 +49,42 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
+        // ইনচার্জ হলে শুধু তাঁর ক্যাম্পাসের শিক্ষকদের কুয়েরি করা হবে
+        const effectiveSearch =
+          user?.role === "incharge"
+            ? `${debouncedSearchTerm} ${user.campus?.name || ""}`.trim()
+            : debouncedSearchTerm;
+
         const [teachersRes, classesRes, subjectsRes] = await Promise.all([
-          getTeachers(debouncedSearchTerm, 1, 999),
+          getTeachers(effectiveSearch, 1, 999),
           getClasses(),
           getSubjects(),
         ]);
-        const teacherList = teachersRes.data.teachers || [];
+
+        let teacherList = teachersRes.data.teachers || [];
+
+        // ফ্রন্টএন্ডে অতিরিক্ত সিকিউরিটি ফিল্টারিং (ইনচার্জের জন্য)
+        if (user?.role === "incharge" && user.campus) {
+          teacherList = teacherList.filter(
+            (t) =>
+              t.campus?._id === user.campus._id || t.campus === user.campus._id
+          );
+        }
+
         const formattedTeachers = teacherList.map((t) => ({
           ...t,
           name: `${t.name} | ${t.campus?.name || "N/A"}`,
         }));
+
         setTeachers(formattedTeachers);
         setClasses(classesRes.data);
         setSubjects(subjectsRes.data);
       } catch (error) {
-        toast.error("Failed to load configuration buffers.");
+        toast.error("Protocol Sync Error: Failed to load buffers.");
       }
     };
     fetchMasterData();
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, user]); // user অবজেক্ট পরিবর্তন হলে ডেটা রি-ফেচ হবে
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -112,7 +132,10 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
                 {initialData ? "Modify Protocol" : "Initialize Routine"}
               </h2>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
-                <FaTerminal className="text-indigo-500" /> Command Console
+                <FaTerminal className="text-indigo-500" />{" "}
+                {user?.role === "incharge"
+                  ? `${user.campus?.name} Console`
+                  : "Global Command Console"}
               </p>
             </div>
           </div>
@@ -122,7 +145,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
           <div className="md:col-span-4">
             <SelectDropdown
-              label="Academic Cycle"
+              label="Academic Year"
               name="year"
               value={formData.year}
               onChange={handleChange}
@@ -137,7 +160,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
           </div>
           <div className="md:col-span-8">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">
-              Staff Search Filter
+              Teacher Search Filter{" "}
             </label>
             <div className="relative group/search">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/search:text-indigo-500 transition-colors" />
@@ -160,7 +183,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         {/* --- ROW 2: TEACHER SELECT --- */}
         <div className="relative">
           <SelectDropdown
-            label="Staff Identification"
+            label="Teacher's Identification"
             name="teacher"
             value={formData.teacher}
             onChange={handleChange}
@@ -168,7 +191,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
             placeholder={
               debouncedSearchTerm
                 ? `Matching "${debouncedSearchTerm}"...`
-                : "Select Identified Personnel"
+                : "Select Teacher"
             }
             disabled={!!initialData || !!defaultTeacherId}
             required
@@ -178,48 +201,41 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         {/* --- ROW 3: CLASS & SUBJECT --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SelectDropdown
-            label="Class Cohort"
+            label="Class"
             name="className"
             value={formData.className}
             onChange={handleChange}
             options={classes}
-            placeholder="Select Level"
+            placeholder="Select Class"
             required
           />
           <SelectDropdown
-            label="Knowledge Area"
+            label="Subject"
             name="subject"
             value={formData.subject}
             onChange={handleChange}
             options={subjects}
-            placeholder="Select Domain"
+            placeholder="Select Subject"
             required
           />
         </div>
 
         {/* --- ACTION AREA --- */}
-        <div className="pt-4 flex flex-col md:flex-row items-center gap-6">
+        <div className="pt-4">
           <button
             type="submit"
             disabled={loading}
-            className="w-full md:w-2/3 py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:shadow-indigo-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full  py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:shadow-indigo-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? (
               <FaSyncAlt className="animate-spin" />
             ) : (
               <>
                 <FaSave className="text-xs" />{" "}
-                {initialData ? "Update Registry" : "Index Routine"}
+                {initialData ? "Update Registry" : "Add Routine"}
               </>
             )}
           </button>
-
-          <div className="flex items-center gap-3 text-slate-400">
-            <FaInfoCircle size={14} />
-            <p className="text-[9px] font-bold uppercase tracking-widest leading-tight">
-              Changes are cross-indexed <br /> with central matrix.
-            </p>
-          </div>
         </div>
       </form>
     </div>

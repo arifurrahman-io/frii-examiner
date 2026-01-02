@@ -97,7 +97,7 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">
-                Staff Induction
+                Add Staff
               </h2>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
                 <FaTerminal className="text-indigo-500" /> Neural Record Entry
@@ -184,7 +184,7 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
           </button>
 
           <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest text-center mt-6">
-            Authorized Personnel induction only
+            Authorized Personnel only
           </p>
         </div>
       </form>
