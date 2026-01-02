@@ -16,6 +16,7 @@ import {
 } from "../../api/apiService";
 import { useAuth } from "../../context/AuthContext";
 import useDebounce from "../../hooks/useDebounce";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
 const TeacherSearchList = () => {
   const { user } = useAuth();
@@ -181,8 +182,8 @@ const TeacherSearchList = () => {
           <FaTerminal className="text-indigo-600 text-xs" />
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
             {!isAdmin
-              ? `${user?.campus?.name || "Campus"} Node Directory`
-              : "Global Faculty Matrix"}
+              ? `${user?.campus?.name || "Campus"} Teachers' Directory`
+              : "Complete Teachers' Matrix"}
           </h3>
         </div>
       </div>
@@ -190,12 +191,7 @@ const TeacherSearchList = () => {
       {/* --- LIST ENGINE --- */}
       <div className="space-y-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-md rounded-[3rem] border border-dashed border-slate-200">
-            <FaSyncAlt className="animate-spin text-6xl text-indigo-500/20 mb-6" />
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">
-              Filtering Local Matrix Nodes
-            </p>
-          </div>
+          <LoadingSpinner />
         ) : teachers.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-10 duration-1000">
             {teachers.map((teacher) => (

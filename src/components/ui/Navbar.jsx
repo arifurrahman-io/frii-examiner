@@ -54,12 +54,6 @@ const Navbar = () => {
       icon: <FaChartBar />,
     });
     NavItems.push({ name: "User Nodes", path: "/users", icon: <FaUsersCog /> });
-  } else if (user?.role === "incharge") {
-    NavItems.splice(1, 0, {
-      name: "Campus Setup",
-      path: "/setup/branch",
-      icon: <FaCogs />,
-    });
   }
 
   const handleLogout = async () => {

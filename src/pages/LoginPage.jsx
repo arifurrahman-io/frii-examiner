@@ -78,7 +78,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center p-4 ">
       <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-4xl border border-indigo-200/70 transform transition-all duration-500 hover:shadow-5xl">
         <div className="text-center mb-10">
           <FaUserTie className="text-6xl text-indigo-700 mx-auto mb-3" />

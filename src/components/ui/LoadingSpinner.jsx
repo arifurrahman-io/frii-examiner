@@ -1,29 +1,31 @@
 import React from "react";
-import { FaSyncAlt } from "react-icons/fa";
 
-/**
- * Reusable Loading Spinner Component (Modern Design)
- *
- * @param {string} message - Optional text message displayed below the spinner (e.g., "Loading data...").
- * @param {string} size - Tailwind CSS text size class (e.g., 'text-xl', 'text-5xl').
- * @param {string} color - Tailwind CSS text color class (e.g., 'text-indigo-700').
- */
 const LoadingSpinner = ({
+  size = "h-12 w-12",
+  color = "border-cyan-500",
   message = "Loading...",
-  size = "text-5xl", // Default is now larger for prominence
-  color = "text-indigo-700", // Default is a deeper, more professional indigo
 }) => {
   return (
-    // Increased vertical padding (py-16) for a central, focused display area
-    <div className="flex flex-col items-center justify-center py-16 w-full">
-      {/* 1. Spinner Icon: Larger, prominent color, maintaining spin animation */}
-      <FaSyncAlt
-        className={`animate-spin ${size} ${color} opacity-90`}
-        aria-label="Loading content"
-      />
+    <div className="flex flex-col items-center justify-center py-10 w-full">
+      {/* --- Circular Spinner --- */}
+      <div className="relative">
+        {/* Static Background Ring */}
+        <div
+          className={`${size} rounded-full border-4 border-cyan-100/30`}
+        ></div>
 
-      {/* 2. Message: Larger font, semi-bold text, and increased vertical gap */}
-      <p className="mt-5 text-xl font-semibold text-gray-700">{message}</p>
+        {/* Animated Spinning Ring (image_d0d747 style) */}
+        <div
+          className={`absolute top-0 left-0 ${size} rounded-full border-4 border-transparent ${color} border-t-transparent animate-spin shadow-[0_0_15px_rgba(6,182,212,0.2)]`}
+        ></div>
+      </div>
+
+      {/* --- Status Message --- */}
+      {message && (
+        <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">
+          {message}
+        </p>
+      )}
     </div>
   );
 };

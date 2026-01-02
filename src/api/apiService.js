@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// কাস্টম axios ইনস্ট্যান্স তৈরি
 const api = axios.create({
   baseURL: "/api",
 });
@@ -21,7 +22,6 @@ api.interceptors.request.use(
 
 /**
  * 🔐 ROLE & USER HELPERS
- * ফ্রন্টএন্ডে বাটন বা ফিচার কন্ডিশনাল রেন্ডার করার জন্য।
  */
 export const getUserRole = () => {
   try {
@@ -45,19 +45,14 @@ export const apiLogin = (credentials) => api.post("/auth/login", credentials);
 export const apiLogout = () => api.post("/auth/logout");
 
 // --- ২. ড্যাশবোর্ড API ---
-// ইনচার্জ হলে ব্যাকএন্ড অটোমেটিক তাঁর ক্যাম্পাসের ডাটা দিবে (টোকেন থেকে)
 export const getDashboardSummary = (year) =>
   api.get("/dashboard/summary", { params: { year } });
-
 export const getTopResponsibleTeachers = (year) =>
   api.get("/dashboard/top-teachers", { params: { year } });
-
 export const getRecentGrantedLeaves = (year) =>
   api.get("/dashboard/recent-granted-leaves", { params: { year } });
-
 export const getAssignmentByDutyType = (year) =>
   api.get("/dashboard/assignment-by-type", { params: { year } });
-
 export const getAssignmentByBranch = (year) =>
   api.get("/dashboard/assignment-by-branch", { params: { year } });
 
@@ -68,10 +63,8 @@ export const getGrantedLeavesByTeacher = (teacherId, year) =>
     params: { teacher: teacherId, status: "Granted", year },
   });
 
-// Admin Only
 export const getAllGrantedLeavesForReport = (filters) =>
   api.get("/leaves", { params: { ...filters, status: "Granted" } });
-
 export const deleteLeave = (leaveId) => api.delete(`/leaves/${leaveId}`);
 export const updateLeave = (leaveId, payload) =>
   api.put(`/leaves/${leaveId}`, payload);
@@ -79,7 +72,6 @@ export const checkLeaveConflict = (filters) =>
   api.get("/leaves/conflict-check", { params: filters });
 
 // --- ৪. শিক্ষক ম্যানেজমেন্ট API ---
-// campusId প্যারামিটারটি ইনচার্জদের জন্য ফিল্টার হিসেবে কাজ করবে
 export const getTeachers = (searchQuery, page = 1, limit = 20, campusId = "") =>
   api.get("/teachers", {
     params: { search: searchQuery, page, limit, campus: campusId },
@@ -90,6 +82,17 @@ export const getTeacherProfile = (teacherId) =>
 export const addTeacher = (teacherData) => api.post("/teachers", teacherData);
 export const updateTeacher = (teacherId, updateData) =>
   api.put(`/teachers/${teacherId}`, updateData);
+export const deleteTeacher = (id) => api.delete(`/teachers/${id}`);
+
+/**
+ * ✅ FIX: পারফরম্যান্স রিপোর্ট ডিলিট করার ফাংশন
+ * এখানে 'axios' এর বদলে 'api' ব্যবহার করতে হবে যাতে Interceptor (Token) কাজ করে।
+ * রাউটটি আপনার ব্যাকএন্ড রাউটের সাথে মিলানো হয়েছে: /api/teachers/:id/reports/:reportId
+ */
+// ✅ Correct Implementation in apiService.js
+export const deletePerformanceReport = (teacherId, reportId) => {
+  return api.delete(`/teachers/${teacherId}/reports/${reportId}`); // api ইনস্ট্যান্স টোকেন অটো-ইনজেক্ট করবে
+};
 
 export const uploadBulkTeachers = (formData) =>
   api.post("/teachers/bulk-upload", formData, {
@@ -105,18 +108,16 @@ export const updateRoutine = (routineId, routineData) =>
   api.put(`/routines/${routineId}`, routineData);
 export const deleteRoutine = (routineId) =>
   api.delete(`/routines/${routineId}`);
-
 export const getEligibleTeachers = (filters) =>
   api.get("/routines/filter", { params: filters });
 export const getTeacherRoutines = (teacherId, year) =>
   api.get(`/routines/teacher/${teacherId}`, { params: { year } });
-
 export const uploadRoutineExcel = (formData) =>
   api.post("/routines/bulk-upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// --- ৬. দায়িত্ব অ্যাসাইনমেন্ট API (অ্যাডমিনদের জন্য সীমাবদ্ধ) ---
+// --- ৬. দায়িত্ব অ্যাসাইনমেন্ট API ---
 export const assignDuty = (assignmentData) =>
   api.post("/assignments", assignmentData);
 export const deleteAssignmentPermanently = (assignmentId) =>
@@ -124,14 +125,12 @@ export const deleteAssignmentPermanently = (assignmentId) =>
 export const getAssignmentsByTeacherAndYear = (teacherId, year) =>
   api.get(`/assignments/teacher/${teacherId}`, { params: { year } });
 
-// --- ৭. মাস্টার ডেটা ম্যানেজমেন্ট (SyntaxError ফিক্সড) ---
-// এগুলো এখন সরাসরি এক্সপোর্ট করা হয়েছে যাতে ইমপোর্ট করতে সমস্যা না হয়
+// --- ৭. মাস্টার ডেটা ম্যানেজমেন্ট ---
 export const getBranches = () => api.get("/branches");
 export const getClasses = () => api.get("/classes");
 export const getSubjects = () => api.get("/subjects");
 export const getResponsibilityTypes = () => api.get("/responsibility-types");
 
-// ডায়নামিক মাস্টার ডাটা ফাংশন (Internal Use)
 const getMasterUrl = (type, id = "") => {
   const routes = {
     branch: "/branches",
