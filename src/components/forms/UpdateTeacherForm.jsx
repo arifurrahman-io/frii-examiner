@@ -200,7 +200,7 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
         <InputField
           label="Institutional Designation"
           name="designation"
-          placeholder="Metadata: e.g. Senior Faculty"
+          placeholder="Senior Teacher"
           value={formData.designation}
           onChange={handleChange}
         />

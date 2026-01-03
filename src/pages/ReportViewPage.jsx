@@ -44,7 +44,7 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
       "Sl.": "S.L.",
       CLASS: "Class Node",
       SUBJECT: "Subject Vector",
-      TEACHER: "Faculty Node",
+      TEACHER: "Teacher Node",
       CAMPUS: "Branch",
     };
     return labels[key] || key;
@@ -128,7 +128,7 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
             </div>
             <div>
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                Faculty Node
+                Teacher Node
               </p>
               <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
                 {row.TEACHER?.name || "-"}

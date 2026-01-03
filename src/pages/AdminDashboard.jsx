@@ -363,7 +363,7 @@ const AdminDashboard = () => {
                   <>
                     <ControlCard
                       icon={FaUserTie}
-                      title="Faculty List"
+                      title="Teacher List"
                       subtitle="My Campus Teachers"
                       path="/teachers"
                     />

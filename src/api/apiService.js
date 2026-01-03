@@ -85,22 +85,19 @@ export const updateTeacher = (teacherId, updateData) =>
 export const deleteTeacher = (id) => api.delete(`/teachers/${id}`);
 
 /**
- * ✅ FIX: পারফরম্যান্স রিপোর্ট ডিলিট করার ফাংশন
- * এখানে 'axios' এর বদলে 'api' ব্যবহার করতে হবে যাতে Interceptor (Token) কাজ করে।
- * রাউটটি আপনার ব্যাকএন্ড রাউটের সাথে মিলানো হয়েছে: /api/teachers/:id/reports/:reportId
+ * ✅ পারফরম্যান্স রিপোর্ট অপারেশনস
  */
-// ✅ Correct Implementation in apiService.js
 export const deletePerformanceReport = (teacherId, reportId) => {
-  return api.delete(`/teachers/${teacherId}/reports/${reportId}`); // api ইনস্ট্যান্স টোকেন অটো-ইনজেক্ট করবে
+  return api.delete(`/teachers/${teacherId}/reports/${reportId}`);
 };
+
+export const addAnnualReport = (teacherId, data) =>
+  api.post(`/teachers/${teacherId}/report`, data);
 
 export const uploadBulkTeachers = (formData) =>
   api.post("/teachers/bulk-upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-
-export const addAnnualReport = (teacherId, data) =>
-  api.post(`/teachers/${teacherId}/report`, data);
 
 // --- ৫. রুটিন API ---
 export const addRoutine = (routineData) => api.post("/routines", routineData);
@@ -118,6 +115,10 @@ export const uploadRoutineExcel = (formData) =>
   });
 
 // --- ৬. দায়িত্ব অ্যাসাইনমেন্ট API ---
+/**
+ * POST /assignments
+ * এখানে ইনচার্জ এক্সেস করার সময় ব্যাকএন্ড চেক করবে (Class 1-3 Restriction)
+ */
 export const assignDuty = (assignmentData) =>
   api.post("/assignments", assignmentData);
 export const deleteAssignmentPermanently = (assignmentId) =>
@@ -154,6 +155,10 @@ export const deleteMasterData = (type, id) =>
 export const getReportData = (filters) =>
   api.get("/reports/data", { params: filters });
 
+/**
+ * 📄 PDF এক্সপোর্ট ফিক্স
+ * সরাসরি window.open না করে বেস URL এর সাথে কনক্যাট করা হয়েছে
+ */
 export const exportCustomReportToPDF = (filters) => {
   const params = new URLSearchParams(filters).toString();
   const endpoint =

@@ -97,42 +97,45 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
   };
 
   return (
-    <div className="relative max-w-4xl mx-auto my-8">
+    <div className="relative max-w-4xl mx-auto my-4 sm:my-8 px-2 sm:px-4">
       {/* Dynamic Background Glow */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-[3rem] blur-2xl"></div>
+      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-[2rem] sm:rounded-[3rem] blur-2xl"></div>
 
-      <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] border border-white/50 shadow-2xl overflow-hidden transition-all duration-500">
-        <form onSubmit={handleSubmit} className="p-10 md:p-14 space-y-12">
-          {/* --- HEADER SECTION --- */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-8 mb-4">
-            <div className="flex items-center gap-5">
-              <div className="h-14 w-14 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-indigo-400 shadow-xl shadow-indigo-100/50">
-                <FaFingerprint size={24} />
+      <div className="relative bg-white/90 backdrop-blur-2xl rounded-[2rem] sm:rounded-[3rem] border border-white/50 shadow-2xl overflow-hidden transition-all duration-500">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 sm:p-10 md:p-14 space-y-8 sm:space-y-12"
+        >
+          {/* --- HEADER SECTION: Fully Responsive Stack --- */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-6 sm:pb-8 mb-4 gap-4">
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 bg-slate-900 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center text-indigo-400 shadow-xl shrink-0">
+                <FaFingerprint className="text-xl sm:text-2xl" />
               </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight leading-none truncate">
                   Teacher Registration
                 </h2>
-                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-[0.2em] mt-2">
+                <p className="text-[8px] sm:text-[10px] font-bold text-indigo-600 uppercase tracking-[0.2em] mt-1.5 sm:mt-2">
                   System Mode: {isAdmin ? "Global Admin" : "Shift Incharge"}
                 </p>
               </div>
             </div>
 
             {isIncharge && (
-              <div className="flex items-center gap-3 px-5 py-2.5 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                <FaEthernet className="text-indigo-500" size={12} />
-                <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">
+              <div className="flex items-center gap-3 px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-50/50 rounded-xl sm:rounded-2xl border border-indigo-100/50 self-start sm:self-auto">
+                <FaEthernet className="text-indigo-500 text-xs" />
+                <span className="text-[9px] sm:text-[10px] font-black text-slate-700 uppercase tracking-widest truncate max-w-[150px]">
                   {user?.campus?.name || "Local Node"}
                 </span>
               </div>
             )}
           </div>
 
-          {/* --- INPUT GRID --- */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-12">
-            {/* Full Name - Spans full width if incharge to create balanced whitespace */}
-            <div className={isIncharge ? "md:col-span-2" : ""}>
+          {/* --- INPUT GRID: Adaptive Column Scaling --- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-10 gap-y-8 sm:gap-y-12">
+            {/* Full Name */}
+            <div className={isIncharge ? "md:col-span-2" : "w-full"}>
               <InputField
                 label="Teacher's Name"
                 name="name"
@@ -142,101 +145,112 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
                 onChange={handleChange}
                 error={errors.name}
                 required
-                className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold px-6"
+                className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
               />
             </div>
 
             {/* Staff ID */}
-            <InputField
-              label="Teacher's ID"
-              name="teacherId"
-              icon={FaIdCard}
-              placeholder="T68****15116"
-              value={formData.teacherId}
-              onChange={handleChange}
-              error={errors.teacherId}
-              required
-              className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold px-6"
-            />
-
-            {/* Campus Select (Only for Global Admin) */}
-            {!isIncharge ? (
-              <SelectDropdown
-                label="Campus/Shift"
-                name="campus"
-                icon={FaBuilding}
-                options={branches}
-                value={formData.campus}
-                onChange={handleChange}
-                error={errors.campus}
-                required
-                className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold"
-              />
-            ) : (
-              /* If Incharge, Phone sits next to ID for balanced padding */
+            <div className="w-full">
               <InputField
-                label="Phone Number"
-                name="phone"
-                icon={FaPhone}
-                placeholder="0168***6151"
-                value={formData.phone}
+                label="Teacher's ID"
+                name="teacherId"
+                icon={FaIdCard}
+                placeholder="T68****15116"
+                value={formData.teacherId}
                 onChange={handleChange}
-                error={errors.phone}
+                error={errors.teacherId}
                 required
-                className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold px-6"
+                className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
               />
-            )}
+            </div>
 
-            {/* Admin only fields for balanced 2-column flow */}
-            {!isIncharge && (
-              <>
+            {/* Campus Select - Fixed Width Issue */}
+            {!isIncharge ? (
+              <div className="w-full">
+                <SelectDropdown
+                  label="Campus/Shift"
+                  name="campus"
+                  icon={FaBuilding} // আইকন যোগ করা হয়েছে যাতে বাম দিকের গ্যাপ সমান থাকে
+                  options={branches}
+                  value={formData.campus}
+                  onChange={handleChange}
+                  error={errors.campus}
+                  required
+                  // এখানে w-full এবং নির্দিষ্ট প্যাডিং নিশ্চিত করা হয়েছে
+                  className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold"
+                />
+              </div>
+            ) : (
+              <div className="w-full">
                 <InputField
-                  label="Communication Line"
+                  label="Phone Number"
                   name="phone"
                   icon={FaPhone}
-                  placeholder="Contact Matrix"
+                  placeholder="0168***6151"
                   value={formData.phone}
                   onChange={handleChange}
                   error={errors.phone}
                   required
-                  className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold px-6"
+                  className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
                 />
-                <InputField
-                  label="Institutional Designation"
-                  name="designation"
-                  icon={FaUserTie}
-                  placeholder="Meta Role Assignment"
-                  value={formData.designation}
-                  onChange={handleChange}
-                  className="bg-slate-50/50 border-slate-100/50 rounded-2xl h-14 text-sm font-semibold px-6"
-                />
+              </div>
+            )}
+
+            {/* Admin only fields */}
+            {!isIncharge && (
+              <>
+                <div className="w-full">
+                  <InputField
+                    label="Communication Line"
+                    name="phone"
+                    icon={FaPhone}
+                    placeholder="Contact Matrix"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    error={errors.phone}
+                    required
+                    className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
+                  />
+                </div>
+                <div className="w-full">
+                  <InputField
+                    label="Institutional Designation"
+                    name="designation"
+                    icon={FaUserTie}
+                    placeholder="Meta Role Assignment"
+                    value={formData.designation}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
+                  />
+                </div>
               </>
             )}
           </div>
 
           {/* --- ACTION SECTION --- */}
-          <div className="pt-10 border-t border-slate-100 mt-6">
+          <div className="pt-6 sm:pt-10 border-t border-slate-100 mt-4 sm:mt-6">
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full overflow-hidden rounded-[1.5rem] bg-slate-900 py-5 text-white shadow-2xl transition-all hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-70"
+              className="group relative w-full overflow-hidden rounded-xl sm:rounded-[1.5rem] bg-slate-900 py-4 sm:py-5 text-white shadow-2xl transition-all hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-70"
             >
-              <div className="relative flex items-center justify-center gap-4 font-black uppercase tracking-[0.3em] text-[13px]">
+              <div className="relative flex items-center justify-center gap-3 sm:gap-4 font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[11px] sm:text-[13px]">
                 {loading ? (
                   <FaSyncAlt className="animate-spin" />
                 ) : (
                   <>
-                    <FaSave /> <span>Add Teacher</span>
+                    <FaSave className="text-sm sm:text-base" />{" "}
+                    <span>Add Teacher</span>
                   </>
                 )}
               </div>
             </button>
 
-            <div className="mt-8 flex flex-col items-center gap-2">
-              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.5em]">
+            <div className="mt-6 sm:mt-8 flex flex-col items-center gap-2 px-4 text-center">
+              <p className="text-[7px] sm:text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] sm:tracking-[0.5em] leading-relaxed">
                 Institutional Security Protocol V2.5.1
               </p>
-              <div className="h-1 w-20 bg-indigo-50 rounded-full"></div>
+              <div className="h-1 w-16 sm:w-20 bg-indigo-50 rounded-full"></div>
             </div>
           </div>
         </form>

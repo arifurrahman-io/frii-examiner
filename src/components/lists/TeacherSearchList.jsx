@@ -156,7 +156,7 @@ const TeacherSearchList = () => {
                 ? `Filter personnel in ${
                     user?.campus?.name || "assigned campus"
                   }...`
-                : "Search Global Faculty Index..."
+                : "Search Global Teacher Index..."
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

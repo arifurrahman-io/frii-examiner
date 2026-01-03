@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -42,9 +42,10 @@ const AssignDutyPage = () => {
   const [loading, setLoading] = useState(false);
   const [triggerRefresh, setTriggerRefresh] = useState(0);
 
-  // --- 🛡️ ROLE PROTECTION ---
+  // --- 🛡️ ROLE PROTECTION (Updated for Incharge Access) ---
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    const allowedRoles = ["admin", "incharge"];
+    if (user && !allowedRoles.includes(user.role)) {
       toast.error(
         "Protocol Violation: Restricted access to Allocation Matrix."
       );
@@ -78,6 +79,15 @@ const AssignDutyPage = () => {
     };
     fetchMasterData();
   }, []);
+
+  // --- 🔍 DYNAMIC CLASS FILTERING FOR INCHARGE ---
+  const filteredClasses = useMemo(() => {
+    if (user?.role === "incharge") {
+      const allowedNames = ["ONE", "TWO", "THREE"];
+      return masterData.classes.filter((c) => allowedNames.includes(c.name));
+    }
+    return masterData.classes;
+  }, [masterData.classes, user]);
 
   const fetchEligibleTeachers = useCallback(async () => {
     const { year, classId, subjectId, responsibilityType } = filters;
@@ -145,7 +155,8 @@ const AssignDutyPage = () => {
     filters.classId &&
     filters.subjectId;
 
-  if (user?.role !== "admin") return null;
+  // Basic guard
+  if (!user || (user.role !== "admin" && user.role !== "incharge")) return null;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-8 relative overflow-hidden">
@@ -172,7 +183,7 @@ const AssignDutyPage = () => {
           <div className="self-start md:self-auto px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-indigo-50 shadow-xl flex items-center gap-3 sm:gap-4">
             <FaShieldAlt className="text-indigo-600 text-xs sm:text-base" />
             <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              ADMIN PROTOCOL ACTIVE
+              {user.role === "admin" ? "ADMIN" : "INCHARGE"} PROTOCOL ACTIVE
             </span>
             <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500 animate-pulse"></div>
           </div>
@@ -212,7 +223,7 @@ const AssignDutyPage = () => {
               name="classId"
               value={filters.classId}
               onChange={handleChange}
-              options={masterData.classes}
+              options={filteredClasses} // Updated to use filtered list
               placeholder="Select Node..."
               required
             />

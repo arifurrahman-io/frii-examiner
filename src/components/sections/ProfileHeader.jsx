@@ -52,8 +52,7 @@ const ProfileHeader = ({
       {/* Print Button */}
       <Button
         onClick={() => window.print()}
-        variant="secondary"
-        className="rounded-xl px-4 sm:px-5 py-3 sm:py-4 bg-white border-slate-200 text-indigo-600 font-black text-[10px] sm:text-xs"
+        className="rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-indigo-600 font-black text-[10px] sm:text-xs"
       >
         <FaPrint className="sm:mr-2" />
         <span className="hidden sm:inline">PRINT</span>
