@@ -52,11 +52,11 @@ const UserManagementPage = () => {
       setUsers(Array.isArray(userRes.data) ? userRes.data : []);
       setBranches(Array.isArray(branchRes.data) ? branchRes.data : []);
     } catch (error) {
-      if (error.response?.status === 403) {
-        toast.error("Access Revoked: Administrative privileges required.");
-      } else {
-        toast.error("Buffer Sync Error: Failed to fetch records.");
-      }
+      toast.error(
+        error.response?.status === 403
+          ? "Administrative privileges required."
+          : "Failed to fetch records."
+      );
     } finally {
       setLoading(false);
     }
@@ -94,12 +94,12 @@ const UserManagementPage = () => {
     if (!formData.name || !formData.email)
       return toast.error("Identity data incomplete.");
     if (formData.role === "incharge" && !formData.campus)
-      return toast.error("Campus assignment required for Incharge.");
+      return toast.error("Campus required for Incharge.");
 
     try {
       if (editingUser) {
         await updateUser(editingUser._id, formData);
-        toast.success("User Node re-indexed successfully.");
+        toast.success("User Node re-indexed.");
       } else {
         if (!formData.password) return toast.error("Security key missing.");
         await addUser(formData);
@@ -125,18 +125,21 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto min-h-screen pt-10">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto min-h-screen pt-20 sm:pt-10 relative overflow-hidden">
+      {/* Background Subtle Pattern */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
       {/* --- HEADER --- */}
-      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-sm border border-white mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-indigo-100/50">
-        <div className="flex items-center gap-6">
-          <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
-            <FaUserShield size={24} />
+      <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10 transition-all hover:shadow-indigo-100/50">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="h-12 w-12 sm:h-14 sm:w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl transition-transform flex-shrink-0">
+            <FaUserShield className="text-xl sm:text-2xl" />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase leading-none mb-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase leading-none mb-1 sm:mb-2">
               User Registry
             </h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2">
+            <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] flex items-center gap-2">
               <FaTerminal className="text-indigo-500" /> SYSTEM ACCESS
               GOVERNANCE
             </p>
@@ -145,14 +148,16 @@ const UserManagementPage = () => {
         <Button
           onClick={openAddModal}
           variant="primary"
-          className="rounded-2xl px-10 py-5 bg-indigo-600 shadow-xl shadow-indigo-100 uppercase font-black text-[11px] tracking-widest flex items-center gap-3"
+          className="w-full md:w-auto rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 bg-indigo-600 shadow-xl shadow-indigo-100 uppercase font-black text-[10px] sm:text-[11px] tracking-widest flex items-center justify-center gap-3"
         >
           <FaUserPlus size={14} /> Initialize New Node
         </Button>
       </div>
-      {/* --- USER MATRIX TABLE --- */}
-      <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-4 shadow-sm border border-white overflow-hidden">
-        <div className="overflow-x-auto">
+
+      {/* --- USER MATRIX --- */}
+      <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-2 sm:p-4 shadow-sm border border-white relative z-10">
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full border-separate border-spacing-0">
             <thead>
               <tr className="bg-slate-50/50">
@@ -188,7 +193,7 @@ const UserManagementPage = () => {
                   >
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs uppercase tracking-tighter shadow-lg group-hover:rotate-6 transition-transform">
+                        <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs uppercase shadow-lg group-hover:rotate-6 transition-transform">
                           {u.name?.charAt(0)}
                         </div>
                         <div>
@@ -221,22 +226,22 @@ const UserManagementPage = () => {
                           {u.campus?.name || "Unassigned"}
                         </div>
                       ) : (
-                        <span className="text-[9px] font-bold text-slate-300 uppercase italic tracking-tighter">
+                        <span className="text-[9px] font-bold text-slate-300 uppercase italic">
                           Global Accessibility
                         </span>
                       )}
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-center gap-4">
+                    <td className="px-8 py-5 text-center">
+                      <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => openEditModal(u)}
-                          className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                          className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all"
                         >
                           <FaEdit size={14} />
                         </button>
                         <button
                           onClick={() => handleDelete(u._id)}
-                          className="h-8 w-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                          className="h-8 w-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
                         >
                           <FaTrashAlt size={14} />
                         </button>
@@ -248,23 +253,83 @@ const UserManagementPage = () => {
             </tbody>
           </table>
         </div>
-      </div>
-      {/* --- DYNAMIC ADD/EDIT MODAL --- */}
 
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <div className="py-20 text-center animate-pulse uppercase font-black text-slate-300 text-[10px] tracking-widest">
+              Loading...
+            </div>
+          ) : (
+            users.map((u) => (
+              <div key={u._id} className="p-5 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm uppercase">
+                      {u.name?.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-tight">
+                        {u.name}
+                      </h4>
+                      <p className="text-[9px] text-slate-400 font-bold flex items-center mt-1">
+                        <FaEnvelope className="mr-1" /> {u.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditModal(u)}
+                      className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"
+                    >
+                      <FaEdit size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u._id)}
+                      className="p-2 bg-rose-50 text-rose-500 rounded-lg"
+                    >
+                      <FaTrashAlt size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border ${
+                      u.role === "admin"
+                        ? "bg-rose-50 border-rose-100 text-rose-600"
+                        : u.role === "incharge"
+                        ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                        : "bg-slate-50 border-slate-200 text-slate-500"
+                    }`}
+                  >
+                    {u.role}
+                  </span>
+                  {u.role === "incharge" && (
+                    <span className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-md text-[8px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1">
+                      <FaUniversity size={8} /> {u.campus?.name || "Unassigned"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* --- MODAL --- */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingUser ? "Modify User Access" : "Register New Access"}
       >
-        <div className="space-y-6 p-2">
-          {/* নাম এবং ইমেইল ফিল্ড (আগের মতোই থাকবে) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4 sm:space-y-6 p-1 sm:p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
                 Full Identity
               </label>
               <input
-                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
+                className="w-full p-3.5 sm:p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
                 value={formData.name}
                 placeholder="Name"
                 onChange={(e) =>
@@ -277,7 +342,7 @@ const UserManagementPage = () => {
                 Network Email
               </label>
               <input
-                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
+                className="w-full p-3.5 sm:p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
                 value={formData.email}
                 placeholder="Email"
                 onChange={(e) =>
@@ -286,29 +351,20 @@ const UserManagementPage = () => {
               />
             </div>
           </div>
-
-          {/* পাসওয়ার্ড এবং রোল ফিল্ড */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-indigo-500 uppercase tracking-widest ml-1">
                 {editingUser ? "New Security Key (Optional)" : "Security Key"}
               </label>
               <input
-                className="w-full p-4 bg-slate-50 border border-indigo-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
+                className="w-full p-3.5 sm:p-4 bg-slate-50 border border-indigo-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
                 type="password"
-                placeholder={
-                  editingUser ? "Leave blank to keep old password" : "••••••••"
-                }
+                placeholder={editingUser ? "Keep old key" : "••••••••"}
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
               />
-              {editingUser && (
-                <p className="text-[8px] text-slate-400 ml-1 font-bold italic">
-                  * Blank input retains current matrix key
-                </p>
-              )}
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
@@ -323,10 +379,8 @@ const UserManagementPage = () => {
               />
             </div>
           </div>
-
-          {/* ক্যাম্পাস ড্রপডাউন (ইনচার্জের জন্য) */}
           {formData.role === "incharge" && (
-            <div className="space-y-1 animate-in slide-in-from-top-2">
+            <div className="space-y-1">
               <label className="text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">
                 Campus Node Selection
               </label>
@@ -340,13 +394,12 @@ const UserManagementPage = () => {
               />
             </div>
           )}
-
-          <div className="pt-4">
+          <div className="pt-2">
             <Button
               onClick={handleSubmit}
               fullWidth
               variant="primary"
-              className="py-5 rounded-2xl font-black text-[11px] tracking-widest uppercase bg-slate-900 shadow-2xl hover:bg-indigo-600 transition-all"
+              className="py-4 sm:py-5 rounded-2xl font-black text-[10px] sm:text-[11px] tracking-widest uppercase bg-slate-900 hover:bg-indigo-600 transition-all"
             >
               {editingUser ? "Push Updates to Matrix" : "Establish Node Access"}
             </Button>

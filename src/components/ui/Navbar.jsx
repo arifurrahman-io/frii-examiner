@@ -91,7 +91,7 @@ const Navbar = () => {
                 Frii <span className="text-indigo-600"> Exam Manager</span>
               </span>
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">
-                Neural Matrix v2.0
+                Academic Exam management
               </span>
             </div>
           </Link>
@@ -211,7 +211,7 @@ const Navbar = () => {
                   {user?.name}
                 </p>
                 <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-[0.2em]">
-                  {user?.role} NODE
+                  {user?.role}
                 </p>
               </div>
             </div>
@@ -219,7 +219,7 @@ const Navbar = () => {
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-rose-50 text-rose-600 font-black text-xs uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100"
             >
-              <FaSignOutAlt /> Terminate Node Session
+              <FaSignOutAlt /> Signout
             </button>
           </div>
         </div>

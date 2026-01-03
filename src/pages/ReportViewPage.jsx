@@ -34,7 +34,7 @@ import {
 
 const ArrayOfData = (data) => Array.isArray(data) && data.length > 0;
 
-// --- 1. Modern Table Component ---
+// --- 1. Modern Responsive Table/Card Component ---
 const ReportTable = ({ data, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const displayedHeaders = ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
@@ -59,9 +59,9 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
 
   if (!ArrayOfData(data)) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-dashed border-slate-200">
-        <FaClipboardList className="text-6xl text-slate-200 mb-6" />
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+      <div className="flex flex-col items-center justify-center py-20 sm:py-32 bg-white/40 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] border border-dashed border-slate-200 text-center px-4">
+        <FaClipboardList className="text-4xl sm:text-6xl text-slate-200 mb-6" />
+        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
           Zero data points in current matrix
         </p>
       </div>
@@ -69,8 +69,9 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-4 shadow-sm border border-white overflow-hidden transition-all hover:shadow-indigo-50">
-      <div className="overflow-x-auto">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-2 sm:p-4 shadow-sm border border-white overflow-hidden transition-all hover:shadow-indigo-50">
+      {/* Desktop View: Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-0">
           <thead>
             <tr className="bg-slate-50/50">
@@ -96,7 +97,6 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
                     cellValue = (currentPage - 1) * rowsPerPage + rowIndex + 1;
                   if (typeof cellValue === "object" && cellValue !== null)
                     cellValue = cellValue.name || cellValue.label || "-";
-
                   return (
                     <td
                       key={colIndex}
@@ -114,7 +114,50 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
         </table>
       </div>
 
-      <div className="flex justify-between items-center mt-6 p-4 border-t border-slate-50">
+      {/* Mobile View: Cards */}
+      <div className="md:hidden divide-y divide-slate-100">
+        {paginatedData.map((row, rowIndex) => (
+          <div key={rowIndex} className="p-5 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-indigo-400 uppercase">
+                Node #{(currentPage - 1) * rowsPerPage + rowIndex + 1}
+              </span>
+              <span className="px-2 py-0.5 bg-slate-100 text-[8px] font-black text-slate-500 rounded uppercase tracking-tighter">
+                {row.CAMPUS?.name || "Global"}
+              </span>
+            </div>
+            <div>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Faculty Node
+              </p>
+              <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                {row.TEACHER?.name || "-"}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Class
+                </p>
+                <p className="text-[11px] font-bold text-slate-600 uppercase">
+                  {row.CLASS?.name || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Subject
+                </p>
+                <p className="text-[11px] font-bold text-slate-600 uppercase">
+                  {row.SUBJECT?.name || "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination Container */}
+      <div className="flex flex-col sm:row justify-between items-center mt-6 p-4 border-t border-slate-50 gap-4">
         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
           Buffer Page {currentPage} / {totalPages}
         </span>
@@ -122,14 +165,14 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
+            className="h-10 w-10 sm:h-8 sm:w-8 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
           >
             <FaAngleLeft size={10} />
           </button>
           <button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
+            className="h-10 w-10 sm:h-8 sm:w-8 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
           >
             <FaAngleRight size={10} />
           </button>
@@ -144,16 +187,14 @@ const ReportViewPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // --- 📅 DYNAMIC YEAR LOGIC (Start from 2024) ---
   const yearOptions = useMemo(() => {
     const startYear = 2024;
     const currentYear = new Date().getFullYear();
     const years = [];
-    // ২০২৪ থেকে বর্তমান বছর + ১ পর্যন্ত লুপ
     for (let y = startYear; y <= currentYear + 1; y++) {
       years.push({ _id: y, name: `${y}` });
     }
-    return years.reverse(); // লেটেস্ট ইয়ার আগে দেখাবে
+    return years.reverse();
   }, []);
 
   const [filters, setFilters] = useState({
@@ -165,7 +206,6 @@ const ReportViewPage = () => {
     status: "Assigned",
   });
 
-  // --- 🛡️ ROLE PROTECTION ---
   useEffect(() => {
     if (user && user.role !== "admin") {
       toast.error("Unauthorized Access: Report Matrix restricted.");
@@ -284,32 +324,32 @@ const ReportViewPage = () => {
   if (user?.role !== "admin") return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-10 px-4 sm:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-8 relative overflow-hidden">
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- HEADER --- */}
-        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-6">
-            <div className="h-16 w-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-indigo-400 shadow-2xl">
-              <FaChartBar size={28} />
+        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 sm:gap-8">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-slate-900 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center text-indigo-400 shadow-2xl">
+              <FaChartBar className="text-xl sm:text-2xl" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none uppercase mb-2">
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none uppercase mb-1 sm:mb-2">
                 Audit Matrix <span className="text-indigo-600">.</span>
               </h1>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2">
+              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] flex items-center gap-2">
                 <FaTerminal className="text-indigo-500" /> DUTY REPORTING ENGINE
               </p>
             </div>
           </div>
 
-          <div className="flex bg-white p-1.5 rounded-[1.5rem] shadow-xl border border-slate-100">
+          <div className="flex bg-white p-1 rounded-2xl sm:rounded-[1.5rem] shadow-xl border border-slate-100 self-start md:self-auto">
             <button
               onClick={() =>
                 setFilters((p) => ({ ...p, reportType: "DETAILED_ASSIGNMENT" }))
               }
-              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
                 filters.reportType === "DETAILED_ASSIGNMENT"
                   ? "bg-indigo-600 text-white shadow-lg"
                   : "text-slate-400 hover:text-slate-600"
@@ -327,7 +367,7 @@ const ReportViewPage = () => {
                   status: "",
                 }))
               }
-              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
                 filters.reportType === "YEARLY_SUMMARY"
                   ? "bg-indigo-600 text-white shadow-lg"
                   : "text-slate-400 hover:text-slate-600"
@@ -339,9 +379,9 @@ const ReportViewPage = () => {
         </div>
 
         {/* --- DYNAMIC FILTER PANEL --- */}
-        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_30px_60px_rgba(79,70,229,0.05)] border border-white mb-10 group overflow-hidden relative">
+        <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white mb-8 sm:mb-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/5 rounded-full -mr-40 -mt-40 blur-3xl"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8 items-end relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8 items-end relative z-10">
             <SelectDropdown
               label="Cycle Year"
               name="year"
@@ -381,7 +421,7 @@ const ReportViewPage = () => {
             <button
               onClick={() => setFetchTrigger((p) => p + 1)}
               disabled={loading}
-              className="h-[52px] w-full rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white font-black text-[10px] tracking-widest uppercase flex items-center justify-center gap-3 transition-all shadow-xl"
+              className="h-[48px] sm:h-[52px] w-full rounded-xl sm:rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white font-black text-[9px] sm:text-[10px] tracking-widest uppercase flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl"
             >
               <FaSyncAlt className={loading ? "animate-spin" : ""} /> Sync
               Matrix
@@ -391,18 +431,18 @@ const ReportViewPage = () => {
 
         {/* --- RESULTS --- */}
         <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000 relative">
-          <div className="absolute top-0 right-6 -mt-12">
+          <div className="flex justify-end mb-4">
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-3 px-6 py-3 bg-white border border-indigo-100 rounded-2xl text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-3 bg-white border border-indigo-100 rounded-xl sm:rounded-2xl text-[8px] sm:text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
             >
               <FaFileExport /> Export Report
             </button>
           </div>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-40 bg-white/40 backdrop-blur-md rounded-[4rem]">
-              <FaSyncAlt className="animate-spin text-7xl text-indigo-500/20 mb-8" />
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">
+            <div className="flex flex-col items-center justify-center py-24 sm:py-40 bg-white/40 backdrop-blur-md rounded-[2rem] sm:rounded-[4rem]">
+              <FaSyncAlt className="animate-spin text-5xl sm:text-7xl text-indigo-500/20 mb-6 sm:mb-8" />
+              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] sm:tracking-[0.5em] animate-pulse">
                 Decrypting Buffer Matrix
               </p>
             </div>
@@ -411,106 +451,98 @@ const ReportViewPage = () => {
           )}
         </div>
 
-        {/* --- EXPORT CONSOLE MODAL --- */}
+        {/* --- EXPORT MODAL --- */}
         <Modal
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
           title={
-            <div className="flex items-center gap-3 uppercase font-black text-slate-800 tracking-tighter">
+            <div className="flex items-center gap-2 text-sm sm:text-base uppercase font-black text-slate-800 tracking-tighter">
               <FaFileExport className="text-indigo-600" /> Data Export Engine
             </div>
           }
         >
-          <div className="p-2 space-y-8">
+          <div className="p-1 sm:p-2 space-y-6 sm:space-y-8">
             {filters.reportType === "YEARLY_SUMMARY" ? (
-              <div className="space-y-8">
-                <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] font-black text-indigo-900 uppercase">
+              <div className="space-y-6 sm:space-y-8">
+                <div className="bg-indigo-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-100 flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[10px] sm:text-[11px] font-black text-indigo-900 uppercase">
                       Archive Comparison
                     </p>
-                    <p className="text-[9px] font-bold text-indigo-400 uppercase mt-1 tracking-widest italic">
+                    <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase mt-1 tracking-widest italic truncate">
                       Include {filters.year - 1} session logs
                     </p>
                   </div>
                   <input
                     type="checkbox"
-                    className="w-6 h-6 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg text-indigo-600 cursor-pointer"
                     checked={includePrevious}
                     onChange={(e) => setIncludePrevious(e.target.checked)}
                   />
                 </div>
-
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <FaCubes className="text-indigo-600" /> Column Projection
-                    Configuration:
+                  <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <FaCubes className="text-indigo-600" /> Projection Matrix:
                   </p>
-                  <div className="grid grid-cols-2 gap-3 p-4 border border-slate-100 rounded-[2rem] bg-slate-50/50 max-h-48 overflow-y-auto custom-scrollbar">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 p-3 sm:p-4 border border-slate-100 rounded-2xl sm:rounded-[2rem] bg-slate-50/50 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar">
                     {masterData.types.map((t) => (
                       <label
                         key={t._id}
-                        className="flex items-center gap-3 p-3 bg-white rounded-xl cursor-pointer hover:bg-indigo-50 transition-colors border border-white shadow-sm"
+                        className="flex items-center gap-3 p-2.5 bg-white rounded-lg sm:rounded-xl cursor-pointer hover:bg-indigo-50 border border-white shadow-sm"
                       >
                         <input
                           type="checkbox"
                           className="rounded text-indigo-600"
                           checked={selectedRespTypes.includes(t.name)}
                           onChange={() =>
-                            setSelectedRespTypes((prev) =>
-                              prev.includes(t.name)
-                                ? prev.filter((x) => x !== t.name)
-                                : [...prev, t.name]
+                            setSelectedRespTypes((p) =>
+                              p.includes(t.name)
+                                ? p.filter((x) => x !== t.name)
+                                : [...p, t.name]
                             )
                           }
                         />
-                        <span className="text-[10px] font-black text-slate-600 uppercase">
+                        <span className="text-[9px] sm:text-[10px] font-black text-slate-600 uppercase truncate">
                           {t.name}
                         </span>
                       </label>
                     ))}
                   </div>
                 </div>
-
                 <Button
                   onClick={() => handleExportAction("EXPORT_YEARLY_SUMMARY")}
                   fullWidth
                   variant="primary"
                   loading={exportLoading}
-                  className="py-5 rounded-2xl uppercase font-black tracking-widest bg-slate-900"
+                  className="py-4 sm:py-5 rounded-xl sm:rounded-2xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
                 >
                   Execute Aggregated Export
                 </Button>
               </div>
             ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
                     onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
-                    className="p-8 bg-slate-50 hover:bg-white border border-slate-100 text-slate-900 rounded-[2.5rem] shadow-sm flex flex-col items-center gap-3 uppercase font-black text-[10px] tracking-widest transition-all hover:shadow-xl hover:-translate-y-1"
+                    className="p-6 sm:p-8 bg-slate-50 hover:bg-white border border-slate-100 text-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] flex flex-col items-center gap-2 sm:gap-3 uppercase font-black text-[9px] sm:text-[10px] tracking-widest transition-all"
                   >
-                    <FaBuilding size={24} className="text-indigo-600" /> Branch
-                    Mapping
+                    <FaBuilding size={20} className="text-indigo-600" /> Branch
+                    Map
                   </button>
                   <button
                     onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
-                    className="p-8 bg-slate-50 hover:bg-white border border-slate-100 text-slate-900 rounded-[2.5rem] shadow-sm flex flex-col items-center gap-3 uppercase font-black text-[10px] tracking-widest transition-all hover:shadow-xl hover:-translate-y-1"
+                    className="p-6 sm:p-8 bg-slate-50 hover:bg-white border border-slate-100 text-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] flex flex-col items-center gap-2 sm:gap-3 uppercase font-black text-[9px] sm:text-[10px] tracking-widest transition-all"
                   >
-                    <FaGraduationCap size={24} className="text-indigo-600" />{" "}
-                    Level Mapping
+                    <FaGraduationCap size={20} className="text-indigo-600" />{" "}
+                    Level Map
                   </button>
                 </div>
                 <button
                   onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
-                  className="w-full py-5 border-2 border-dashed border-indigo-100 text-indigo-600 rounded-3xl uppercase font-black text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-indigo-50 transition-all"
+                  className="w-full py-4 sm:py-5 border-2 border-dashed border-indigo-100 text-indigo-600 rounded-2xl sm:rounded-3xl uppercase font-black text-[9px] sm:text-[10px] tracking-widest flex items-center justify-center gap-3"
                 >
                   <FaTerminal /> Initial Campus Routine Index
                 </button>
-              </div>
-            )}
-            {exportError && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-3 animate-pulse">
-                <FaShieldAlt size={14} /> ALERT: {exportError}
               </div>
             )}
           </div>

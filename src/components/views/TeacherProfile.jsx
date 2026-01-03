@@ -11,6 +11,7 @@ import {
   deleteRoutine,
   deleteLeave,
   deleteTeacher,
+  deletePerformanceReport,
 } from "../../api/apiService";
 
 // UI/Sections
@@ -49,8 +50,7 @@ const TeacherProfile = ({ teacherId }) => {
   const isIncharge = user?.role === "incharge";
   const canManageRoutine = isAdmin || isIncharge;
 
-  // --- 🛠️ 1. Hooks (Top Level) ---
-
+  // --- 🛠️ Logic Helpers ---
   const dynamicYears = useMemo(() => {
     const years = [];
     for (let y = currentYear; y >= 2024; y--) years.push(y);
@@ -60,7 +60,7 @@ const TeacherProfile = ({ teacherId }) => {
   const uniqueRoutineSchedule = useMemo(() => {
     const seen = new Set();
     return routineSchedule.filter((item) => {
-      const key = `${item.year}-${item.display.toLowerCase().trim()}`;
+      const key = `${item.year}-${item.display?.toLowerCase().trim()}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -75,8 +75,7 @@ const TeacherProfile = ({ teacherId }) => {
     return yearData?.responsibilities || [];
   }, [teacherData, activeTab]);
 
-  // --- 🛠️ 2. Handlers ---
-
+  // --- 🛠️ Handlers ---
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
@@ -86,12 +85,13 @@ const TeacherProfile = ({ teacherId }) => {
       ];
       if (isAdmin || isIncharge)
         promises.push(getGrantedLeavesByTeacher(teacherId));
+
       const [profileRes, routinesRes, leavesRes] = await Promise.all(promises);
       setTeacherData(profileRes.data);
       setRoutineSchedule(routinesRes.data || []);
       if (leavesRes) setGrantedLeaves(leavesRes.data || []);
     } catch (error) {
-      toast.error("Buffer Sync Fail.");
+      toast.error("Protocol Error: Synchronization failed.");
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ const TeacherProfile = ({ teacherId }) => {
     setLoading(true);
     try {
       await deleteTeacher(teacherId);
-      toast.success("Teacher Node Purged.");
+      toast.success("Node Terminated.");
       navigate("/teachers");
     } catch (error) {
       toast.error("Purge Failed.");
@@ -123,27 +123,19 @@ const TeacherProfile = ({ teacherId }) => {
       toast.success("Purged.");
       fetchProfile();
     } catch {
-      toast.error("Fail.");
+      toast.error("Error.");
     }
   };
 
   const handleReportDelete = async (reportId) => {
-    if (!isAdmin) return toast.error("Admin authorization required.");
-
-    if (!window.confirm("CRITICAL: Purge this performance record?")) return;
-
+    if (!isAdmin) return toast.error("Admin credentials required.");
+    if (!window.confirm("Purge this performance record?")) return;
     try {
-      // এখানে teacherId (প্রপস থেকে) এবং reportId দুটোই পাঠাতে হবে
       await deletePerformanceReport(teacherId, reportId);
-      toast.success("Sync Complete: Node Purged.");
-      fetchProfile(); // ডাটা রিফ্রেশ করুন
+      toast.success("Node Purged.");
+      fetchProfile();
     } catch (error) {
-      console.error("Purge Error:", error);
-      // ব্যাকএন্ড থেকে আসা প্রকৃত এরর মেসেজ দেখাবে
-      toast.error(
-        error.response?.data?.message ||
-          "Purge execution failed: Matrix Link Interrupted."
-      );
+      toast.error("Purge failed.");
     }
   };
 
@@ -172,8 +164,11 @@ const TeacherProfile = ({ teacherId }) => {
 
   if (loading && !teacherData)
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <FaSyncAlt className="animate-spin text-5xl text-indigo-500" />
+      <div className="flex flex-col items-center justify-center min-h-[80vh]">
+        <FaSyncAlt className="animate-spin text-5xl text-indigo-500 mb-4" />
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">
+          Syncing Profile
+        </p>
       </div>
     );
 
@@ -181,85 +176,80 @@ const TeacherProfile = ({ teacherId }) => {
   const { teacherDetails } = teacherData;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-8 pt-10 print:pt-0 print:bg-white">
-      {/* 🛠️ ১. মডার্ন প্রিন্ট ইঞ্জিন (CSS) */}
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-6 lg:px-8 pt-20 sm:pt-10 print:pt-0 print:bg-white relative">
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] no-print"></div>
+
       <style>
         {`
-          @media print {
-            @page { 
-               size: A4 portrait; 
-               margin: 5mm 5mm 15mm 5mm; /* উপরের মার্জিন কমিয়ে ৫ মিমি করা হয়েছে */
-            }
-            body { 
-               background: white !important; 
-               -webkit-print-color-adjust: exact; 
-               counter-reset: page; 
-               margin: 0 !important;
-               padding: 0 !important;
-            }
-            .screen-layout, .no-print, nav, button, .fixed { display: none !important; }
-            .print-container { 
-               display: block !important; 
-               width: 100% !important; 
-               position: relative;
-               padding-top: 0 !important; /* টপ প্যাডিং জিরো */
-            }
-            
-            .report-title { 
-               border-bottom: 2px solid #1e293b; 
-               padding-bottom: 10px; 
-               margin-bottom: 15px; /* টাইটেল মার্জিন কমানো হয়েছে */
-               display: flex; 
-               justify-content: space-between; 
-            }
-            .section-header { 
-               background: #f1f5f9 !important; 
-               padding: 5px 10px; 
-               border-left: 4px solid #4f46e5; 
-               margin: 15px 0 8px 0; 
-               font-size: 10px; 
-               font-weight: 900; 
-               text-transform: uppercase; 
-            }
-            
-            table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 12px; table-layout: fixed; }
-            th { background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 6px; font-size: 9px; text-align: left; text-transform: uppercase; }
-            td { border: 1px solid #e2e8f0 !important; padding: 6px; font-size: 9px; vertical-align: top; word-wrap: break-word; }
-            
-            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; padding: 0 40px; page-break-inside: avoid; }
-            .sig-line { border-top: 1px solid #000; width: 140px; text-align: center; font-size: 8px; font-weight: bold; padding-top: 4px; text-transform: uppercase; }
+            @media print {
+              @page { 
+                size: A4 portrait; 
+                margin: 5mm; /* পেজ লেভেলের মার্জিন কমিয়ে ৫ মিমি করা হয়েছে */
+              }
+              body { 
+                background: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+              }
+              .no-print { display: none !important; }
+              
+              /* --- প্রিন্ট কন্টেইনার ফিক্স --- */
+              .print-container { 
+                display: block !important; 
+                width: 100% !important; 
+                padding-top: 0 !important; /* টপ প্যাডিং সম্পূর্ণ রিমুভ করা হয়েছে */
+                margin-top: -5px !important; /* নেগেটিভ মার্জিন দিয়ে টাইটেলকে আরও উপরে তোলা হয়েছে */
+              }
+              
+              /* --- রিপোর্ট টাইটেল সেকশন (ছবি অনুযায়ী) --- */
+              .report-title { 
+                border-bottom: 2px solid #1e293b; 
+                padding-bottom: 10px; 
+                margin-bottom: 15px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: flex-start;
+              }
 
-            .print-footer {
-              position: fixed;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              width: 100%;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-top: 1px solid #e2e8f0;
-              padding-top: 6px;
-              background: white !important;
+              .section-header { 
+                background: #f1f5f9 !important; 
+                border-left: 4px solid #4f46e5; 
+                padding: 5px 10px; 
+                margin: 15px 0 8px 0; 
+                font-size: 10px; 
+                font-weight: 900; 
+                text-transform: uppercase; 
+              }
+              
+              table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 15px; }
+              th { background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 6px; font-size: 9px; text-align: left; text-transform: uppercase; }
+              td { border: 1px solid #e2e8f0 !important; padding: 6px; font-size: 9px; vertical-align: top; }
+              
+              .print-footer { 
+                position: fixed; 
+                bottom: 0; 
+                left: 0; 
+                right: 0; 
+                display: flex; 
+                justify-content: space-between; 
+                border-top: 1px solid #e2e8f0; 
+                padding-top: 5px; 
+                background: white !important; 
+              }
             }
-            .page-number::after {
-              counter-increment: page;
-              content: "Page " counter(page);
-            }
-          }
-          .print-container { display: none; }
-        `}
+            .print-container { display: none; }
+          `}
       </style>
 
-      {/* 📄 ২. প্রোফেশনাল পিডিএফ লেআউট */}
+      {/* --- প্রিন্ট টেমপ্লেট --- */}
       <div className="print-container">
         <div className="report-title">
           <div>
-            <h1 className="text-2xl font-black uppercase text-slate-900 leading-none">
+            <h1 className="text-2xl font-black uppercase text-slate-900 leading-tight">
               {teacherDetails.name}
             </h1>
-            <p className="text-[10px] font-bold text-slate-600 mt-2 uppercase tracking-widest">
-              {teacherDetails.designation} | ID: {teacherDetails.teacherId}
+            <p className="text-[10px] font-bold text-slate-600 mt-1 uppercase tracking-widest">
+              | ID: {teacherDetails.teacherId}
             </p>
             <p className="text-[9px] text-indigo-600 font-bold mt-1 uppercase">
               CAMPUS: {teacherDetails.campus?.name} | PHONE:{" "}
@@ -270,27 +260,28 @@ const TeacherProfile = ({ teacherId }) => {
             <h2 className="text-sm font-black text-slate-900 uppercase">
               Teacher's Duty Report
             </h2>
-            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-              Institutional Governance Data
+            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+              Institutional Governance Matrix
             </p>
           </div>
         </div>
 
+        {/* সেকশন ১: দায়িত্বের রেকর্ড */}
         <div className="section-header">1. Responsibility Records Archive</div>
         <table>
           <thead>
             <tr>
-              <th style={{ width: "10%" }}>Session</th>
-              <th style={{ width: "36%" }}>Title</th>
-              <th style={{ width: "27%" }}>Class</th>
-              <th style={{ width: "27%" }}>Subject</th>
+              <th style={{ width: "12%" }}>Session</th>
+              <th style={{ width: "38%" }}>Title</th>
+              <th style={{ width: "25%" }}>Class</th>
+              <th style={{ width: "25%" }}>Subject</th>
             </tr>
           </thead>
           <tbody>
             {teacherData.assignmentsByYear?.map((year) =>
               year.responsibilities.map((res, idx) => (
                 <tr key={`${year._id}-${idx}`}>
-                  <td style={{ width: "10%" }}>{idx === 0 ? year._id : ""}</td>
+                  <td>{idx === 0 ? year._id : ""}</td>
                   <td className="font-bold">{res.name}</td>
                   <td>{res.class}</td>
                   <td>{res.subject}</td>
@@ -300,12 +291,13 @@ const TeacherProfile = ({ teacherId }) => {
           </tbody>
         </table>
 
-        <div className="section-header">2. Leave History</div>
+        {/* সেকশন ২: লিভ হিস্ট্রি */}
+        <div className="section-header">2. Leave History Archive</div>
         <table>
           <thead>
             <tr>
-              <th style={{ width: "10%" }}>Year</th>
-              <th>Description</th>
+              <th style={{ width: "12%" }}>Year</th>
+              <th>Leave Reason / Narrative</th>
             </tr>
           </thead>
           <tbody>
@@ -326,12 +318,13 @@ const TeacherProfile = ({ teacherId }) => {
           </tbody>
         </table>
 
-        <div className="section-header">3. Performance Report</div>
+        {/* সেকশন ৩: পারফরম্যান্স রিপোর্ট */}
+        <div className="section-header">3. Performance Appraisal Logs</div>
         <table>
           <thead>
             <tr>
-              <th style={{ width: "10%" }}>Year</th>
-              <th>Report Detail</th>
+              <th style={{ width: "12%" }}>Year</th>
+              <th>Review Detail</th>
             </tr>
           </thead>
           <tbody>
@@ -345,18 +338,19 @@ const TeacherProfile = ({ teacherId }) => {
             ) : (
               <tr>
                 <td colSpan="2" className="text-center text-slate-300 italic">
-                  Pending
+                  No performance data found
                 </td>
               </tr>
             )}
           </tbody>
         </table>
 
+        {/* সেকশন ৪: একাডেমিক রুটিন */}
         <div className="section-header">4. Academic Schedule Matrix</div>
         <table>
           <thead>
             <tr>
-              <th style={{ width: "10%" }}>Year</th>
+              <th style={{ width: "12%" }}>Year</th>
               <th>Routine Configuration</th>
             </tr>
           </thead>
@@ -372,27 +366,18 @@ const TeacherProfile = ({ teacherId }) => {
           </tbody>
         </table>
 
-        <div className="signature-box">
-          <div className="sig-line">Incharge</div>
-          <div className="sig-line">Headmaster</div>
-        </div>
-
-        {/* ✅ Dynamic Print Footer */}
-        <div className="print-footer hidden print:flex">
-          <p className="text-[7px] font-black uppercase text-slate-500">
-            SYNC: {new Date().toLocaleString()}
+        <div className="print-footer">
+          <p className="text-[7px] font-black uppercase text-slate-400">
+            Timestamp: {new Date().toLocaleString()}
           </p>
-          <div className="text-[7px] font-black uppercase tracking-widest text-slate-900 flex gap-4">
-            <span className="page-number"></span>{" "}
-            {/* এখানে "Page 1" জেনারেট হবে */}
-            <span>•</span>
-            <span>NEURAL MATRIX V2.5</span>
-          </div>
+          <p className="text-[7px] font-black uppercase text-slate-900 tracking-widest">
+            Official Document
+          </p>
         </div>
       </div>
 
-      {/* --- 🖥️ স্ক্রিন লেআউট --- */}
-      <div className="screen-layout max-w-[1600px] mx-auto relative z-10">
+      {/* --- 🖥️ স্ক্রিন লেআউট (ফুল রেসপন্সিভ) --- */}
+      <div className="screen-layout max-w-[1600px] mx-auto relative z-10 animate-in fade-in duration-1000">
         <ProfileHeader
           teacherDetails={teacherDetails}
           isAdmin={isAdmin}
@@ -404,36 +389,42 @@ const TeacherProfile = ({ teacherId }) => {
         />
 
         {!isEditing ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <ProfileSidebar
-              teacherDetails={teacherDetails}
-              grantedLeaves={grantedLeaves}
-              isAdmin={isAdmin}
-              handleLeaveDelete={handleLeaveDelete}
-              handleReportDelete={handleReportDelete}
-            />
-            <ProfileMainMatrix
-              dynamicYears={dynamicYears}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              filteredAssignments={filteredAssignments}
-              isAdmin={isAdmin}
-              handleAssignmentDelete={handleAssignmentDelete}
-              currentYear={currentYear}
-              uniqueRoutineSchedule={uniqueRoutineSchedule}
-              canManageRoutine={canManageRoutine}
-              toggleModal={(t, s) => setModals((p) => ({ ...p, [t]: s }))}
-              handleRoutineDelete={handleRoutineDelete}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+            <div className="lg:col-span-8 order-1">
+              <ProfileMainMatrix
+                dynamicYears={dynamicYears}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                filteredAssignments={filteredAssignments}
+                isAdmin={isAdmin}
+                handleAssignmentDelete={handleAssignmentDelete}
+                currentYear={currentYear}
+                uniqueRoutineSchedule={uniqueRoutineSchedule}
+                canManageRoutine={canManageRoutine}
+                toggleModal={(t, s) => setModals((p) => ({ ...p, [t]: s }))}
+                handleRoutineDelete={handleRoutineDelete}
+              />
+            </div>
+            <div className="lg:col-span-4 order-2">
+              <ProfileSidebar
+                teacherDetails={teacherDetails}
+                grantedLeaves={grantedLeaves}
+                isAdmin={isAdmin}
+                handleLeaveDelete={handleLeaveDelete}
+                handleReportDelete={handleReportDelete}
+              />
+            </div>
           </div>
         ) : (
-          <UpdateTeacherForm
-            teacherId={teacherId}
-            onUpdateSuccess={() => {
-              setIsEditing(false);
-              fetchProfile();
-            }}
-          />
+          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+            <UpdateTeacherForm
+              teacherId={teacherId}
+              onUpdateSuccess={() => {
+                setIsEditing(false);
+                fetchProfile();
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -444,8 +435,6 @@ const TeacherProfile = ({ teacherId }) => {
         onConfirm={handleTeacherDelete}
         loading={loading}
       />
-
-      {/* Modals are the same... */}
       <AnnualReportModal
         isOpen={modals.report}
         onClose={() => setModals((p) => ({ ...p, report: false }))}

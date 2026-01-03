@@ -44,9 +44,6 @@ const Footer = () => {
                 System: Online
               </span>
             </div>
-            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest hidden sm:block">
-              V2.5.0
-            </span>
           </div>
         </div>
       </div>

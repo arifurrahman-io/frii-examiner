@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaSignInAlt, FaUserTie, FaLock } from "react-icons/fa";
+import {
+  FaSignInAlt,
+  FaUserTie,
+  FaLock,
+  FaShieldAlt,
+  FaFingerprint,
+} from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate, Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -19,7 +25,6 @@ const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Load saved ID/Email if "Remember Me" was previously checked
   useEffect(() => {
     const savedUser = localStorage.getItem("rememberedUser");
     if (savedUser) {
@@ -28,7 +33,6 @@ const LoginPage = () => {
     }
   }, []);
 
-  // Redirect if already logged in
   if (isAuthenticated) {
     return <Navigate to="/" />;
   }
@@ -47,114 +51,141 @@ const LoginPage = () => {
     const { teacherIdOrEmail, password } = credentials;
 
     if (!teacherIdOrEmail || !password) {
-      toast.error("Please enter both ID/Email and Password.");
+      toast.error("Credentials required for authentication.");
       setLoading(false);
       return;
     }
 
     try {
-      // Call login function from AuthContext
       const success = await login({
-        username: teacherIdOrEmail, // Passed as username per backend requirement
+        username: teacherIdOrEmail,
         password,
       });
 
       if (success) {
-        // Handle "Remember Me" logic
         if (rememberMe) {
           localStorage.setItem("rememberedUser", teacherIdOrEmail);
         } else {
           localStorage.removeItem("rememberedUser");
         }
-
-        toast.success("Login successful!");
+        toast.success("Identity Verified. Welcome.");
         navigate("/");
       }
     } catch (error) {
-      console.error("Login attempt error:", error);
+      toast.error("Authentication Failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 ">
-      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-4xl border border-indigo-200/70 transform transition-all duration-500 hover:shadow-5xl">
-        <div className="text-center mb-10">
-          <FaUserTie className="text-6xl text-indigo-700 mx-auto mb-3" />
-          <h2 className="text-4xl font-extrabold text-gray-800 tracking-tight">
-            Login Required
-          </h2>
-          <p className="text-gray-500 mt-2 font-medium">
-            Access your Responsibility Management Platform
-          </p>
-        </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#F8FAFC] p-4 sm:p-6 lg:p-8">
+      {/* Background Decorative Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-3xl"></div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. Username/Teacher ID Field */}
-          <InputField
-            label="Teacher ID or Email"
-            type="text"
-            name="teacherIdOrEmail"
-            icon={FaUserTie}
-            placeholder="Enter ID or Email"
-            value={credentials.teacherIdOrEmail}
-            onChange={handleChange}
-            required
-          />
-
-          {/* 2. Password Field (Now with Toggle support in InputField component) */}
-          <InputField
-            label="Password"
-            type="password"
-            name="password"
-            icon={FaLock}
-            placeholder="Enter Password"
-            value={credentials.password}
-            onChange={handleChange}
-            required
-          />
-
-          {/* 3. Remember Me & Options Section */}
-          <div className="flex items-center justify-between px-1">
-            <label className="flex items-center cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer transition-all"
-              />
-              <span className="ml-2 text-sm font-medium text-gray-600 group-hover:text-indigo-700 transition-colors">
-                Remember Me
-              </span>
-            </label>
-            <button
-              type="button"
-              className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-              onClick={() =>
-                toast.loading("Contacting Admin Support...", { duration: 2000 })
-              }
-            >
-              Forgot Password?
-            </button>
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
+        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-indigo-50 group">
+          {/* Header Section */}
+          <div className="text-center mb-8 sm:mb-10">
+            <div className="inline-flex p-4 bg-indigo-50 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-500">
+              <FaShieldAlt className="text-4xl sm:text-5xl text-indigo-600" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight uppercase">
+              Access Node
+            </h2>
+            <p className="text-slate-400 mt-2 text-xs sm:text-sm font-bold uppercase tracking-widest">
+              Institutional Governance Matrix
+            </p>
           </div>
 
-          {/* 4. Submit Button */}
-          <Button
-            type="submit"
-            fullWidth
-            loading={loading}
-            variant="primary"
-            className="mt-4 text-lg py-3 flex items-center justify-center"
-          >
-            <FaSignInAlt className="mr-2" />
-            LOG IN
-          </Button>
-        </form>
+          {/* Form Section */}
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+            <div className="space-y-1">
+              <InputField
+                label="Teacher ID / Email"
+                type="text"
+                name="teacherIdOrEmail"
+                icon={FaUserTie}
+                placeholder="Enter ID or Email"
+                value={credentials.teacherIdOrEmail}
+                onChange={handleChange}
+                required
+                className="rounded-2xl border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all"
+              />
+            </div>
 
-        <p className="text-center text-sm text-gray-500 mt-8 font-medium">
-          Contact administration if you forgot your credentials.
-        </p>
+            <div className="space-y-1">
+              <InputField
+                label="Security Password"
+                type="password"
+                name="password"
+                icon={FaLock}
+                placeholder="••••••••"
+                value={credentials.password}
+                onChange={handleChange}
+                required
+                className="rounded-2xl border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all"
+              />
+            </div>
+
+            {/* Options Row */}
+            <div className="flex flex-col sm:row sm:items-center justify-between gap-4 px-1">
+              <label className="flex items-center cursor-pointer group w-fit">
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-5 h-5 text-indigo-600 border-slate-300 rounded-lg focus:ring-indigo-500 cursor-pointer transition-all"
+                  />
+                </div>
+                <span className="ml-3 text-xs sm:text-sm font-bold text-slate-500 group-hover:text-indigo-600 transition-colors uppercase tracking-tighter">
+                  Save Login Data
+                </span>
+              </label>
+
+              <button
+                type="button"
+                className="text-xs sm:text-sm font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-tighter self-end sm:self-auto"
+                onClick={() =>
+                  toast.loading("Connecting to Admin Uplink...", {
+                    duration: 2000,
+                  })
+                }
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              fullWidth
+              loading={loading}
+              variant="primary"
+              className="mt-4 text-sm sm:text-base font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-indigo-100 hover:shadow-indigo-200 active:scale-95 transition-all uppercase tracking-[0.2em]"
+            >
+              {!loading && <FaSignInAlt className="text-lg" />}
+              {loading ? "Verifying..." : "Initialize Session"}
+            </Button>
+          </form>
+
+          {/* Footer Text */}
+          <div className="mt-8 sm:mt-10 text-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="h-px w-8 bg-slate-100"></div>
+              <FaFingerprint className="text-slate-300" />
+              <div className="h-px w-8 bg-slate-100"></div>
+            </div>
+            <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+              Contact administration for <br className="sm:hidden" /> credential
+              recovery.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

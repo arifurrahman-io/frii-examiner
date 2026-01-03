@@ -189,11 +189,11 @@ const AdminDashboard = () => {
               </span>
             </div>
             <p className="text-slate-400 font-bold text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.4em] ml-5 sm:ml-6">
-              Neural Sync: {selectedYear} Session Intelligence
+              Session: {selectedYear}{" "}
             </p>
           </div>
 
-          <div className="flex items-center self-start lg:self-center gap-3 bg-white p-2 sm:p-3 rounded-[1.5rem] sm:rounded-[2rem] shadow-xl shadow-indigo-100/20 border border-indigo-50">
+          <div className="flex items-center mx-auto md:mx-0 self-start lg:self-center gap-3 bg-white p-2 sm:p-3 rounded-[1.5rem] sm:rounded-[2rem] shadow-xl shadow-indigo-100/20 border border-indigo-50">
             <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-indigo-600 rounded-xl sm:rounded-2xl text-white shadow-lg">
               <FaCalendarCheck size={12} />
               <select
@@ -201,11 +201,17 @@ const AdminDashboard = () => {
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="bg-transparent border-none text-[10px] sm:text-xs font-black uppercase tracking-widest focus:ring-0 cursor-pointer outline-none"
               >
-                {[2024, 2025, 2026].map((y) => (
-                  <option key={y} value={y} className="text-slate-900">
-                    {y} Session
-                  </option>
-                ))}
+                {/* 🚀 ২০২৪ থেকে বর্তমান বছর পর্যন্ত ডাইনামিক লুপ */}
+                {Array.from(
+                  { length: new Date().getFullYear() - 2024 + 1 },
+                  (_, i) => 2024 + i
+                )
+                  .reverse()
+                  .map((y) => (
+                    <option key={y} value={y} className="text-slate-900">
+                      {y} Session
+                    </option>
+                  ))}
               </select>
             </div>
             <button

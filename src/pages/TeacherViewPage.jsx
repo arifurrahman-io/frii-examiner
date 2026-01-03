@@ -8,7 +8,6 @@ import {
   FaTerminal,
   FaCloudUploadAlt,
   FaShieldAlt,
-  FaLock,
 } from "react-icons/fa";
 
 // Core Components
@@ -47,21 +46,22 @@ const TeacherViewPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-10 px-4 sm:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Layer */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- DYNAMIC HEADER --- */}
-        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 animate-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-6">
-            <div className="h-16 w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-indigo-200 transition-transform hover:scale-105 duration-500">
-              <FaUsers size={28} />
+        <div className="mb-8 sm:mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl flex-shrink-0 transition-transform hover:scale-105 duration-500">
+              <FaUsers className="text-xl sm:text-2xl" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none mb-2 uppercase">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">
                 Teachers' List <span className="text-indigo-600">.</span>
               </h1>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
                 {isAdmin
                   ? "Global Human Resource Index"
                   : `${user?.campus?.name || "Campus"} Teachers' Directory`}
@@ -70,27 +70,27 @@ const TeacherViewPage = () => {
           </div>
 
           {/* --- PILL TABS --- */}
-          <div className="flex bg-white p-1.5 rounded-[1.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100">
+          <div className="flex bg-white p-1 sm:p-1.5 rounded-2xl sm:rounded-[1.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100 self-start lg:self-auto w-full sm:w-auto">
             <button
               onClick={() => setViewMode("list")}
-              className={`flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black transition-all duration-500 uppercase tracking-widest ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black transition-all duration-500 uppercase tracking-widest ${
                 viewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105"
+                  ? "bg-indigo-600 text-white shadow-lg scale-100 sm:scale-105"
                   : "text-slate-400 hover:text-indigo-500"
               }`}
             >
-              <FaSearch size={14} /> Directory
+              <FaSearch size={12} /> Directory
             </button>
 
             <button
               onClick={() => setViewMode("add")}
-              className={`flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black transition-all duration-500 uppercase tracking-widest ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black transition-all duration-500 uppercase tracking-widest ${
                 viewMode === "add"
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105"
+                  ? "bg-indigo-600 text-white shadow-lg scale-100 sm:scale-105"
                   : "text-slate-400 hover:text-indigo-500"
               }`}
             >
-              <FaUserPlus size={14} /> Add
+              <FaUserPlus size={12} /> Add
             </button>
           </div>
         </div>
@@ -98,74 +98,73 @@ const TeacherViewPage = () => {
         {/* --- CONTENT ENGINE --- */}
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
           {viewMode === "list" ? (
-            <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-4 shadow-sm border border-white transition-all hover:shadow-indigo-50">
+            <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-3 sm:p-4 shadow-sm border border-white overflow-x-auto">
               <TeacherSearchList key={refreshList} />
             </div>
           ) : (
             /* --- ADD MODE: ADMIN vs INCHARGE LAYOUT --- */
             <div
               className={`grid grid-cols-1 ${
-                isAdmin ? "lg:grid-cols-12" : "max-w-3xl mx-auto"
-              } gap-10`}
+                isAdmin ? "lg:grid-cols-12" : "max-w-4xl mx-auto"
+              } gap-6 sm:gap-10`}
             >
-              {/* 1. Manual Entry Column (Always visible, layout dynamic) */}
+              {/* 1. Manual Entry Column */}
               <div className={isAdmin ? "lg:col-span-7" : "w-full"}>
-                <div className="bg-white/80 backdrop-blur-xl p-8 md:p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-white group overflow-hidden relative transition-all hover:shadow-indigo-100">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                  <div className="flex items-center gap-4 mb-10 border-b border-slate-50 pb-6 relative z-10">
-                    <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                      <FaTerminal size={18} />
+                <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white relative overflow-hidden transition-all hover:shadow-indigo-100">
+                  <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-indigo-500/5 rounded-full -mr-24 -mt-24 sm:-mr-32 -mt-32 blur-3xl"></div>
+
+                  <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10 border-b border-slate-50 pb-4 sm:pb-6 relative z-10">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-indigo-50 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-600">
+                      <FaTerminal size={14} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest leading-none">
                         {isIncharge
                           ? "Campus Node Registration"
                           : "Global Staff Entry"}
                       </h3>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
+                      <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
                         Matrix Initialization:{" "}
                         {isAdmin ? "Global Protocol" : user?.campus?.name}
                       </p>
                     </div>
                   </div>
-                  <AddTeacherForm onSaveSuccess={handleSaveSuccess} />
+
+                  <div className="relative z-10">
+                    <AddTeacherForm onSaveSuccess={handleSaveSuccess} />
+                  </div>
                 </div>
               </div>
 
-              {/* --- ⚙️ MINIMAL BULK SYNC ENGINE (ADMIN ONLY) --- */}
+              {/* 2. BULK SYNC ENGINE (ADMIN ONLY) */}
               {isAdmin && (
-                <div className="lg:col-span-5 flex flex-col gap-6 animate-in slide-in-from-right-8 duration-1000">
-                  {/* Main Aggregator Card */}
-                  <div className="bg-slate-200 rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-indigo-900/10 relative overflow-hidden group transition-all duration-500 hover:shadow-indigo-500/10">
-                    {/* Subtle Background Glow */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-[80px]"></div>
+                <div className="lg:col-span-5 flex flex-col gap-6 animate-in slide-in-from-bottom-4 lg:slide-in-from-right-8 duration-1000">
+                  <div className="bg-slate-200 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full -mr-24 -mt-24 blur-[60px]"></div>
 
-                    {/* Header Area */}
-                    <div className="flex items-center justify-between mb-10 border-b border-white/5 pb-6 relative z-10">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform">
-                          <FaCloudUploadAlt size={18} />
+                    <div className="flex items-center justify-between mb-8 sm:mb-10 border-b border-white/5 pb-4 sm:pb-6 relative z-10">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-indigo-500/10 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+                          <FaCloudUploadAlt size={16} />
                         </div>
                         <div>
-                          <h3 className="text-base font-black text-blue-600 uppercase tracking-tighter leading-none">
+                          <h3 className="text-sm sm:text-base font-black text-blue-600 uppercase tracking-tighter leading-none">
                             Bulk Add
                           </h3>
-                          <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-[0.3em] mt-1.5 opacity-80">
+                          <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1">
                             Matrix Aggregator
                           </p>
                         </div>
                       </div>
 
-                      {/* Decorative ID Badge */}
-                      <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
-                        <FaShieldAlt className="text-indigo-500" size={10} />
+                      <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
+                        <FaShieldAlt className="text-indigo-500 text-[8px]" />
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
                           Global Protocol
                         </span>
                       </div>
                     </div>
 
-                    {/* Upload Zone Component */}
                     <div className="relative z-10">
                       <BulkUploadSection onSaveSuccess={handleSaveSuccess} />
                     </div>
