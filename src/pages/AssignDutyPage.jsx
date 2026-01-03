@@ -171,11 +171,11 @@ const AssignDutyPage = () => {
             </div>
             <div>
               <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase leading-none mb-1 sm:mb-2">
-                Duty Engine <span className="text-indigo-600">.</span>
+                Assign Duty <span className="text-indigo-600">.</span>
               </h1>
               <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] flex items-center gap-2">
-                <FaTerminal className="text-indigo-500" /> SYNCING ALLOCATION
-                MATRIX
+                <FaTerminal className="text-indigo-500" /> SYNCING DUTY
+                DISTRIBUTION
               </p>
             </div>
           </div>

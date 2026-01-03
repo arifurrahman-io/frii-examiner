@@ -256,7 +256,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tighter">
-                    Load Distribution Matrix
+                    Load Distributions
                   </h3>
                   <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                     Operational analytics for {selectedYear}
@@ -391,7 +391,7 @@ const AdminDashboard = () => {
             <div className="bg-white p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-slate-100 relative overflow-hidden group">
               <FaMedal className="absolute top-6 sm:top-8 right-6 sm:right-10 text-yellow-400/10 text-5xl sm:text-6xl" />
               <h3 className="text-[10px] sm:text-xs font-black text-slate-900 uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-8 sm:mb-10">
-                Neural Rank: Duties
+                Top Responsibles
               </h3>
               <div className="space-y-4 sm:space-y-5">
                 {topTeachers.map((t, i) => (

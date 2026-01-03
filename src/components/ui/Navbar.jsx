@@ -47,25 +47,25 @@ const Navbar = () => {
     if (user?.role === "admin") {
       // এডমিনের জন্যInfrastructure ২য় পজিশনে ইনসার্ট করা হয়েছে
       items.splice(1, 0, {
-        name: "Infrastructure",
+        name: "Setting",
         path: "/setup/branch",
         icon: <FaCogs />,
       });
 
       items.push({
-        name: "Allocation",
+        name: "Assign Duty",
         path: "/assign",
         icon: <FaClipboardList />,
       });
 
       items.push({
-        name: "Audit",
+        name: "Report",
         path: "/report",
         icon: <FaChartBar />,
       });
 
       items.push({
-        name: "Governance",
+        name: "Users",
         path: "/users",
         icon: <FaUsersCog />,
       });
@@ -113,10 +113,10 @@ const Navbar = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-sm sm:text-xl font-black tracking-tighter text-slate-900 leading-none uppercase">
-                Neural <span className="text-indigo-600">Matrix</span>
+                Exam <span className="text-indigo-600">Manager</span>
               </span>
               <span className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1">
-                Governance System v2.5
+                Faizur Rahman Ideal Institute
               </span>
             </div>
           </Link>
@@ -166,7 +166,7 @@ const Navbar = () => {
                         : "text-indigo-600"
                     }`}
                   >
-                    {user?.role} NODE
+                    {user?.role}
                   </p>
                 </div>
               </div>
@@ -239,7 +239,7 @@ const Navbar = () => {
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-rose-50 text-rose-600 font-black text-[10px] uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100"
             >
-              <FaSignOutAlt /> Terminate Session
+              <FaSignOutAlt /> Logout
             </button>
           </div>
         </div>

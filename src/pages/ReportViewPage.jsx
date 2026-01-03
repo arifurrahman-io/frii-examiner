@@ -482,7 +482,7 @@ const ReportViewPage = () => {
                 </div>
                 <div className="space-y-4">
                   <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <FaCubes className="text-indigo-600" /> Projection Matrix:
+                    <FaCubes className="text-indigo-600" /> Projections:
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 p-3 sm:p-4 border border-slate-100 rounded-2xl sm:rounded-[2rem] bg-slate-50/50 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar">
                     {masterData.types.map((t) => (
@@ -516,7 +516,7 @@ const ReportViewPage = () => {
                   loading={exportLoading}
                   className="py-4 sm:py-5 rounded-xl sm:rounded-2xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
                 >
-                  Execute Aggregated Export
+                  Execute Export
                 </Button>
               </div>
             ) : (

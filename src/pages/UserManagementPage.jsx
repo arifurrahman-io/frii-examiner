@@ -37,9 +37,9 @@ const UserManagementPage = () => {
   });
 
   const roleOptions = [
-    { _id: "admin", name: "Administrator" },
-    { _id: "teacher", name: "Global Teacher" },
-    { _id: "incharge", name: "Campus Incharge" },
+    { _id: "admin", name: "Admin" },
+    { _id: "teacher", name: "Teacher" },
+    { _id: "incharge", name: "Incharge" },
   ];
 
   const fetchUsersAndBranches = useCallback(async () => {
@@ -150,7 +150,7 @@ const UserManagementPage = () => {
           variant="primary"
           className="w-full md:w-auto rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 bg-indigo-600 shadow-xl shadow-indigo-100 uppercase font-black text-[10px] sm:text-[11px] tracking-widest flex items-center justify-center gap-3"
         >
-          <FaUserPlus size={14} /> Initialize New Node
+          <FaUserPlus size={14} /> Add User
         </Button>
       </div>
 
@@ -162,7 +162,7 @@ const UserManagementPage = () => {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
-                  Identity Nodes
+                  Identity
                 </th>
                 <th className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
                   Privilege Level
@@ -182,7 +182,7 @@ const UserManagementPage = () => {
                     colSpan="4"
                     className="py-32 text-center animate-pulse uppercase font-black text-slate-300 tracking-[0.5em]"
                   >
-                    Synchronizing Matrix...
+                    Synchronizing...
                   </td>
                 </tr>
               ) : (
@@ -339,7 +339,7 @@ const UserManagementPage = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                Network Email
+                Email
               </label>
               <input
                 className="w-full p-3.5 sm:p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 font-bold text-sm outline-none transition-all"
@@ -382,7 +382,7 @@ const UserManagementPage = () => {
           {formData.role === "incharge" && (
             <div className="space-y-1">
               <label className="text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">
-                Campus Node Selection
+                Campus/Shift Selection
               </label>
               <SelectDropdown
                 options={branches}
@@ -401,7 +401,7 @@ const UserManagementPage = () => {
               variant="primary"
               className="py-4 sm:py-5 rounded-2xl font-black text-[10px] sm:text-[11px] tracking-widest uppercase bg-slate-900 hover:bg-indigo-600 transition-all"
             >
-              {editingUser ? "Push Updates to Matrix" : "Establish Node Access"}
+              {editingUser ? "Update" : "Add"}
             </Button>
           </div>
         </div>
