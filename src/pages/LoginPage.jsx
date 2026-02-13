@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaSignInAlt,
-  FaUserTie,
-  FaLock,
-  FaShieldAlt,
-  FaFingerprint,
-} from "react-icons/fa";
+import { FaUserTie, FaLock, FaArrowRight, FaFingerprint } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate, Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-// Reusable UI Components
 import InputField from "../components/ui/InputField";
 import Button from "../components/ui/Button";
 
@@ -33,159 +26,122 @@ const LoginPage = () => {
     }
   }, []);
 
-  if (isAuthenticated) {
-    return <Navigate to="/" />;
-  }
+  if (isAuthenticated) return <Navigate to="/" />;
 
   const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value,
-    });
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const { teacherIdOrEmail, password } = credentials;
-
-    if (!teacherIdOrEmail || !password) {
-      toast.error("Credentials required for authentication.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const success = await login({
-        username: teacherIdOrEmail,
-        password,
+        username: credentials.teacherIdOrEmail,
+        password: credentials.password,
       });
-
       if (success) {
-        if (rememberMe) {
-          localStorage.setItem("rememberedUser", teacherIdOrEmail);
-        } else {
-          localStorage.removeItem("rememberedUser");
-        }
-        toast.success("Identity Verified. Welcome.");
+        rememberMe
+          ? localStorage.setItem("rememberedUser", credentials.teacherIdOrEmail)
+          : localStorage.removeItem("rememberedUser");
+        toast.success("Identity Verified");
         navigate("/");
       }
     } catch (error) {
-      toast.error("Authentication Failed.");
+      toast.error("Access Denied");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#F8FAFC] p-4 sm:p-6 lg:p-8">
-      {/* Background Decorative Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-3xl"></div>
-      </div>
+    <div className="w-full flex items-center justify-center text-slate-900 p-6 selection:bg-indigo-100">
+      <div className="w-full max-w-[400px] space-y-8">
+        {/* Minimal Header */}
+        <header className="space-y-2">
+          <div className="w-12 h-12 bg-slate-900 flex items-center justify-center rounded-xl mb-6">
+            <FaFingerprint className="text-white text-xl" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            System Access
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            Institutional Governance
+          </p>
+        </header>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
-        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(79,70,229,0.05)] border border-indigo-50 group">
-          {/* Header Section */}
-          <div className="text-center mb-8 sm:mb-10">
-            <div className="inline-flex p-4 bg-indigo-50 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-500">
-              <FaShieldAlt className="text-4xl sm:text-5xl text-indigo-600" />
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight uppercase">
-              Access Node
-            </h2>
-            <p className="text-slate-400 mt-2 text-xs sm:text-sm font-bold uppercase tracking-widest">
-              Institutional Governance Matrix
-            </p>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <InputField
+              label="Identifier"
+              type="text"
+              name="teacherIdOrEmail"
+              icon={FaUserTie}
+              placeholder="Teacher ID or Email"
+              value={credentials.teacherIdOrEmail}
+              onChange={handleChange}
+              required
+              className="border-slate-200 focus:ring-1 focus:ring-slate-900 rounded-lg transition-all"
+            />
+            <InputField
+              label="Security Key"
+              type="password"
+              name="password"
+              icon={FaLock}
+              placeholder="••••••••"
+              value={credentials.password}
+              onChange={handleChange}
+              required
+              className="border-slate-200 focus:ring-1 focus:ring-slate-900 rounded-lg transition-all"
+            />
           </div>
 
-          {/* Form Section */}
-          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-            <div className="space-y-1">
-              <InputField
-                label="Teacher ID / Email"
-                type="text"
-                name="teacherIdOrEmail"
-                icon={FaUserTie}
-                placeholder="Enter ID or Email"
-                value={credentials.teacherIdOrEmail}
-                onChange={handleChange}
-                required
-                className="rounded-2xl border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all"
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
               />
-            </div>
-
-            <div className="space-y-1">
-              <InputField
-                label="Security Password"
-                type="password"
-                name="password"
-                icon={FaLock}
-                placeholder="••••••••"
-                value={credentials.password}
-                onChange={handleChange}
-                required
-                className="rounded-2xl border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all"
-              />
-            </div>
-
-            {/* Options Row */}
-            <div className="flex flex-col sm:row sm:items-center justify-between gap-4 px-1">
-              <label className="flex items-center cursor-pointer group w-fit">
-                <div className="relative flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-5 h-5 text-indigo-600 border-slate-300 rounded-lg focus:ring-indigo-500 cursor-pointer transition-all"
-                  />
-                </div>
-                <span className="ml-3 text-xs sm:text-sm font-bold text-slate-500 group-hover:text-indigo-600 transition-colors uppercase tracking-tighter">
-                  Save Login Data
-                </span>
-              </label>
-
-              <button
-                type="button"
-                className="text-xs sm:text-sm font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-tighter self-end sm:self-auto"
-                onClick={() =>
-                  toast.loading("Connecting to Admin Uplink...", {
-                    duration: 2000,
-                  })
-                }
-              >
-                Forgot Password?
-              </button>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-              variant="primary"
-              className="mt-4 text-sm sm:text-base font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-indigo-100 hover:shadow-indigo-200 active:scale-95 transition-all uppercase tracking-[0.2em]"
+              <span className="text-[13px] font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
+                Remember device
+              </span>
+            </label>
+            <button
+              type="button"
+              className="text-[13px] font-semibold text-slate-900 hover:underline underline-offset-4"
+              onClick={() =>
+                toast("Contact Admin for recovery", { icon: "🛡️" })
+              }
             >
-              {!loading && <FaSignInAlt className="text-lg" />}
-              {loading ? "Verifying..." : "Initialize Session"}
-            </Button>
-          </form>
-
-          {/* Footer Text */}
-          <div className="mt-8 sm:mt-10 text-center">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="h-px w-8 bg-slate-100"></div>
-              <FaFingerprint className="text-slate-300" />
-              <div className="h-px w-8 bg-slate-100"></div>
-            </div>
-            <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-              Contact administration for <br className="sm:hidden" /> credential
-              recovery.
-            </p>
+              Reset Key
+            </button>
           </div>
-        </div>
+
+          <Button
+            type="submit"
+            fullWidth
+            loading={loading}
+            className="h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? (
+              "Verifying..."
+            ) : (
+              <>
+                Continue <FaArrowRight className="text-[10px]" />
+              </>
+            )}
+          </Button>
+        </form>
+
+        {/* Support Footer */}
+        <footer className="pt-8 border-t border-slate-100 text-center">
+          <p className="text-[11px] text-slate-400 font-medium uppercase tracking-[0.15em]">
+            Secured Terminal &copy; 2026
+          </p>
+        </footer>
       </div>
     </div>
   );
