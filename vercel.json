@@ -16,7 +16,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://frii-examiner-back.onrender.com/api/$1"
+      "dest": "https://exam.smarteducationbd.com/api/$1"
     },
     {
       "src": "/[^.]+",
