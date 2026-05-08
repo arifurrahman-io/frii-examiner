@@ -7,11 +7,11 @@ import { useAuth } from "../context/AuthContext";
  * @param {Array} allowedRoles - কোন কোন রোলের ইউজার এই পেজটি দেখতে পারবেন (ঐচ্ছিক)
  */
 const ProtectedRoute = ({ element, allowedRoles }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
   // ১. অথেন্টিকেশন চেক করার সময় Loading স্টেট থাকলে
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center p-20 text-xl font-bold text-indigo-500 animate-pulse">

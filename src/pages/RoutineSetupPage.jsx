@@ -7,17 +7,24 @@ import {
   FaCloudUploadAlt,
   FaInfoCircle,
   FaTerminal,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaUserPlus,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import AddRoutineForm from "../components/forms/AddRoutineForm";
 import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
 import { uploadRoutineExcel } from "../api/apiService";
 
 const RoutineSetupPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [duplicateMode, setDuplicateMode] = useState("skip");
+  const [uploadResult, setUploadResult] = useState(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -49,32 +56,46 @@ const RoutineSetupPage = () => {
   const handleExcelUpload = async () => {
     if (!selectedFile) return toast.error("Select a file first.");
     setUploading(true);
+    setUploadResult(null);
+    setUploadProgress(0);
+    setIsUploadModalOpen(true);
     const formData = new FormData();
     formData.append("excelFile", selectedFile);
+    formData.append("duplicateMode", duplicateMode);
 
     try {
-      const response = await uploadRoutineExcel(formData);
-      const { savedRoutinesCount, errors } = response.data;
-      toast.success(`Success: ${savedRoutinesCount} routines indexed.`);
+      const response = await uploadRoutineExcel(formData, {
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(Math.min(percent, 95));
+        },
+      });
+      const { uploadedCount, savedRoutinesCount, errors } = response.data;
+      setUploadProgress(100);
+      setUploadResult(response.data);
+      toast.success(
+        `Success: ${uploadedCount ?? savedRoutinesCount ?? 0} routines indexed.`
+      );
       if (errors?.length > 0) toast.error(`${errors.length} records failed.`);
       setSelectedFile(null);
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Upload failed.");
+      const message = error.response?.data?.message || "Upload failed.";
+      setUploadResult({ message, errors: [message], failed: true });
+      toast.error(message);
     } finally {
       setUploading(false);
     }
   };
 
   const handleManualSaveSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
+    toast.success("Routine synchronized.");
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Layer */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-
+    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto relative z-10">
         {/* --- HEADER --- */}
         <div className="mb-8 sm:mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -84,10 +105,10 @@ const RoutineSetupPage = () => {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-1 sm:mb-2 uppercase">
-                Schedule Engine <span className="text-indigo-600">.</span>
+                Routine setup
               </h1>
               <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
-                Initialize Institutional Routines
+                Manage institutional schedules
               </p>
             </div>
           </div>
@@ -95,7 +116,7 @@ const RoutineSetupPage = () => {
           <div className="self-start md:self-auto px-4 sm:px-6 py-2 sm:py-3 bg-white rounded-xl sm:rounded-2xl border border-indigo-50 shadow-sm flex items-center gap-3">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              Core Synchronized
+              Ready
             </span>
           </div>
         </div>
@@ -109,7 +130,7 @@ const RoutineSetupPage = () => {
                   <FaTerminal className="text-sm sm:text-base" />
                 </div>
                 <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest">
-                  Manual Entry Console
+                  Manual entry
                 </h3>
               </div>
               <AddRoutineForm onSaveSuccess={handleManualSaveSuccess} />
@@ -153,7 +174,7 @@ const RoutineSetupPage = () => {
                   <input
                     id="routine-excel-upload"
                     type="file"
-                    accept=".xlsx"
+                    accept=".xlsx,.xls"
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -176,13 +197,13 @@ const RoutineSetupPage = () => {
                         <FaCloudUploadAlt className="text-2xl sm:text-4xl" />
                       </div>
                       <p className="text-[11px] sm:text-sm font-black text-slate-700 uppercase tracking-tighter">
-                        Drop Excel Node or{" "}
+                        Drop Excel file or{" "}
                         <span className="text-indigo-600 underline">
                           Browse
                         </span>
                       </p>
                       <p className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 sm:mt-3">
-                        Accepts .XLSX Matrix only
+                        Accepts .xlsx and .xls files
                       </p>
                     </div>
                   )}
@@ -191,6 +212,31 @@ const RoutineSetupPage = () => {
 
               {/* --- ACTION AREA --- */}
               <div className="mt-8 sm:mt-10">
+                <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-2 border border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateMode("skip")}
+                    className={`rounded-xl px-3 py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                      duplicateMode === "skip"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-slate-400 hover:text-slate-700"
+                    }`}
+                  >
+                    Skip Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateMode("overwrite")}
+                    className={`rounded-xl px-3 py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                      duplicateMode === "overwrite"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-slate-400 hover:text-slate-700"
+                    }`}
+                  >
+                    Overwrite
+                  </button>
+                </div>
+
                 <Button
                   onClick={handleExcelUpload}
                   fullWidth
@@ -199,15 +245,15 @@ const RoutineSetupPage = () => {
                   disabled={!selectedFile || uploading}
                   className="rounded-xl sm:rounded-[1.5rem] py-4 sm:py-5 bg-slate-900 hover:bg-indigo-600 text-white font-black text-[9px] sm:text-[11px] tracking-[0.1em] sm:tracking-[0.2em] transition-all active:scale-95 border-none"
                 >
-                  <FaUpload className="mr-2 sm:mr-3" /> INITIALIZE BULK UPLOAD
+                  <FaUpload className="mr-2 sm:mr-3" /> Upload routines
                 </Button>
 
                 <div className="mt-4 sm:mt-6 flex items-start gap-2 sm:gap-3 p-4 sm:p-5 bg-indigo-50/50 rounded-xl sm:rounded-2xl border border-indigo-100/50">
                   <FaInfoCircle className="text-indigo-400 mt-0.5" size={12} />
                   <p className="text-[8px] sm:text-[9px] font-bold text-indigo-900 uppercase tracking-widest leading-relaxed">
                     <span className="text-indigo-600">Format:</span> TeacherID,
-                    Name, Phone, Branch, Class, Subject. Ensure master data
-                    matches perfectly.
+                    TeacherName, BranchName, ClassName, SubjectName, Year.
+                    TeacherName is required only when the teacher ID is new.
                   </p>
                 </div>
               </div>
@@ -216,12 +262,142 @@ const RoutineSetupPage = () => {
         </div>
       </div>
 
-      {/* Footer Branding */}
-      <div className="mt-12 sm:mt-20 text-center opacity-20 px-4">
-        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] sm:tracking-[1em] leading-relaxed">
-          Authorized Governance Matrix
-        </p>
-      </div>
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => !uploading && setIsUploadModalOpen(false)}
+        title="Routine Upload Status"
+      >
+        {uploading ? (
+          <div className="py-8 text-center">
+            <FaSyncAlt className="mx-auto mb-5 text-4xl text-indigo-600 animate-spin" />
+            <p className="text-sm font-black text-slate-900 uppercase tracking-widest">
+              Processing Excel routines
+            </p>
+            <div className="mx-auto mt-6 max-w-sm">
+              <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <span>Upload Progress</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+            <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Routine work percentage appears when processing finishes.
+            </p>
+          </div>
+        ) : uploadResult ? (
+          <div className="space-y-5">
+            <div className="flex items-start gap-3">
+              {uploadResult.failed ? (
+                <FaExclamationTriangle className="mt-1 text-red-500" />
+              ) : (
+                <FaCheckCircle className="mt-1 text-emerald-500" />
+              )}
+              <div>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                  {uploadResult.message || "Bulk routine upload completed."}
+                </p>
+                <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Duplicate mode:{" "}
+                  {uploadResult.duplicateMode === "overwrite"
+                    ? "Overwrite"
+                    : "Skip existing"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+              <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-indigo-700">
+                <span>Total Routine Work</span>
+                <span>{uploadResult.progressPercentage ?? 0}%</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full bg-indigo-600"
+                  style={{
+                    width: `${uploadResult.progressPercentage ?? 0}%`,
+                  }}
+                />
+              </div>
+              <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+                Processed {uploadResult.processedCount ?? 0} of{" "}
+                {uploadResult.totalRows ?? 0} rows
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                ["Total Rows", uploadResult.totalRows ?? 0, "text-slate-900"],
+                [
+                  "New Teachers",
+                  uploadResult.createdTeachersCount ?? 0,
+                  "text-emerald-600",
+                  FaUserPlus,
+                ],
+                [
+                  "Campus Updated",
+                  uploadResult.updatedTeacherCampusesCount ?? 0,
+                  "text-cyan-600",
+                ],
+                [
+                  "Uploaded",
+                  uploadResult.uploadedCount ??
+                    uploadResult.savedRoutinesCount ??
+                    0,
+                  "text-emerald-600",
+                ],
+                [
+                  "Remaining",
+                  uploadResult.remainingCount ??
+                    ((uploadResult.skippedCount || 0) +
+                      (uploadResult.failedCount || 0)),
+                  "text-amber-600",
+                ],
+                ["Skipped", uploadResult.skippedCount ?? 0, "text-indigo-600"],
+                [
+                  "Overwritten",
+                  uploadResult.overwrittenCount ?? 0,
+                  "text-violet-600",
+                ],
+                ["Failed", uploadResult.failedCount ?? 0, "text-red-600"],
+              ].map(([label, value, color, Icon]) => (
+                <div
+                  key={label}
+                  className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <div className="flex items-center gap-2">
+                    {Icon ? <Icon className="text-emerald-500" size={12} /> : null}
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                      {label}
+                    </p>
+                  </div>
+                  <p className={`mt-2 text-2xl font-black ${color}`}>
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {uploadResult.errors?.length > 0 && (
+              <div className="max-h-44 overflow-y-auto rounded-2xl border border-red-100 bg-red-50/60 p-4">
+                <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-red-600">
+                  Remaining or failed rows
+                </p>
+                <ul className="space-y-1 text-[11px] font-semibold text-red-700">
+                  {uploadResult.errors.slice(0, 25).map((err, index) => (
+                    <li key={`${err}-${index}`}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
+
     </div>
   );
 };

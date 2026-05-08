@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   FaUserPlus,
@@ -21,8 +21,6 @@ const TeacherViewPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const isProfileView = !!id;
-  const navigate = useNavigate();
-
   const [viewMode, setViewMode] = useState("list");
   const [refreshList, setRefreshList] = useState(0);
 
@@ -46,10 +44,7 @@ const TeacherViewPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Layer */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-
+    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- DYNAMIC HEADER --- */}
         <div className="mb-8 sm:mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -59,11 +54,11 @@ const TeacherViewPage = () => {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">
-                Teachers' List <span className="text-indigo-600">.</span>
+                Teachers
               </h1>
               <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
                 {isAdmin
-                  ? "Global Human Resource Index"
+                  ? "Complete teacher directory"
                   : `${user?.campus?.name || "Campus"} Teachers' Directory`}
               </p>
             </div>
@@ -120,12 +115,11 @@ const TeacherViewPage = () => {
                     <div>
                       <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest leading-none">
                         {isIncharge
-                          ? "Campus Node Registration"
-                          : "Global Staff Entry"}
+                          ? "Campus teacher registration"
+                          : "Staff entry"}
                       </h3>
                       <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
-                        Matrix Initialization:{" "}
-                        {isAdmin ? "Global Protocol" : user?.campus?.name}
+                        {isAdmin ? "All campuses" : user?.campus?.name}
                       </p>
                     </div>
                   </div>
@@ -152,7 +146,7 @@ const TeacherViewPage = () => {
                             Bulk Add
                           </h3>
                           <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1">
-                            Matrix Aggregator
+                            Spreadsheet import
                           </p>
                         </div>
                       </div>
@@ -160,7 +154,7 @@ const TeacherViewPage = () => {
                       <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
                         <FaShieldAlt className="text-indigo-500 text-[8px]" />
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                          Global Protocol
+                          Admin only
                         </span>
                       </div>
                     </div>

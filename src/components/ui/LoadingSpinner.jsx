@@ -2,7 +2,7 @@ import React from "react";
 
 const LoadingSpinner = ({
   size = "h-12 w-12",
-  color = "border-cyan-500",
+  color = "border-emerald-600",
   message = "Loading...",
 }) => {
   return (
@@ -10,19 +10,17 @@ const LoadingSpinner = ({
       {/* --- Circular Spinner --- */}
       <div className="relative">
         {/* Static Background Ring */}
-        <div
-          className={`${size} rounded-full border-4 border-cyan-100/30`}
-        ></div>
+        <div className={`${size} rounded-full border-4 border-emerald-100`} />
 
         {/* Animated Spinning Ring (image_d0d747 style) */}
         <div
-          className={`absolute top-0 left-0 ${size} rounded-full border-4 border-transparent ${color} border-t-transparent animate-spin shadow-[0_0_15px_rgba(6,182,212,0.2)]`}
+          className={`absolute top-0 left-0 ${size} rounded-full border-4 border-transparent ${color} border-t-transparent animate-spin`}
         ></div>
       </div>
 
       {/* --- Status Message --- */}
       {message && (
-        <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">
+        <p className="mt-4 text-xs font-semibold text-slate-400">
           {message}
         </p>
       )}

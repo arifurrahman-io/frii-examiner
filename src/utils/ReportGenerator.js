@@ -2,6 +2,47 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import toast from "react-hot-toast";
 
+const getReportGeneratedAt = () =>
+  new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: true,
+    timeZone: "Asia/Dhaka",
+  }).format(new Date());
+
+const drawReportFooter = (doc) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const footerY = pageHeight - 8;
+  const marginX = 10;
+
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.2);
+  doc.line(marginX, footerY - 5, pageWidth - marginX, footerY - 5);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Generated: ${getReportGeneratedAt()}`, marginX, footerY);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(30, 58, 138);
+  doc.text("FRII Exam Management Platform", pageWidth / 2, footerY, {
+    align: "center",
+  });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(
+    `Page ${doc.internal.getCurrentPageInfo().pageNumber}`,
+    pageWidth - marginX,
+    footerY,
+    { align: "right" }
+  );
+};
+
 /**
  * রিপোর্ট ডেটা JSON ফরম্যাট থেকে PDF তৈরি ও ডাউনলোড করে।
  * @param {Array<Object>} data - রিপোর্ট ডেটা (getReportData API থেকে প্রাপ্ত)
@@ -87,14 +128,9 @@ export const generatePDFReport = (data, filters, title) => {
         halign: "center",
       },
       styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
-      margin: { top: 30, right: 10, left: 10, bottom: 10 },
+      margin: { top: 30, right: 10, left: 10, bottom: 16 },
       didDrawPage: (data) => {
-        doc.setFontSize(8);
-        doc.text(
-          "Page " + doc.internal.getNumberOfPages(),
-          data.settings.margin.left,
-          doc.internal.pageSize.height - 5
-        );
+        drawReportFooter(doc, data.pageNumber);
       },
     });
 

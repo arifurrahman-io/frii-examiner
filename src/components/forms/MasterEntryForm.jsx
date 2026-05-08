@@ -47,7 +47,7 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
       icon: FaBookOpen,
     },
     responsibility: {
-      title: "New Duty Prototype",
+      title: "New duty type",
       placeholder: "e.g., Coordinator",
       icon: FaTasks,
     },
@@ -87,7 +87,7 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
       };
 
       await addMasterData(type, payload);
-      toast.success(`${type.toUpperCase()} indexed successfully!`);
+      toast.success("Saved successfully.");
 
       setName("");
       setDescription("");
@@ -103,20 +103,19 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-[3rem] p-1 shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-200 overflow-hidden">
       <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8">
         {/* --- UNIFIED SINGLE HEADER --- */}
         <div className="flex items-center gap-5 border-b border-slate-50 pb-8">
-          <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 transition-transform hover:rotate-0">
+          <div className="h-14 w-14 bg-emerald-700 rounded-xl flex items-center justify-center text-white">
             <currentConfig.icon size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">
               {currentConfig.title}
             </h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
-              <FaTerminal className="text-indigo-500" /> INITIALIZE NEURAL
-              RECORD
+            <p className="text-xs font-semibold text-slate-400 mt-2 flex items-center gap-2">
+              <FaTerminal className="text-emerald-700" /> Master data entry
             </p>
           </div>
         </div>
@@ -177,16 +176,16 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
         {/* --- INPUT ROW 2 + BUTTON --- */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
           <div className="md:col-span-9">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">
-              NARRATIVE DESCRIPTION (OPTIONAL)
+            <label className="text-xs font-semibold text-slate-500 mb-2 block ml-1">
+              Description optional
             </label>
             <div className="relative">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Contextual metadata..."
+                placeholder="Short description..."
                 rows="1"
-                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-sm outline-none resize-none"
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 transition-all font-medium text-sm outline-none resize-none"
               />
               <FaInfoCircle className="absolute right-4 top-4 text-slate-200" />
             </div>
@@ -196,9 +195,9 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full py-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-3 transition-colors disabled:opacity-50"
             >
-              {loading ? <FaSyncAlt className="animate-spin" /> : "INDEXING"}
+              {loading ? <FaSyncAlt className="animate-spin" /> : "Save"}
             </button>
           </div>
         </div>

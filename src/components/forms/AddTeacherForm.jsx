@@ -61,11 +61,11 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "ID Required";
-    if (!formData.teacherId.trim()) newErrors.teacherId = "Node Required";
-    if (!formData.campus) newErrors.campus = "Link Required";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.teacherId.trim()) newErrors.teacherId = "Teacher ID is required";
+    if (!formData.campus) newErrors.campus = "Campus is required";
     if (!formData.phone.trim()) {
-      newErrors.phone = "Comm Required";
+      newErrors.phone = "Phone is required";
     } else if (!/^\d+$/.test(formData.phone)) {
       newErrors.phone = "Digits only";
     }
@@ -83,14 +83,15 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
     setLoading(true);
     try {
       const response = await addTeacher(formData);
-      toast.success(`${response.data.name} synchronized.`);
+      const savedTeacher = response.data.teacher || response.data.data;
+      toast.success(`${savedTeacher?.name || formData.name} synchronized.`);
       setFormData({
         ...initialFormData,
         campus: isIncharge ? user.campus._id || user.campus : "",
       });
-      if (onSaveSuccess) onSaveSuccess(response.data);
+      if (onSaveSuccess) onSaveSuccess(savedTeacher);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Protocol Error.");
+      toast.error(error.response?.data?.message || "Operation failed.");
     } finally {
       setLoading(false);
     }
@@ -98,10 +99,7 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
 
   return (
     <div className="relative max-w-4xl mx-auto my-4 sm:my-8 px-2 sm:px-4">
-      {/* Dynamic Background Glow */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-[2rem] sm:rounded-[3rem] blur-2xl"></div>
-
-      <div className="relative bg-white/90 backdrop-blur-2xl rounded-[2rem] sm:rounded-[3rem] border border-white/50 shadow-2xl overflow-hidden transition-all duration-500">
+      <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-200">
         <form
           onSubmit={handleSubmit}
           className="p-6 sm:p-10 md:p-14 space-y-8 sm:space-y-12"
@@ -109,24 +107,24 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
           {/* --- HEADER SECTION: Fully Responsive Stack --- */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-6 sm:pb-8 mb-4 gap-4">
             <div className="flex items-center gap-4 sm:gap-5">
-              <div className="h-12 w-12 sm:h-14 sm:w-14 bg-slate-900 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center text-indigo-400 shadow-xl shrink-0">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 bg-emerald-700 rounded-xl flex items-center justify-center text-white shrink-0">
                 <FaFingerprint className="text-xl sm:text-2xl" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight leading-none truncate">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none truncate">
                   Teacher Registration
                 </h2>
-                <p className="text-[8px] sm:text-[10px] font-bold text-indigo-600 uppercase tracking-[0.2em] mt-1.5 sm:mt-2">
-                  System Mode: {isAdmin ? "Global Admin" : "Shift Incharge"}
+                <p className="text-xs font-semibold text-slate-400 mt-1.5 sm:mt-2">
+                  {isAdmin ? "All campuses" : "Campus incharge"}
                 </p>
               </div>
             </div>
 
             {isIncharge && (
-              <div className="flex items-center gap-3 px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-50/50 rounded-xl sm:rounded-2xl border border-indigo-100/50 self-start sm:self-auto">
-                <FaEthernet className="text-indigo-500 text-xs" />
-                <span className="text-[9px] sm:text-[10px] font-black text-slate-700 uppercase tracking-widest truncate max-w-[150px]">
-                  {user?.campus?.name || "Local Node"}
+              <div className="flex items-center gap-3 px-4 py-2 sm:px-5 sm:py-2.5 bg-emerald-50 rounded-xl border border-emerald-100 self-start sm:self-auto">
+                <FaEthernet className="text-emerald-700 text-xs" />
+                <span className="text-xs font-semibold text-slate-700 truncate max-w-[150px]">
+                  {user?.campus?.name || "Local campus"}
                 </span>
               </div>
             )}
@@ -204,7 +202,7 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
                     label="Communication Line"
                     name="phone"
                     icon={FaPhone}
-                    placeholder="Contact Matrix"
+                    placeholder="Phone number"
                     value={formData.phone}
                     onChange={handleChange}
                     error={errors.phone}
@@ -217,7 +215,7 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
                     label="Institutional Designation"
                     name="designation"
                     icon={FaUserTie}
-                    placeholder="Meta Role Assignment"
+                    placeholder="Designation"
                     value={formData.designation}
                     onChange={handleChange}
                     className="w-full bg-slate-50/50 border-slate-100/50 rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm font-semibold px-4 sm:px-6"
@@ -232,9 +230,9 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full overflow-hidden rounded-xl sm:rounded-[1.5rem] bg-slate-900 py-4 sm:py-5 text-white shadow-2xl transition-all hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-70"
+              className="group relative w-full overflow-hidden rounded-xl bg-emerald-700 py-4 sm:py-5 text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:opacity-70"
             >
-              <div className="relative flex items-center justify-center gap-3 sm:gap-4 font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[11px] sm:text-[13px]">
+              <div className="relative flex items-center justify-center gap-3 sm:gap-4 font-bold text-sm">
                 {loading ? (
                   <FaSyncAlt className="animate-spin" />
                 ) : (
@@ -246,12 +244,6 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
               </div>
             </button>
 
-            <div className="mt-6 sm:mt-8 flex flex-col items-center gap-2 px-4 text-center">
-              <p className="text-[7px] sm:text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] sm:tracking-[0.5em] leading-relaxed">
-                Institutional Security Protocol V2.5.1
-              </p>
-              <div className="h-1 w-16 sm:w-20 bg-indigo-50 rounded-full"></div>
-            </div>
           </div>
         </form>
       </div>

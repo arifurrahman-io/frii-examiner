@@ -80,7 +80,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
         setClasses(classesRes.data);
         setSubjects(subjectsRes.data);
       } catch (error) {
-        toast.error("Protocol Sync Error: Failed to load buffers.");
+        toast.error("Failed to load routine options.");
       }
     };
     fetchMasterData();
@@ -96,7 +96,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
 
     const requiredFields = ["teacher", "year", "className", "subject"];
     if (requiredFields.some((field) => !formData[field])) {
-      toast.error("Complete all neural parameters before saving.");
+      toast.error("Complete all required fields before saving.");
       setLoading(false);
       return;
     }
@@ -108,7 +108,7 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
 
     try {
       await action;
-      toast.success(isUpdating ? "Protocol updated." : "Record indexed.");
+      toast.success(isUpdating ? "Routine updated." : "Routine added.");
       if (onSaveSuccess) onSaveSuccess();
       if (!isUpdating) setFormData(getInitialState(null, defaultTeacherId));
     } catch (error) {
@@ -119,23 +119,23 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
   };
 
   return (
-    <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-1 shadow-sm border border-slate-100 group transition-all duration-500 hover:shadow-indigo-100/50">
+    <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-200 group transition-all duration-200 hover:shadow-md">
       <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8">
         {/* --- HEADER --- */}
         <div className="flex items-center justify-between border-b border-slate-50 pb-6">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 transition-transform group-hover:rotate-0">
+            <div className="h-12 w-12 bg-emerald-700 rounded-xl flex items-center justify-center text-white">
               <FaCalendarAlt size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">
-                {initialData ? "Modify Protocol" : "Initialize Routine"}
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-none">
+                {initialData ? "Update routine" : "Add routine"}
               </h2>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
-                <FaTerminal className="text-indigo-500" />{" "}
+              <p className="text-xs font-semibold text-slate-400 mt-2 flex items-center gap-2">
+                <FaTerminal className="text-emerald-700" />{" "}
                 {user?.role === "incharge"
-                  ? `${user.campus?.name} Console`
-                  : "Global Command Console"}
+                  ? user.campus?.name
+                  : "All campuses"}
               </p>
             </div>
           </div>
@@ -159,17 +159,17 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
             />
           </div>
           <div className="md:col-span-8">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">
-              Teacher Search Filter{" "}
+            <label className="text-xs font-semibold text-slate-500 mb-2 block ml-1">
+              Teacher search
             </label>
             <div className="relative group/search">
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/search:text-indigo-500 transition-colors" />
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/search:text-emerald-700 transition-colors" />
               <input
                 type="text"
-                placeholder="Query Name or ID..."
+                placeholder="Search by name or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-sm outline-none shadow-inner"
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 transition-all font-semibold text-sm outline-none"
               />
               <FaSyncAlt
                 className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-200 ${
@@ -225,14 +225,14 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full  py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:shadow-indigo-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full py-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-3 transition-colors disabled:opacity-50"
           >
             {loading ? (
               <FaSyncAlt className="animate-spin" />
             ) : (
               <>
                 <FaSave className="text-xs" />{" "}
-                {initialData ? "Update Registry" : "Add Routine"}
+                {initialData ? "Update routine" : "Add routine"}
               </>
             )}
           </button>

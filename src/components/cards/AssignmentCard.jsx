@@ -22,6 +22,16 @@ import {
   checkLeaveConflict,
 } from "../../api/apiService";
 
+const getName = (value) => (typeof value === "object" ? value?.name : value);
+const normalizeName = (value) =>
+  getName(value)?.toString().trim().toLowerCase() || "";
+const getAssignmentTypeName = (assignment) =>
+  getName(assignment.responsibilityType) || getName(assignment.name);
+const getAssignmentClassName = (assignment) =>
+  getName(assignment.targetClass) || getName(assignment.class);
+const getAssignmentSubjectName = (assignment) =>
+  getName(assignment.targetSubject) || getName(assignment.subject);
+
 const AssignmentCard = ({
   teacher,
   assignmentsByYear,
@@ -35,24 +45,36 @@ const AssignmentCard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const currentYear = new Date().getFullYear();
-  const previousYear = currentYear - 1;
+  const selectedYear = Number(year);
+  const previousYear = selectedYear - 1;
 
   const [existingAssignments, setExistingAssignments] = useState([]);
   const [conflictLoading, setConflictLoading] = useState(false);
   const [isConflict, setIsConflict] = useState(false);
   const [isLeaveConflict, setIsLeaveConflict] = useState(false);
 
+  const matchesSelectedTarget = useCallback(
+    (assignment) =>
+      normalizeName(getAssignmentTypeName(assignment)) ===
+        normalizeName(responsibilityType?.name) &&
+      normalizeName(getAssignmentClassName(assignment)) ===
+        normalizeName(targetClass?.name) &&
+      normalizeName(getAssignmentSubjectName(assignment)) ===
+        normalizeName(targetSubject?.name),
+    [responsibilityType?.name, targetClass?.name, targetSubject?.name]
+  );
+
   // --- Filter Routine Data ---
   const routineDataCurrentYear = Array.isArray(routineSchedule)
-    ? routineSchedule.filter((item) => item.year === currentYear)
+    ? routineSchedule.filter((item) => item.year === selectedYear)
     : [];
 
   const assignmentsByYearArray = Array.isArray(assignmentsByYear)
     ? assignmentsByYear
     : [];
   const assignmentsCurrent =
-    assignmentsByYearArray.find((a) => a._id === currentYear)
+    assignmentsByYearArray
+      .find((a) => a._id === selectedYear)
       ?.responsibilities || [];
   const assignmentsPrevious =
     assignmentsByYearArray.find((a) => a._id === previousYear)
@@ -78,9 +100,7 @@ const AssignmentCard = ({
     try {
       const { data } = await getAssignmentsByTeacherAndYear(teacher._id, year);
       const hasConflict = data.some(
-        (a) =>
-          a.responsibilityType?.name === responsibilityType.name &&
-          a.status === "Assigned"
+        (a) => a.status === "Assigned" && matchesSelectedTarget(a)
       );
       setExistingAssignments(data);
       setIsConflict(hasConflict);
@@ -89,7 +109,12 @@ const AssignmentCard = ({
     } finally {
       setConflictLoading(false);
     }
-  }, [teacher._id, year, responsibilityType?.name]);
+  }, [
+    teacher._id,
+    year,
+    responsibilityType?.name,
+    matchesSelectedTarget,
+  ]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -119,7 +144,7 @@ const AssignmentCard = ({
   };
 
   // ✅ Updated List with Subject Integration
-  const CompactList = ({ list, title, icon: Icon, color }) => (
+  const CompactList = ({ list, title, icon: Icon, color, showAll = false }) => (
     <div className="flex flex-col space-y-1.5">
       <div className="flex items-center gap-1.5">
         <Icon className={`text-[8px] sm:text-[10px] ${color}`} />
@@ -127,9 +152,9 @@ const AssignmentCard = ({
           {title}
         </p>
       </div>
-      <div className="space-y-1 max-h-20 overflow-y-auto no-scrollbar">
+      <div className="space-y-1 max-h-40 overflow-y-auto no-scrollbar">
         {list.length > 0 ? (
-          list.slice(0, 2).map((a, i) => (
+          (showAll ? list : list.slice(0, 2)).map((a, i) => (
             <p
               key={i}
               className="text-[10px] sm:text-[11px] font-bold text-slate-600 truncate leading-tight"
@@ -151,7 +176,7 @@ const AssignmentCard = ({
             Empty Node
           </p>
         )}
-        {list.length > 2 && (
+        {!showAll && list.length > 2 && (
           <p className="text-[8px] font-black text-indigo-400">
             + {list.length - 2} Vectors
           </p>
@@ -200,7 +225,7 @@ const AssignmentCard = ({
           <div className="sm:border-r border-slate-100 sm:pr-4">
             <CompactList
               list={assignmentsCurrent}
-              title={`Cycle ${currentYear}`}
+              title={`Cycle ${selectedYear}`}
               icon={FaLayerGroup}
               color="text-indigo-500"
             />
@@ -211,6 +236,7 @@ const AssignmentCard = ({
               title={`Archive ${previousYear}`}
               icon={FaHistory}
               color="text-slate-400"
+              showAll
             />
           </div>
         </div>
@@ -286,7 +312,7 @@ const AssignmentCard = ({
                   <div
                     key={a._id}
                     className={`flex justify-between items-center p-3 rounded-xl border ${
-                      a.responsibilityType?.name === responsibilityType?.name
+                      matchesSelectedTarget(a)
                         ? "bg-rose-50 border-rose-100"
                         : "bg-slate-50 border-slate-100"
                     }`}
@@ -298,13 +324,9 @@ const AssignmentCard = ({
                       {/* ✅ Modal conflict list with Subject integration */}
                       <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">
                         (
-                        {typeof a.class === "object"
-                          ? a.class?.name
-                          : a.class || "N/A"}{" "}
+                        {getAssignmentClassName(a) || "N/A"}{" "}
                         |{" "}
-                        {typeof a.subject === "object"
-                          ? a.subject?.name
-                          : a.subject || "N/A"}
+                        {getAssignmentSubjectName(a) || "N/A"}
                         )
                       </p>
                     </div>

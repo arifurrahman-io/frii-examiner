@@ -99,16 +99,16 @@ const UserManagementPage = () => {
     try {
       if (editingUser) {
         await updateUser(editingUser._id, formData);
-        toast.success("User Node re-indexed.");
+        toast.success("User updated.");
       } else {
         if (!formData.password) return toast.error("Security key missing.");
         await addUser(formData);
-        toast.success("New access node established.");
+        toast.success("User added.");
       }
       setIsModalOpen(false);
       fetchUsersAndBranches();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Protocol failure.");
+      toast.error(error.response?.data?.message || "Operation failed.");
     }
   };
 
@@ -116,7 +116,7 @@ const UserManagementPage = () => {
     if (window.confirm("Authorize permanent removal of this access node?")) {
       try {
         await deleteUser(id);
-        toast.success("Node terminated.");
+        toast.success("User removed.");
         fetchUsersAndBranches();
       } catch (error) {
         toast.error("Operation aborted.");
@@ -125,9 +125,8 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto min-h-screen pt-20 sm:pt-10 relative overflow-hidden">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto min-h-screen pt-6 sm:pt-8 relative overflow-hidden">
       {/* Background Subtle Pattern */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       {/* --- HEADER --- */}
       <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10 transition-all hover:shadow-indigo-100/50">
@@ -141,7 +140,7 @@ const UserManagementPage = () => {
             </h2>
             <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] flex items-center gap-2">
               <FaTerminal className="text-indigo-500" /> SYSTEM ACCESS
-              GOVERNANCE
+              Access control
             </p>
           </div>
         </div>
@@ -154,7 +153,7 @@ const UserManagementPage = () => {
         </Button>
       </div>
 
-      {/* --- USER MATRIX --- */}
+      {/* --- USER LIST --- */}
       <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-2 sm:p-4 shadow-sm border border-white relative z-10">
         {/* Desktop View: Table */}
         <div className="hidden md:block overflow-x-auto">

@@ -28,17 +28,17 @@ const SelectDropdown = ({
 }) => {
   // 💡 MODERN STYLING: Clean, border-focused design with prominent focus ring.
   const baseStyle =
-    "w-full p-3 rounded-lg bg-white appearance-none transition duration-150 cursor-pointer text-gray-800";
+    "w-full p-3 rounded-xl bg-white appearance-none transition-all duration-200 cursor-pointer text-slate-800 shadow-sm";
 
   const defaultStyle =
-    "border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
+    "border border-slate-200 focus:border-teal-600 focus:ring-4 focus:ring-teal-100 focus:outline-none";
 
   const errorStyle = error
-    ? "border-red-500 ring-2 ring-red-500" // Use ring for visible error highlight
+    ? "border-rose-500 ring-4 ring-rose-100"
     : defaultStyle;
 
   const disabledStyle = props.disabled
-    ? "bg-gray-100 cursor-not-allowed opacity-80"
+    ? "bg-slate-100 cursor-not-allowed opacity-80"
     : "";
 
   const finalClassName = `${baseStyle} ${errorStyle} ${disabledStyle}`;
@@ -49,9 +49,9 @@ const SelectDropdown = ({
       {label && (
         <label
           htmlFor={name}
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-slate-700"
         >
-          {label} {required && <span className="text-red-500">*</span>}
+          {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
 
@@ -85,21 +85,21 @@ const SelectDropdown = ({
         {/* কাস্টম Chevron আইকন (ডিফল্ট সিস্টেম মেনু লুকানোর জন্য) */}
         <FaChevronDown
           className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-            error ? "text-red-500" : "text-gray-400"
+            error ? "text-rose-500" : "text-slate-400"
           }`}
         />
 
         {/* ত্রুটির আইকন (যদি error থাকে) */}
         {error && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-            <FaExclamationCircle className="text-red-500" />
+            <FaExclamationCircle className="text-rose-500" />
           </div>
         )}
       </div>
 
       {/* ৩. ত্রুটির বার্তা */}
       {error && (
-        <p className="mt-1 text-xs text-red-600 flex items-center">{error}</p>
+        <p className="mt-1 text-xs text-rose-600 flex items-center">{error}</p>
       )}
     </div>
   );

@@ -26,7 +26,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
       toast.success(`${file.name} ready for add.`);
     } else {
       setSelectedFile(null);
-      toast.error("Invalid file matrix. Use .xlsx only.");
+      toast.error("Invalid file. Use .xlsx or .xls.");
     }
   };
 
@@ -50,7 +50,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
 
   const handleBulkUpload = async () => {
     if (!selectedFile) {
-      toast.error("Selection matrix empty. Provide Excel file.");
+      toast.error("Select an Excel file first.");
       return;
     }
 
@@ -79,19 +79,19 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-[3rem] p-1 shadow-sm border border-slate-100 overflow-hidden h-full flex flex-col group transition-all duration-500 hover:shadow-indigo-100/50">
+    <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col group transition-all duration-200 hover:shadow-md">
       <div className="p-8 md:p-10 flex-grow space-y-8">
         {/* --- UNIFIED HEADER --- */}
         <div className="flex items-center gap-5 border-b border-slate-50 pb-8">
-          <div className="h-14 w-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-100 rotate-3 transition-transform group-hover:rotate-0">
+          <div className="h-14 w-14 bg-emerald-700 rounded-xl flex items-center justify-center text-white">
             <FaFileExcel size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">
               Bulk Add
             </h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
-              <FaTerminal className="text-emerald-500" /> MATRIX AGGREGATOR
+            <p className="text-xs font-semibold text-slate-400 mt-2 flex items-center gap-2">
+              <FaTerminal className="text-emerald-700" /> Spreadsheet import
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
                   {selectedFile.name}
                 </p>
                 <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2 block italic">
-                  Verified Matrix Ready
+                  File ready
                 </span>
               </div>
             ) : (
@@ -139,11 +139,11 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
                   <FaCloudUploadAlt size={35} />
                 </div>
                 <p className="text-sm font-black text-slate-700 uppercase tracking-tighter">
-                  Drop Matrix Node or{" "}
-                  <span className="text-indigo-600 underline">Browse</span>
+                  Drop Excel file or{" "}
+                  <span className="text-emerald-700 underline">Browse</span>
                 </p>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-3">
-                  Accepts .XLSX Matrix only
+                  Accepts .xlsx and .xls files
                 </p>
               </div>
             )}
@@ -155,13 +155,13 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
             loading={uploading}
             variant="primary"
             disabled={!selectedFile || uploading}
-            className="rounded-2xl py-5 bg-slate-900 hover:bg-indigo-600 text-white font-black text-[11px] tracking-[0.2em] shadow-2xl shadow-indigo-100/50 flex items-center justify-center gap-3 transition-all active:scale-95"
+            className="rounded-xl py-5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-3 transition-colors"
           >
             {uploading ? (
               <FaSyncAlt className="animate-spin" />
             ) : (
               <>
-                <FaUpload size={14} /> SYNCHRONIZE BULK DATA
+                <FaUpload size={14} /> Upload teachers
               </>
             )}
           </Button>
@@ -173,7 +173,7 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
             <div className="flex items-center gap-3 mb-4 text-rose-600">
               <FaExclamationTriangle />
               <h4 className="text-[10px] font-black uppercase tracking-widest">
-                Protocol Errors Detected
+                Upload errors
               </h4>
             </div>
             <ul className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
@@ -193,9 +193,9 @@ const BulkUploadSection = ({ onUploadSuccess }) => {
         <div className="mt-6 flex items-start gap-4 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
           <FaInfoCircle className="text-indigo-400 mt-1" size={14} />
           <p className="text-[9px] font-bold text-indigo-900 uppercase tracking-widest leading-relaxed">
-            <span className="text-indigo-600">Node Architecture:</span>{" "}
+            <span className="text-emerald-700">Required columns:</span>{" "}
             teacherId, name, phone, campus, designation. Verify headers match
-            the Neural Database Schema.
+            the teacher import format.
           </p>
         </div>
       </div>

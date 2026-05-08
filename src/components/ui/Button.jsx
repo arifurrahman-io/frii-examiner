@@ -26,27 +26,27 @@ const Button = ({
 }) => {
   // ১. ভেরিয়েন্ট অনুযায়ী স্টাইল সেট করা
   const baseStyle =
-    "flex items-center justify-center p-3 rounded-lg font-semibold transition duration-200 focus:outline-none focus:ring-4";
+    "flex items-center justify-center gap-2 p-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-4 disabled:transform-none";
 
   let variantStyle = "";
 
   switch (variant) {
     case "secondary":
       variantStyle =
-        "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400";
+        "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-950 focus:ring-slate-200";
       break;
     case "danger":
       variantStyle =
-        "bg-red-600 text-white hover:bg-red-700 focus:ring-red-300";
+        "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-200";
       break;
     case "success":
       variantStyle =
-        "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-300";
+        "bg-teal-700 text-white hover:bg-teal-800 focus:ring-teal-100";
       break;
     case "primary": // Default
     default:
       variantStyle =
-        "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-300";
+        "bg-teal-700 text-white hover:bg-teal-800 focus:ring-teal-100";
       break;
   }
 

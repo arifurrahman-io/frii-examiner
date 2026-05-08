@@ -82,7 +82,7 @@ const TeacherSearchList = () => {
         setTotalTeachers(data.totalTeachers || 0);
         setPage(data.page || 1);
       } catch (error) {
-        toast.error("Protocol Error: Matrix sync failed.");
+        toast.error("Failed to load teachers.");
         setTeachers([]);
       } finally {
         setLoading(false);
@@ -104,18 +104,18 @@ const TeacherSearchList = () => {
   };
 
   const PaginationControls = () => (
-    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 p-5 bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm">
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Indexed: {totalTeachers} | Node: {page} / {totalPages}
+        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+        <p className="text-xs font-semibold text-slate-500">
+          {totalTeachers} teachers | Page {page} of {totalPages}
         </p>
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={() => handlePageChange(page - 1)}
           disabled={page === 1 || loading}
-          className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
+          className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-emerald-700 hover:text-white disabled:opacity-30 transition-colors"
         >
           <FaChevronLeft size={12} />
         </button>
@@ -124,7 +124,7 @@ const TeacherSearchList = () => {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-500 ${
-                page === i + 1 ? "w-6 bg-indigo-600" : "w-1.5 bg-slate-200"
+                page === i + 1 ? "w-6 bg-emerald-700" : "w-1.5 bg-slate-200"
               }`}
             ></div>
           ))}
@@ -132,7 +132,7 @@ const TeacherSearchList = () => {
         <button
           onClick={() => handlePageChange(page + 1)}
           disabled={page === totalPages || loading}
-          className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all shadow-sm"
+          className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-emerald-700 hover:text-white disabled:opacity-30 transition-colors"
         >
           <FaChevronRight size={12} />
         </button>
@@ -144,9 +144,8 @@ const TeacherSearchList = () => {
     <div className="max-w-5xl mx-auto space-y-8 pb-10">
       {/* --- SEARCH INTERFACE --- */}
       <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-[2rem] blur opacity-10 group-focus-within:opacity-20 transition duration-1000"></div>
-        <div className="relative flex items-center space-x-4 p-4 bg-white/90 backdrop-blur-2xl rounded-[2rem] shadow-xl border border-white">
-          <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-bold shadow-inner">
+        <div className="relative flex items-center space-x-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
+          <div className="h-11 w-11 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-700">
             <FaSearch size={18} />
           </div>
           <input
@@ -156,11 +155,11 @@ const TeacherSearchList = () => {
                 ? `Filter personnel in ${
                     user?.campus?.name || "assigned campus"
                   }...`
-                : "Search Global Teacher Index..."
+                : "Search teachers..."
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-sm font-bold text-slate-700 placeholder:text-slate-300 tracking-tight"
+            className="flex-1 bg-transparent outline-none text-sm font-semibold text-slate-700 placeholder:text-slate-300"
           />
           <button
             onClick={() => fetchTeachers(searchTerm, 1)}
@@ -168,7 +167,7 @@ const TeacherSearchList = () => {
             className={`h-12 w-12 flex items-center justify-center rounded-2xl transition-all duration-500 ${
               loading
                 ? "bg-slate-50 text-slate-300"
-                : "bg-slate-900 text-white hover:bg-indigo-600 shadow-lg"
+                : "bg-emerald-700 text-white hover:bg-emerald-800"
             }`}
           >
             <FaSyncAlt className={loading ? "animate-spin" : ""} size={14} />
@@ -179,11 +178,11 @@ const TeacherSearchList = () => {
       {/* --- SUB-HEADER --- */}
       <div className="flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <FaTerminal className="text-indigo-600 text-xs" />
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+          <FaTerminal className="text-emerald-700 text-xs" />
+          <h3 className="text-xs font-semibold text-slate-500">
             {!isAdmin
               ? `${user?.campus?.name || "Campus"} Teachers' Directory`
-              : "Complete Teachers' Matrix"}
+              : "Complete teacher directory"}
           </h3>
         </div>
       </div>
@@ -203,10 +202,10 @@ const TeacherSearchList = () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] shadow-sm border border-slate-100 grayscale opacity-40">
-            <FaUsers size={60} className="text-slate-200 mb-6" />
-            <p className="text-sm font-black text-slate-400 uppercase tracking-widest text-center">
-              No matching nodes found <br /> in{" "}
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl shadow-sm border border-slate-200">
+            <FaUsers size={48} className="text-slate-200 mb-5" />
+            <p className="text-sm font-semibold text-slate-400 text-center">
+              No matching teachers found <br /> in{" "}
               {user?.campus?.name || "this campus"}
             </p>
           </div>

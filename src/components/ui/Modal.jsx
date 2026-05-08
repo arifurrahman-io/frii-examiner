@@ -28,8 +28,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
         onClick={(e) => e.stopPropagation()} // মডাল কন্টেইনারে ক্লিক করলে যেন বন্ধ না হয়
       >
         {/* ৩. মডাল হেডার */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-indigo-50 rounded-t-xl">
-          <h3 className="text-xl font-bold text-indigo-700">{title}</h3>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-emerald-50 rounded-t-xl">
+          <h3 className="text-xl font-bold text-emerald-800">{title}</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition"

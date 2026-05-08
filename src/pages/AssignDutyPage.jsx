@@ -47,7 +47,7 @@ const AssignDutyPage = () => {
     const allowedRoles = ["admin", "incharge"];
     if (user && !allowedRoles.includes(user.role)) {
       toast.error(
-        "Protocol Violation: Restricted access to Allocation Matrix."
+        "Restricted access to duty allocation."
       );
       navigate("/dashboard");
     }
@@ -121,7 +121,7 @@ const AssignDutyPage = () => {
       );
       setEligibleTeachers(finalTeachersList);
     } catch (error) {
-      toast.error("Matrix Calculation Error: Eligible node fetch failed.");
+      toast.error("Eligible teacher lookup failed.");
     } finally {
       setLoading(false);
     }
@@ -159,8 +159,7 @@ const AssignDutyPage = () => {
   if (!user || (user.role !== "admin" && user.role !== "incharge")) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-8 relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-8 relative overflow-hidden">
 
       <div className="max-w-[1500px] mx-auto relative z-10">
         {/* --- HEADER --- */}
@@ -196,7 +195,7 @@ const AssignDutyPage = () => {
               <FaFilter size={12} />
             </div>
             <h3 className="text-[10px] sm:text-sm font-black text-slate-800 uppercase tracking-widest">
-              Target Selection Node
+              Assignment filters
             </h3>
           </div>
 
@@ -210,7 +209,7 @@ const AssignDutyPage = () => {
               required
             />
             <SelectDropdown
-              label="Protocol Type"
+              label="Duty type"
               name="responsibilityType"
               value={filters.responsibilityType}
               onChange={handleChange}
@@ -224,7 +223,7 @@ const AssignDutyPage = () => {
               value={filters.classId}
               onChange={handleChange}
               options={filteredClasses} // Updated to use filtered list
-              placeholder="Select Node..."
+              placeholder="Select class..."
               required
             />
             <SelectDropdown
@@ -249,7 +248,7 @@ const AssignDutyPage = () => {
             >
               {allFiltersSelected
                 ? `Verified Candidates (${eligibleTeachers.length})`
-                : "Configure Filter Matrix"}
+                : "Choose filters to begin"}
             </h3>
             {allFiltersSelected && (
               <div className="h-1 w-8 sm:w-12 bg-indigo-600 rounded-full"></div>
@@ -272,7 +271,7 @@ const AssignDutyPage = () => {
             <div className="bg-white/40 backdrop-blur-md p-16 sm:p-32 rounded-[2rem] sm:rounded-[4rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
               <FaSyncAlt className="animate-spin text-4xl sm:text-7xl text-indigo-500/20 mb-4 sm:mb-8" />
               <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] sm:tracking-[0.5em] animate-pulse">
-                Computing Matrix Eligibility
+                Finding eligible teachers
               </p>
             </div>
           ) : allFiltersSelected && eligibleTeachers.length > 0 ? (
@@ -297,7 +296,7 @@ const AssignDutyPage = () => {
                 <FaExclamationCircle size={32} className="sm:text-5xl" />
               </div>
               <p className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-tight">
-                Zero Compatible Nodes
+                No eligible teachers
               </p>
               <p className="text-[10px] sm:text-xs font-bold text-slate-400 mt-2 sm:mt-3 max-w-sm uppercase tracking-widest leading-relaxed">
                 No staff member matches the selected routine vector for the
@@ -336,7 +335,7 @@ const AssignDutyPage = () => {
 
       <div className="mt-20 text-center opacity-10 select-none pointer-events-none hidden sm:block">
         <p className="text-[8px] sm:text-[10px] font-black text-slate-900 uppercase tracking-[1.5em]">
-          Duty Allocation Matrix Subsystem
+          Duty allocation
         </p>
       </div>
     </div>

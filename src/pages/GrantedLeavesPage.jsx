@@ -46,9 +46,8 @@ const GrantedLeavesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 px-4 sm:px-6 lg:px-8 pt-20 sm:pt-10 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent pb-10 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 relative overflow-hidden">
       {/* Background Subtle Pattern */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- HEADER & SEARCH BAR --- */}

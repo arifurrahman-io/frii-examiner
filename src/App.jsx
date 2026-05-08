@@ -2,8 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-// --- Global Context & Layouts ---
-import { AuthProvider } from "./context/AuthContext.jsx";
+// --- Global Layouts ---
 import LayoutContainer from "./components/layouts/LayoutContainer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -21,8 +20,7 @@ import UserManagementPage from "./pages/UserManagementPage";
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <LayoutContainer>
+      <LayoutContainer>
           <Routes>
             {/* --- 🔓 PUBLIC NODES --- */}
             <Route path="/login" element={<LoginPage />} />
@@ -124,8 +122,7 @@ function App() {
               }
             />
           </Routes>
-        </LayoutContainer>
-      </AuthProvider>
+      </LayoutContainer>
       <Toaster
         position="top-right"
         toastOptions={{

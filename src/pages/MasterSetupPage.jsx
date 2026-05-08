@@ -23,8 +23,8 @@ const MasterSetupPage = () => {
     switch (t) {
       case "branch":
         return {
-          title: "Branch Architecture",
-          subtitle: "Campus infrastructure nodes",
+          title: "Branches",
+          subtitle: "Manage campus records",
           icon: FaLink,
           color: "from-blue-600 to-indigo-700",
         };
@@ -37,15 +37,15 @@ const MasterSetupPage = () => {
         };
       case "subject":
         return {
-          title: "Curriculum Matrix",
-          subtitle: "Knowledge area management",
+          title: "Subjects",
+          subtitle: "Manage subject records",
           icon: FaBook,
           color: "from-amber-500 to-orange-600",
         };
       case "responsibility":
         return {
-          title: "Duty Protocols",
-          subtitle: "Role definition master",
+          title: "Duty types",
+          subtitle: "Manage responsibility records",
           icon: FaTasks,
           color: "from-violet-600 to-fuchsia-700",
         };
@@ -90,9 +90,8 @@ const MasterSetupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Cube Pattern */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* --- HEADER --- */}
@@ -150,10 +149,10 @@ const MasterSetupPage = () => {
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">
-                      Archived Records
+                      Saved records
                     </h3>
                     <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-2">
-                      Active inventory synchronization
+                      Current master data list
                     </p>
                   </div>
                 </div>
@@ -167,12 +166,6 @@ const MasterSetupPage = () => {
         </div>
       </div>
 
-      {/* Footer Branding */}
-      <div className="mt-12 sm:mt-20 text-center opacity-20 px-4">
-        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] sm:tracking-[1em] leading-relaxed">
-          Authorized Governance Matrix
-        </p>
-      </div>
     </div>
   );
 };

@@ -30,14 +30,25 @@ import {
   getBranches,
   getReportData,
   exportCustomReportToPDF,
+  exportCampusRoutinePDF,
 } from "../api/apiService";
 
 const ArrayOfData = (data) => Array.isArray(data) && data.length > 0;
+const displayValue = (value, fallback = "-") => {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (typeof value === "object") return value.name || value.label || fallback;
+  return value;
+};
 
 // --- 1. Modern Responsive Table/Card Component ---
-const ReportTable = ({ data, rowsPerPage = 10 }) => {
+const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const displayedHeaders = ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
+  const displayedHeaders =
+    reportType === "UNASSIGNED_TEACHERS"
+      ? ["Sl.", "TEACHERID", "TEACHER", "CAMPUS", "YEAR", "MISSING_DUTIES"]
+      : reportType === "INACTIVE_NO_ROUTINE"
+      ? ["Sl.", "TEACHERID", "TEACHER", "CAMPUS", "YEAR", "STATUS", "ROUTINE_STATUS"]
+      : ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
 
   const headerLabel = (key) => {
     const labels = {
@@ -46,6 +57,12 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
       SUBJECT: "Subject Vector",
       TEACHER: "Teacher Node",
       CAMPUS: "Branch",
+      TEACHERID: "Teacher ID",
+      YEAR: "Year",
+      RESPONSIBILITY_TYPE: "Duty Type",
+      MISSING_DUTIES: "Missing Duties",
+      STATUS: "Status",
+      ROUTINE_STATUS: "Routine",
     };
     return labels[key] || key;
   };
@@ -123,7 +140,7 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
                 Node #{(currentPage - 1) * rowsPerPage + rowIndex + 1}
               </span>
               <span className="px-2 py-0.5 bg-slate-100 text-[8px] font-black text-slate-500 rounded uppercase tracking-tighter">
-                {row.CAMPUS?.name || "Global"}
+                {displayValue(row.CAMPUS, "Global")}
               </span>
             </div>
             <div>
@@ -131,27 +148,67 @@ const ReportTable = ({ data, rowsPerPage = 10 }) => {
                 Teacher Node
               </p>
               <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                {row.TEACHER?.name || "-"}
+                {displayValue(row.TEACHER)}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Class
-                </p>
-                <p className="text-[11px] font-bold text-slate-600 uppercase">
-                  {row.CLASS?.name || "-"}
-                </p>
+            {reportType === "UNASSIGNED_TEACHERS" ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Teacher ID
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.TEACHERID)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Duty
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.MISSING_DUTIES)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Subject
-                </p>
-                <p className="text-[11px] font-bold text-slate-600 uppercase">
-                  {row.SUBJECT?.name || "-"}
-                </p>
+            ) : reportType === "INACTIVE_NO_ROUTINE" ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Teacher ID
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.TEACHERID)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Routine
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.ROUTINE_STATUS)}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Class
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.CLASS)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Subject
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.SUBJECT)}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -215,6 +272,9 @@ const ReportViewPage = () => {
 
   const [includePrevious, setIncludePrevious] = useState(true);
   const [selectedRespTypes, setSelectedRespTypes] = useState([]);
+  const [selectedUnassignedTypeIds, setSelectedUnassignedTypeIds] = useState(
+    []
+  );
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
     classes: [],
@@ -252,16 +312,28 @@ const ReportViewPage = () => {
 
   const fetchReport = useCallback(async () => {
     if (fetchTrigger === 0) return;
+    const isUnassignedReport = filters.reportType === "UNASSIGNED_TEACHERS";
+    if (isUnassignedReport && selectedUnassignedTypeIds.length === 0) {
+      setReportData([]);
+      return;
+    }
     setLoading(true);
     try {
-      const { data } = await getReportData(filters);
+      const reportFilters = isUnassignedReport
+        ? {
+            ...filters,
+            typeId: "",
+            typeIds: selectedUnassignedTypeIds.join(","),
+          }
+        : filters;
+      const { data } = await getReportData(reportFilters);
       setReportData(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Matrix sync failed.");
     } finally {
       setLoading(false);
     }
-  }, [filters, fetchTrigger]);
+  }, [filters, fetchTrigger, selectedUnassignedTypeIds]);
 
   useEffect(() => {
     fetchReport();
@@ -275,7 +347,21 @@ const ReportViewPage = () => {
       ...(name === "reportType" && value === "YEARLY_SUMMARY"
         ? { typeId: "", classId: "", status: "" }
         : {}),
+      ...(name === "reportType" && value === "UNASSIGNED_TEACHERS"
+        ? { typeId: "", classId: "", status: "" }
+        : {}),
+      ...(name === "reportType" && value === "INACTIVE_NO_ROUTINE"
+        ? { typeId: "", classId: "", status: "" }
+        : {}),
     }));
+  };
+
+  const toggleUnassignedDutyType = (typeId) => {
+    setSelectedUnassignedTypeIds((prev) =>
+      prev.includes(typeId)
+        ? prev.filter((id) => id !== typeId)
+        : [...prev, typeId]
+    );
   };
 
   const handleExportAction = async (exportType) => {
@@ -287,11 +373,19 @@ const ReportViewPage = () => {
 
     if (exportType === "EXPORT_CAMPUS_ROUTINE") {
       if (!filters.branchId) return toast.error("Select target campus node.");
-      window.open(
-        `/api/reports/export/campus-routine?branchId=${filters.branchId}&year=${filters.year}`,
-        "_blank"
-      );
-      setIsExportModalOpen(false);
+      setExportLoading(true);
+      try {
+        await exportCampusRoutinePDF({
+          branchId: filters.branchId,
+          year: filters.year,
+        });
+        toast.success("Campus routine export initialized.");
+        setIsExportModalOpen(false);
+      } catch (error) {
+        toast.error(error.reportMessage || "Export Protocol error.");
+      } finally {
+        setExportLoading(false);
+      }
       return;
     }
 
@@ -300,6 +394,15 @@ const ReportViewPage = () => {
         return setExportError("Minimum 1 column vector required.");
       exportFilters.reportType = "YEARLY_SUMMARY";
       exportFilters.selectedTypes = selectedRespTypes.join(",");
+    } else if (exportType === "EXPORT_UNASSIGNED") {
+      if (selectedUnassignedTypeIds.length === 0)
+        return setExportError("Minimum 1 duty prototype required.");
+      exportFilters.reportType = "UNASSIGNED_TEACHERS";
+      exportFilters.typeId = "";
+      exportFilters.typeIds = selectedUnassignedTypeIds.join(",");
+    } else if (exportType === "EXPORT_INACTIVE_NO_ROUTINE") {
+      exportFilters.reportType = "INACTIVE_NO_ROUTINE";
+      exportFilters.typeId = "";
     } else {
       if (!filters.typeId) return setExportError("Duty prototype required.");
       exportFilters.reportType = exportType;
@@ -314,8 +417,8 @@ const ReportViewPage = () => {
       await exportCustomReportToPDF(exportFilters);
       toast.success("Report export initialized.");
       setIsExportModalOpen(false);
-    } catch {
-      toast.error("Export Protocol error.");
+    } catch (error) {
+      toast.error(error.reportMessage || "Export Protocol error.");
     } finally {
       setExportLoading(false);
     }
@@ -324,8 +427,7 @@ const ReportViewPage = () => {
   if (user?.role !== "admin") return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 pt-20 sm:pt-10 px-4 sm:px-8 relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-8 relative overflow-hidden">
 
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- HEADER --- */}
@@ -356,6 +458,41 @@ const ReportViewPage = () => {
               }`}
             >
               Detailed
+            </button>
+            <button
+              onClick={() =>
+                setFilters((p) => ({
+                  ...p,
+                  reportType: "UNASSIGNED_TEACHERS",
+                  classId: "",
+                  status: "",
+                }))
+              }
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                filters.reportType === "UNASSIGNED_TEACHERS"
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              Unassigned
+            </button>
+            <button
+              onClick={() =>
+                setFilters((p) => ({
+                  ...p,
+                  reportType: "INACTIVE_NO_ROUTINE",
+                  typeId: "",
+                  classId: "",
+                  status: "",
+                }))
+              }
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                filters.reportType === "INACTIVE_NO_ROUTINE"
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              No Routine
             </button>
             <button
               onClick={() =>
@@ -408,6 +545,33 @@ const ReportViewPage = () => {
                   options={masterData.types}
                   placeholder="All Prototypes"
                 />
+              </>
+            )}
+            {filters.reportType === "UNASSIGNED_TEACHERS" && (
+              <div className="sm:col-span-2 lg:col-span-2 space-y-2">
+                <p className="block text-sm font-medium text-slate-700">
+                  Duty Prototypes <span className="text-rose-500">*</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-slate-200 rounded-xl bg-white max-h-36 overflow-y-auto custom-scrollbar">
+                  {masterData.types.map((type) => (
+                    <label
+                      key={type._id}
+                      className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-tight cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded text-indigo-600"
+                        checked={selectedUnassignedTypeIds.includes(type._id)}
+                        onChange={() => toggleUnassignedDutyType(type._id)}
+                      />
+                      <span className="truncate">{type.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            {filters.reportType === "DETAILED_ASSIGNMENT" && (
+              <>
                 <SelectDropdown
                   label="Class Cohort"
                   name="classId"
@@ -446,8 +610,16 @@ const ReportViewPage = () => {
                 Decrypting Buffer Matrix
               </p>
             </div>
+          ) : filters.reportType === "UNASSIGNED_TEACHERS" &&
+            selectedUnassignedTypeIds.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 sm:py-32 bg-white/40 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] border border-dashed border-slate-200 text-center px-4">
+              <FaSearch className="text-4xl sm:text-6xl text-slate-200 mb-6" />
+              <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+                Select at least one duty type to view unassigned teachers
+              </p>
+            </div>
           ) : (
-            <ReportTable data={reportData} />
+            <ReportTable data={reportData} reportType={filters.reportType} />
           )}
         </div>
 
@@ -519,6 +691,48 @@ const ReportViewPage = () => {
                   Execute Export
                 </Button>
               </div>
+            ) : filters.reportType === "UNASSIGNED_TEACHERS" ? (
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-indigo-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-100">
+                  <p className="text-[10px] sm:text-[11px] font-black text-indigo-900 uppercase">
+                    Unassigned teacher list
+                  </p>
+                  <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase mt-1 tracking-widest italic">
+                    Year and selected duty types are taken from the active filters
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleExportAction("EXPORT_UNASSIGNED")}
+                  fullWidth
+                  variant="primary"
+                  loading={exportLoading}
+                  className="py-4 sm:py-5 rounded-xl sm:rounded-2xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
+                >
+                  Execute Export
+                </Button>
+              </div>
+            ) : filters.reportType === "INACTIVE_NO_ROUTINE" ? (
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-indigo-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-100">
+                  <p className="text-[10px] sm:text-[11px] font-black text-indigo-900 uppercase">
+                    Teachers without routine
+                  </p>
+                  <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase mt-1 tracking-widest italic">
+                    Year and campus are taken from the active filters
+                  </p>
+                </div>
+                <Button
+                  onClick={() =>
+                    handleExportAction("EXPORT_INACTIVE_NO_ROUTINE")
+                  }
+                  fullWidth
+                  variant="primary"
+                  loading={exportLoading}
+                  className="py-4 sm:py-5 rounded-xl sm:rounded-2xl uppercase font-black text-[10px] tracking-widest bg-slate-900"
+                >
+                  Execute Export
+                </Button>
+              </div>
             ) : (
               <div className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -544,6 +758,11 @@ const ReportViewPage = () => {
                   <FaTerminal /> Initial Campus Routine Index
                 </button>
               </div>
+            )}
+            {exportError && (
+              <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest text-center">
+                {exportError}
+              </p>
             )}
           </div>
         </Modal>

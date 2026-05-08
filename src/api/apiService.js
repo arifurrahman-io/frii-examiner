@@ -105,13 +105,16 @@ export const updateRoutine = (routineId, routineData) =>
   api.put(`/routines/${routineId}`, routineData);
 export const deleteRoutine = (routineId) =>
   api.delete(`/routines/${routineId}`);
+export const deleteRoutinesByYear = (year) =>
+  api.delete(`/routines/year/${year}`);
 export const getEligibleTeachers = (filters) =>
   api.get("/routines/filter", { params: filters });
 export const getTeacherRoutines = (teacherId, year) =>
   api.get(`/routines/teacher/${teacherId}`, { params: { year } });
-export const uploadRoutineExcel = (formData) =>
+export const uploadRoutineExcel = (formData, config = {}) =>
   api.post("/routines/bulk-upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    ...config,
   });
 
 // --- ৬. দায়িত্ব অ্যাসাইনমেন্ট API ---
@@ -159,13 +162,50 @@ export const getReportData = (filters) =>
  * 📄 PDF এক্সপোর্ট ফিক্স
  * সরাসরি window.open না করে বেস URL এর সাথে কনক্যাট করা হয়েছে
  */
-export const exportCustomReportToPDF = (filters) => {
-  const params = new URLSearchParams(filters).toString();
+const openPdfResponse = (response, filename) => {
+  const blob = new Blob([response.data], { type: "application/pdf" });
+  const url = window.URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+  return filename;
+};
+
+const getBlobErrorMessage = async (error) => {
+  const data = error.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      return JSON.parse(text).message || text;
+    } catch {
+      return null;
+    }
+  }
+  return data?.message || null;
+};
+
+export const exportCustomReportToPDF = async (filters) => {
   const endpoint =
     filters.reportType === "YEARLY_SUMMARY"
-      ? `/api/reports/export/yearly-pdf?${params}`
-      : `/api/reports/export/custom-pdf?${params}`;
-  return window.open(endpoint, "_blank");
+      ? "/reports/export/yearly-pdf"
+      : "/reports/export/custom-pdf";
+  try {
+    const response = await api.get(endpoint, {
+      params: filters,
+      responseType: "blob",
+    });
+    return openPdfResponse(response, "report.pdf");
+  } catch (error) {
+    error.reportMessage = await getBlobErrorMessage(error);
+    throw error;
+  }
+};
+
+export const exportCampusRoutinePDF = async ({ branchId, year }) => {
+  const response = await api.get("/reports/export/campus-routine", {
+    params: { branchId, year },
+    responseType: "blob",
+  });
+  return openPdfResponse(response, "campus-routine.pdf");
 };
 
 export const getUsers = () => api.get("/users");

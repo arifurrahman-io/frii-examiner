@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  FaUserTie,
-  FaLock,
   FaArrowRight,
-  FaRocket,
-  FaGlobe,
+  FaCheckCircle,
+  FaFingerprint,
+  FaLock,
+  FaShieldAlt,
+  FaUserTie,
 } from "react-icons/fa";
-import { useAuth } from "../context/AuthContext.jsx";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-import InputField from "../components/ui/InputField";
+import { useAuth } from "../context/AuthContext.jsx";
 import Button from "../components/ui/Button";
+import InputField from "../components/ui/InputField";
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
@@ -47,9 +47,11 @@ const LoginPage = () => {
         password: credentials.password,
       });
       if (success) {
-        rememberMe
-          ? localStorage.setItem("rememberedUser", credentials.teacherIdOrEmail)
-          : localStorage.removeItem("rememberedUser");
+        if (rememberMe) {
+          localStorage.setItem("rememberedUser", credentials.teacherIdOrEmail);
+        } else {
+          localStorage.removeItem("rememberedUser");
+        }
         toast.success("Welcome Back");
         navigate("/");
       }
@@ -61,83 +63,90 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="w-full flex bg-white font-sans selection:bg-blue-100">
-      {/* Left: Branding & Visuals (Hidden on Mobile) */}
-      <div className="hidden lg:flex w-[45%] bg-[#0A58CA] relative flex-col justify-between p-16 overflow-hidden">
-        {/* Dynamic Background Elements */}
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-5%] left-[-5%] w-[300px] h-[300px] bg-white/10 rounded-full blur-[80px]" />
-
-        {/* Cloud/Wave Mask (SVG) */}
-        <div className="absolute right-0 top-0 bottom-0 w-24 overflow-hidden pointer-events-none">
-          <svg
-            viewBox="0 0 100 1000"
-            preserveAspectRatio="none"
-            className="h-full w-full fill-white"
-          >
-            <path d="M0,0 C40,150 100,350 100,500 C100,650 40,850 0,1000 L100,1000 L100,0 Z" />
-          </svg>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 text-white mb-12">
-            <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-              <FaRocket className="text-2xl" />
+    <div className="min-h-screen bg-[#f4f5f7] px-4 py-6 font-sans text-slate-900 selection:bg-emerald-100 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-48px)] max-w-6xl items-center gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+        <section className="hidden h-full min-h-[640px] rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:flex lg:flex-col">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-700 text-white">
+              <FaFingerprint className="text-xl" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">
-              FRII Exam Manager
-            </span>
+            <div>
+              <p className="text-lg font-bold tracking-tight text-emerald-950">
+                FRII
+              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Teacher Platform
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <h1 className="text-5xl font-extrabold text-white leading-tight">
-              Manage your <br />
-              <span className="text-blue-200">Governance Matrix</span>
+          <div className="my-auto max-w-md">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+              <FaShieldAlt />
+              Secure institutional access
+            </div>
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-950">
+              Manage teachers, duties, and routines from one calm workspace.
             </h1>
-            <p className="text-blue-100 text-lg font-medium opacity-80 max-w-sm leading-relaxed">
-              Experience the next-gen institutional portal designed for
-              high-performance educational environments.
+            <p className="mt-5 text-base font-medium leading-7 text-slate-500">
+              Built for focused academic administration with clean navigation,
+              reliable access control, and fast daily operations.
             </p>
-          </div>
-        </div>
 
-        <div className="relative z-10 flex items-center gap-4 text-blue-100/60 text-sm font-medium">
-          <div className="flex -space-x-2">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full border-2 border-[#0A58CA] bg-blue-300"
-              />
-            ))}
-          </div>
-          <span>Trusted by 500+ Institutions</span>
-        </div>
-      </div>
-
-      {/* Right: Form Section */}
-      <div className="w-full lg:w-[55%] flex flex-col items-center justify-center p-8 sm:p-20 relative">
-        <div className="w-full max-w-[440px]">
-          {/* Mobile Header Only */}
-          <div className="lg:hidden flex items-center gap-3 mb-12">
-            <div className="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
-              <FaRocket className="text-white text-xl" />
+            <div className="mt-10 grid gap-3">
+              {[
+                "Teacher routine management",
+                "Campus-based responsibility control",
+                "Protected reporting workflow",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3"
+                >
+                  <FaCheckCircle className="text-emerald-600" />
+                  <span className="text-sm font-semibold text-slate-600">
+                    {item}
+                  </span>
+                </div>
+              ))}
             </div>
-            <span className="text-2xl font-bold text-slate-900">
-              FRII Exam Manager
-            </span>
           </div>
 
-          <div className="mb-10">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">Sign In</h2>
-            <p className="text-slate-500 font-medium">
-              Please enter your institutional details.
+          <div className="border-t border-slate-100 pt-5">
+            <p className="text-xs font-semibold text-slate-400">
+              Faizur Rahman Ideal Institute
             </p>
           </div>
+        </section>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-5">
-              {/* Identifier Field */}
-              <div className="group relative">
+        <section className="flex items-center justify-center">
+          <div className="w-full max-w-[460px] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-9 flex items-center gap-3 lg:hidden">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-700 text-white">
+                <FaFingerprint className="text-lg" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-emerald-950">FRII</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  Teacher Platform
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Welcome back
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+                Sign in
+              </h2>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Enter your teacher ID or email to continue.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-5">
                 <InputField
                   label="Teacher ID / Email"
                   name="teacherIdOrEmail"
@@ -146,94 +155,87 @@ const LoginPage = () => {
                   value={credentials.teacherIdOrEmail}
                   onChange={handleChange}
                   required
-                  className="h-13 border-slate-200 bg-slate-50/30 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 rounded-xl transition-all duration-300"
                 />
-              </div>
 
-              {/* Password Field with Header Action */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-end px-1 pt-4">
-                  <label className="text-[13px] font-bold text-slate-700 tracking-wide">
-                    Security Key
-                  </label>
-                  <button
-                    type="button"
-                    tabIndex="-1"
-                    className="text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-colors underline-offset-4 hover:underline"
-                  >
-                    Recovery?
-                  </button>
-                </div>
-                <InputField
-                  type="password"
-                  name="password"
-                  icon={FaLock}
-                  placeholder="••••••••"
-                  value={credentials.password}
-                  onChange={handleChange}
-                  required
-                  className="h-13 border-slate-200 bg-slate-50/30 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 rounded-xl transition-all duration-300"
-                />
-              </div>
-            </div>
-
-            {/* Remember Me Toggle */}
-            <div className="flex items-center justify-between px-1">
-              <label className="flex items-center gap-3 cursor-pointer group select-none">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="peer sr-only"
+                <div className="space-y-1.5">
+                  <div className="flex items-end justify-between px-1 pt-2">
+                    <label className="text-[13px] font-bold text-slate-700">
+                      Security Key
+                    </label>
+                    <button
+                      type="button"
+                      tabIndex="-1"
+                      className="text-[12px] font-bold text-emerald-700 underline-offset-4 transition-colors hover:underline"
+                    >
+                      Recovery?
+                    </button>
+                  </div>
+                  <InputField
+                    type="password"
+                    name="password"
+                    icon={FaLock}
+                    placeholder="Password"
+                    value={credentials.password}
+                    onChange={handleChange}
+                    required
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded-lg bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-200 shadow-sm" />
-                  <svg
-                    className="absolute top-1 left-1 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200 pointer-events-none"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
                 </div>
-                <span className="text-sm font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">
-                  Trust this device
-                </span>
-              </label>
-            </div>
+              </div>
 
-            {/* Action Button */}
-            <div className="pt-2">
+              <div className="flex items-center justify-between px-1">
+                <label className="group flex cursor-pointer select-none items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-5 rounded-lg border-2 border-slate-300 bg-white shadow-sm transition-all duration-200 peer-checked:border-emerald-700 peer-checked:bg-emerald-700" />
+                    <svg
+                      className="pointer-events-none absolute left-1 top-1 h-3 w-3 text-white opacity-0 transition-opacity duration-200 peer-checked:opacity-100"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-500 transition-colors group-hover:text-slate-800">
+                    Trust this device
+                  </span>
+                </label>
+              </div>
+
               <Button
                 type="submit"
                 fullWidth
                 loading={loading}
-                className="group h-14 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-bold text-[15px] flex items-center justify-center gap-3 transition-all duration-300 shadow-lg shadow-slate-200 hover:shadow-blue-200 active:scale-[0.97]"
+                className="group h-14 rounded-xl bg-emerald-700 text-[15px] font-bold shadow-sm hover:bg-emerald-800 active:scale-[0.98]"
               >
                 {loading ? (
                   "Securing Connection..."
                 ) : (
                   <>
                     <span>Authorize Access</span>
-                    <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                    <FaArrowRight className="text-[10px] transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </Button>
-            </div>
-          </form>
+            </form>
 
-          <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between text-slate-400">
-            <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-              <FaGlobe className="text-xs" /> FRII Exam Manager
-            </p>
+            <div className="mt-10 border-t border-slate-100 pt-6">
+              <p className="text-[11px] font-semibold text-slate-400">
+                FRII Teacher Management Platform
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
