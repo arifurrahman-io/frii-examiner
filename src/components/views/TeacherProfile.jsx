@@ -174,9 +174,23 @@ const TeacherProfile = ({ teacherId }) => {
 
   if (!teacherData) return null;
   const { teacherDetails } = teacherData;
+  const totalAssignments =
+    teacherData.assignmentsByYear?.reduce(
+      (total, year) => total + (year.responsibilities?.length || 0),
+      0
+    ) || 0;
+  const profileStats = {
+    currentAssignments: filteredAssignments.length,
+    totalAssignments,
+    currentRoutine:
+      uniqueRoutineSchedule.filter((item) => item.year === currentYear)
+        .length || 0,
+    leaves: grantedLeaves.length,
+    reports: teacherDetails.reports?.length || 0,
+  };
 
   return (
-    <div className="min-h-screen bg-transparent pb-10 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 print:pt-0 print:bg-white relative">
+    <div className="min-h-screen bg-transparent px-4 pb-10 pt-6 sm:px-6 sm:pt-8 lg:px-8 print:bg-white print:pt-0">
 
       <style>
         {`
@@ -376,9 +390,10 @@ const TeacherProfile = ({ teacherId }) => {
       </div>
 
       {/* --- 🖥️ স্ক্রিন লেআউট (ফুল রেসপন্সিভ) --- */}
-      <div className="screen-layout max-w-[1600px] mx-auto relative z-10 animate-in fade-in duration-1000">
+      <div className="screen-layout mx-auto max-w-[1440px] animate-in fade-in duration-700">
         <ProfileHeader
           teacherDetails={teacherDetails}
+          stats={profileStats}
           isAdmin={isAdmin}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
@@ -388,8 +403,8 @@ const TeacherProfile = ({ teacherId }) => {
         />
 
         {!isEditing ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
-            <div className="lg:col-span-8 order-1">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="order-1">
               <ProfileMainMatrix
                 dynamicYears={dynamicYears}
                 activeTab={activeTab}
@@ -404,7 +419,7 @@ const TeacherProfile = ({ teacherId }) => {
                 handleRoutineDelete={handleRoutineDelete}
               />
             </div>
-            <div className="lg:col-span-4 order-2">
+            <div className="order-2">
               <ProfileSidebar
                 teacherDetails={teacherDetails}
                 grantedLeaves={grantedLeaves}
@@ -415,7 +430,7 @@ const TeacherProfile = ({ teacherId }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+          <div className="border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <UpdateTeacherForm
               teacherId={teacherId}
               onUpdateSuccess={() => {
