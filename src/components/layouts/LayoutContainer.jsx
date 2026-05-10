@@ -2,14 +2,14 @@ import React, { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FaBars,
+  FaBook,
+  FaBuilding,
   FaCalendarAlt,
   FaChartBar,
   FaChevronLeft,
   FaChevronRight,
   FaClipboardList,
   FaCogs,
-  FaBook,
-  FaBuilding,
   FaFingerprint,
   FaLayerGroup,
   FaSignOutAlt,
@@ -21,6 +21,184 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
+const BrandMark = ({ compact = false, onNavigate }) => (
+  <Link
+    to="/"
+    onClick={onNavigate}
+    className={`flex min-w-0 items-center ${compact ? "justify-center" : "gap-3"}`}
+    title="Dashboard"
+  >
+    <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-slate-900 text-white shadow-sm">
+      <FaFingerprint className="text-lg" />
+    </div>
+    {!compact && (
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-slate-950">FRII</p>
+        <p className="truncate text-xs font-medium text-slate-500">
+          Teacher Platform
+        </p>
+      </div>
+    )}
+  </Link>
+);
+
+const UserPanel = ({ user, compact = false }) => {
+  if (compact) {
+    return (
+      <div
+        className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600"
+        title={`${user?.name || "User"} (${user?.role || "role"})`}
+      >
+        <FaUserCircle size={22} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center gap-3">
+        <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-white text-slate-600">
+          <FaUserCircle size={22} />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-950">
+            {user?.name || "User"}
+          </p>
+          <p className="text-xs font-medium capitalize text-slate-500">
+            {user?.role || "role"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NavLinkItem = ({ item, active, onNavigate, compact = false }) => {
+  const Icon = item.icon;
+
+  if (compact) {
+    return (
+      <Link
+        to={item.path}
+        onClick={onNavigate}
+        title={item.name}
+        className={`relative grid h-10 w-10 place-items-center rounded-lg text-sm transition-colors ${
+          active
+            ? "bg-slate-900 text-white"
+            : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+        }`}
+      >
+        {active && (
+          <span className="absolute -left-4 h-6 w-1 rounded-r-full bg-teal-600" />
+        )}
+        <Icon />
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      to={item.path}
+      onClick={onNavigate}
+      className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+        active
+          ? "bg-slate-900 text-white"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+      }`}
+    >
+      <span
+        className={`grid h-8 w-8 flex-none place-items-center rounded-lg ${
+          active ? "bg-white/10 text-white" : "bg-white text-slate-500"
+        }`}
+      >
+        <Icon size={14} />
+      </span>
+      <span className="min-w-0 flex-1 truncate">{item.name}</span>
+      {active && <span className="h-2 w-2 rounded-full bg-teal-300" />}
+    </Link>
+  );
+};
+
+const NavGroup = ({ item, isActive, onNavigate, compact = false }) => {
+  const Icon = item.icon;
+  const active = item.children.some((child) => isActive(child.path));
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <div
+          title={item.name}
+          className={`grid h-10 w-10 place-items-center rounded-lg text-sm ${
+            active ? "bg-slate-900 text-white" : "text-slate-500"
+          }`}
+        >
+          <Icon />
+        </div>
+        <div className="space-y-1 border-l border-slate-200 pl-1">
+          {item.children.map((child) => (
+            <NavLinkItem
+              key={child.name}
+              item={child}
+              active={isActive(child.path)}
+              onNavigate={onNavigate}
+              compact
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold ${
+          active ? "bg-slate-100 text-slate-950" : "text-slate-600"
+        }`}
+      >
+        <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-white text-slate-500">
+          <Icon size={14} />
+        </span>
+        <span>{item.name}</span>
+      </div>
+      <div className="ml-4 space-y-1 border-l border-slate-200 pl-4">
+        {item.children.map((child) => (
+          <NavLinkItem
+            key={child.name}
+            item={child}
+            active={isActive(child.path)}
+            onNavigate={onNavigate}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const NavigationList = ({ navItems, isActive, onNavigate, compact = false }) => (
+  <nav className={compact ? "space-y-3" : "space-y-1.5"}>
+    {navItems.map((item) =>
+      item.children ? (
+        <NavGroup
+          key={item.name}
+          item={item}
+          isActive={isActive}
+          onNavigate={onNavigate}
+          compact={compact}
+        />
+      ) : (
+        <NavLinkItem
+          key={item.name}
+          item={item}
+          active={isActive(item.path)}
+          onNavigate={onNavigate}
+          compact={compact}
+        />
+      )
+    )}
+  </nav>
+);
+
 const AppSidebar = ({
   navItems,
   isActive,
@@ -30,229 +208,187 @@ const AppSidebar = ({
   user,
 }) => (
   <div className="flex h-full flex-col">
-    <div className="flex items-center justify-between gap-3 px-2">
-      <Link to="/" onClick={onNavigate} className="flex min-w-0 items-center gap-3">
-        <div className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-slate-900 text-white">
-          <FaFingerprint className="text-lg" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold tracking-tight text-slate-950">
-            FRII
-          </p>
-          <p className="truncate text-xs font-medium text-slate-500">
-            Teacher Platform
-          </p>
-        </div>
-      </Link>
+    <div className="flex items-center justify-between gap-3">
+      <BrandMark onNavigate={onNavigate} />
       <button
         type="button"
         onClick={onCollapse}
-        className="grid h-8 w-8 flex-none place-items-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:text-emerald-700"
+        className="grid h-9 w-9 flex-none place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
         title="Collapse menu"
+        aria-label="Collapse sidebar"
       >
         <FaChevronLeft className="text-xs" />
       </button>
     </div>
 
-    <div className="mt-9">
-      <p className="mb-3 px-3 text-xs font-medium text-slate-500">
+    <div className="mt-8">
+      <p className="mb-3 px-3 text-xs font-semibold text-slate-500">
         Workspace
       </p>
-      <div className="space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = item.children
-            ? item.children.some((child) => isActive(child.path))
-            : isActive(item.path);
-
-          if (item.children) {
-            return (
-              <div key={item.name}>
-                <div
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
-                    active ? "bg-slate-100 text-slate-950" : "text-slate-600"
-                  }`}
-                >
-                  <Icon
-                    className={active ? "text-slate-900" : "text-slate-400"}
-                  />
-                  <span>{item.name}</span>
-                </div>
-                <div className="ml-5 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                  {item.children.map((child) => {
-                    const ChildIcon = child.icon;
-                    const childActive = isActive(child.path);
-                    return (
-                      <Link
-                        key={child.name}
-                        to={child.path}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                          childActive
-                            ? "bg-slate-100 text-slate-950"
-                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
-                        }`}
-                      >
-                        <ChildIcon
-                          className={
-                            childActive ? "text-slate-900" : "text-slate-400"
-                          }
-                        />
-                        <span>{child.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                active
-                  ? "bg-slate-100 text-slate-950"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-              }`}
-            >
-              <Icon className={active ? "text-slate-900" : "text-slate-400"} />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </div>
+      <NavigationList
+        navItems={navItems}
+        isActive={isActive}
+        onNavigate={onNavigate}
+      />
     </div>
 
-    <div className="mt-auto border-t border-slate-100 pt-5">
-      <div className="mb-5 flex items-center gap-3 px-2">
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-500">
-          <FaUserCircle size={22} />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-bold text-slate-800">
-            {user?.name}
-          </p>
-          <p className="text-xs font-medium text-slate-500">
-            {user?.role}
-          </p>
-        </div>
-      </div>
-
+    <div className="mt-auto space-y-3 border-t border-slate-100 pt-5">
+      <UserPanel user={user} />
       <button
         type="button"
         onClick={onLogout}
         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
       >
-        <FaSignOutAlt />
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-white">
+          <FaSignOutAlt size={14} />
+        </span>
         Log out
       </button>
     </div>
   </div>
 );
 
-const IconRail = ({
-  navItems,
-  isActive,
-  onNavigate,
-  onLogout,
-  collapsed,
-  onExpand,
-}) => (
+const IconRail = ({ navItems, isActive, onNavigate, onLogout, onExpand, user }) => (
   <div className="flex h-full flex-col items-center">
-    <Link
-      to="/"
-      onClick={onNavigate}
-      className="grid h-10 w-10 place-items-center rounded-lg text-slate-900"
-      title="Dashboard"
-    >
-      <FaFingerprint className="text-xl" />
-    </Link>
-
-    {collapsed && (
-      <button
-        type="button"
-        onClick={onExpand}
-        className="mt-4 grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:text-emerald-700"
-        title="Expand menu"
-      >
-        <FaChevronRight className="text-xs" />
-      </button>
-    )}
-
-    <div className={`${collapsed ? "mt-6" : "mt-8"} space-y-3`}>
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = item.children
-          ? item.children.some((child) => isActive(child.path))
-          : isActive(item.path);
-
-        if (item.children) {
-          return (
-            <div key={item.name} className="space-y-2">
-              <div
-                title={item.name}
-                className={`grid h-9 w-9 place-items-center rounded-lg text-sm ${
-                  active ? "bg-slate-100 text-slate-900" : "text-slate-400"
-                }`}
-              >
-                <Icon />
-              </div>
-              <div className="space-y-1 border-l border-slate-200 pl-1">
-                {item.children.map((child) => {
-                  const ChildIcon = child.icon;
-                  const childActive = isActive(child.path);
-                  return (
-                    <Link
-                      key={child.name}
-                      to={child.path}
-                      onClick={onNavigate}
-                      title={child.name}
-                      className={`grid h-8 w-8 place-items-center rounded-lg text-xs transition-colors ${
-                        childActive
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
-                      }`}
-                    >
-                      <ChildIcon />
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <Link
-            key={item.name}
-            to={item.path}
-            onClick={onNavigate}
-            title={item.name}
-            className={`grid h-9 w-9 place-items-center rounded-lg text-sm transition-colors ${
-              active
-                ? "bg-slate-100 text-slate-900"
-                : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            <Icon />
-          </Link>
-        );
-      })}
-    </div>
+    <BrandMark compact onNavigate={onNavigate} />
 
     <button
       type="button"
-      onClick={onLogout}
-      className="mt-auto grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-      title="Log out"
+      onClick={onExpand}
+      className="mt-4 grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
+      title="Expand menu"
+      aria-label="Expand sidebar"
     >
-      <FaSignOutAlt />
+      <FaChevronRight className="text-xs" />
     </button>
+
+    <div className="mt-7">
+      <NavigationList
+        navItems={navItems}
+        isActive={isActive}
+        onNavigate={onNavigate}
+        compact
+      />
+    </div>
+
+    <div className="mt-auto flex flex-col items-center gap-3">
+      <UserPanel user={user} compact />
+      <button
+        type="button"
+        onClick={onLogout}
+        className="grid h-10 w-10 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+        title="Log out"
+        aria-label="Log out"
+      >
+        <FaSignOutAlt />
+      </button>
+    </div>
   </div>
 );
+
+const MobileTopBar = ({ pageTitle, onOpen }) => (
+  <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm lg:hidden">
+    <div className="flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="grid h-11 w-11 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-800 transition-colors hover:bg-slate-100"
+        aria-label="Open menu"
+      >
+        <FaBars />
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-slate-950">
+          {pageTitle}
+        </p>
+        <p className="text-xs font-medium text-slate-500">FRII workspace</p>
+      </div>
+      <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-900 text-white">
+        <FaFingerprint />
+      </div>
+    </div>
+  </header>
+);
+
+const MobileDrawer = ({
+  open,
+  navItems,
+  isActive,
+  onNavigate,
+  onClose,
+  onLogout,
+  user,
+}) => (
+  <>
+    <div
+      className={`fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm transition-opacity lg:hidden ${
+        open ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+      onClick={onClose}
+    />
+
+    <aside
+      className={`fixed inset-y-0 left-0 z-[60] w-[min(88vw,336px)] border-r border-slate-200 bg-white p-5 shadow-2xl transition-transform duration-300 lg:hidden ${
+        open ? "translate-x-0" : "-translate-x-full"
+      }`}
+      aria-label="Mobile navigation"
+    >
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between gap-3">
+          <BrandMark onNavigate={onNavigate} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:bg-slate-100"
+            aria-label="Close menu"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        <div className="mt-8">
+          <p className="mb-3 px-3 text-xs font-semibold text-slate-500">
+            Navigation
+          </p>
+          <NavigationList
+            navItems={navItems}
+            isActive={isActive}
+            onNavigate={onNavigate}
+          />
+        </div>
+
+        <div className="mt-auto space-y-3 border-t border-slate-100 pt-5">
+          <UserPanel user={user} />
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+          >
+            <FaSignOutAlt />
+            Log out
+          </button>
+        </div>
+      </div>
+    </aside>
+  </>
+);
+
+const findActiveTitle = (navItems, pathname) => {
+  for (const item of navItems) {
+    if (item.children) {
+      const child = item.children.find(
+        (entry) => pathname === entry.path || pathname.startsWith(`${entry.path}/`)
+      );
+      if (child) return child.name;
+    }
+
+    if (pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path))) {
+      return item.name;
+    }
+  }
+
+  return "Workspace";
+};
 
 const LayoutContainer = ({ children }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -305,6 +441,11 @@ const LayoutContainer = ({ children }) => {
     location.pathname === path ||
     (path !== "/" && location.pathname.startsWith(path));
 
+  const pageTitle = useMemo(
+    () => findActiveTitle(navItems, location.pathname),
+    [navItems, location.pathname]
+  );
+
   const handleLogout = async () => {
     await logout();
     setDrawerOpen(false);
@@ -329,18 +470,18 @@ const LayoutContainer = ({ children }) => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {sidebarCollapsed ? (
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[72px] border-r border-slate-200 bg-white px-4 py-6 lg:block">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[80px] border-r border-slate-200 bg-white px-5 py-6 lg:block">
           <IconRail
             navItems={navItems}
             isActive={isActive}
             onNavigate={handleNavigate}
             onLogout={handleLogout}
-            collapsed={sidebarCollapsed}
             onExpand={() => updateSidebarCollapsed(false)}
+            user={user}
           />
         </aside>
       ) : (
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[224px] border-r border-slate-200 bg-white px-5 py-7 lg:block">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-slate-200 bg-white px-5 py-6 lg:block">
           <AppSidebar
             navItems={navItems}
             isActive={isActive}
@@ -352,48 +493,21 @@ const LayoutContainer = ({ children }) => {
         </aside>
       )}
 
-      <button
-        type="button"
-        onClick={() => setDrawerOpen(true)}
-        className="fixed left-4 top-4 z-40 grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-white text-slate-800 lg:hidden"
-        aria-label="Open menu"
-      >
-        <FaBars />
-      </button>
+      <MobileTopBar pageTitle={pageTitle} onOpen={() => setDrawerOpen(true)} />
 
-      <div
-        className={`fixed inset-0 z-50 bg-slate-950/35 transition-opacity lg:hidden ${
-          drawerOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        onClick={() => setDrawerOpen(false)}
+      <MobileDrawer
+        open={drawerOpen}
+        navItems={navItems}
+        isActive={isActive}
+        onNavigate={handleNavigate}
+        onClose={() => setDrawerOpen(false)}
+        onLogout={handleLogout}
+        user={user}
       />
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-[60] w-[min(86vw,300px)] border-r border-slate-200 bg-white p-5 shadow-xl transition-transform duration-300 lg:hidden ${
-          drawerOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(false)}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-500"
-          aria-label="Close menu"
-        >
-          <FaTimes />
-        </button>
-        <AppSidebar
-          navItems={navItems}
-          isActive={isActive}
-          onNavigate={handleNavigate}
-          onLogout={handleLogout}
-          onCollapse={() => setDrawerOpen(false)}
-          user={user}
-        />
-      </aside>
 
       <main
         className={`min-h-screen transition-[padding] duration-300 ${
-          sidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-[224px]"
+          sidebarCollapsed ? "lg:pl-[80px]" : "lg:pl-[260px]"
         }`}
       >
         <div className="mx-auto max-w-[1440px]">{children}</div>
