@@ -28,10 +28,10 @@ const SelectDropdown = ({
 }) => {
   // 💡 MODERN STYLING: Clean, border-focused design with prominent focus ring.
   const baseStyle =
-    "w-full p-3 rounded-xl bg-white appearance-none transition-all duration-200 cursor-pointer text-slate-800 shadow-sm";
+    "w-full px-3 py-2.5 rounded-lg bg-white appearance-none transition-colors duration-150 cursor-pointer text-sm text-slate-800 shadow-none";
 
   const defaultStyle =
-    "border border-slate-200 focus:border-teal-600 focus:ring-4 focus:ring-teal-100 focus:outline-none";
+    "border border-slate-300 focus:border-slate-700 focus:ring-2 focus:ring-slate-200 focus:outline-none";
 
   const errorStyle = error
     ? "border-rose-500 ring-4 ring-rose-100"
@@ -44,7 +44,7 @@ const SelectDropdown = ({
   const finalClassName = `${baseStyle} ${errorStyle} ${disabledStyle}`;
 
   return (
-    <div className={`space-y-1 ${className}`}>
+    <div className={`space-y-1.5 ${className}`}>
       {/* ১. লেবেল */}
       {label && (
         <label

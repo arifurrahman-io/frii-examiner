@@ -9,6 +9,7 @@ import {
   FaTerminal,
   FaInfoCircle,
   FaSyncAlt,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { addMasterData } from "../../api/apiService";
 
@@ -22,6 +23,7 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
   const [level, setLevel] = useState("");
   const [code, setCode] = useState("");
   const [category, setCategory] = useState("");
+  const [submissionDeadline, setSubmissionDeadline] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -83,7 +85,10 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
         description: description.trim(),
         ...(type === "class" && { level: parseInt(level) }),
         ...(type === "subject" && { code: code.trim() }),
-        ...(type === "responsibility" && { category: category }),
+        ...(type === "responsibility" && {
+          category: category,
+          submissionDeadline: submissionDeadline || null,
+        }),
       };
 
       await addMasterData(type, payload);
@@ -94,6 +99,7 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
       setLevel("");
       setCode("");
       setCategory("");
+      setSubmissionDeadline("");
       if (onSaveSuccess) onSaveSuccess();
     } catch (err) {
       toast.error(err.response?.data?.message || "Operation failed.");
@@ -175,7 +181,11 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
 
         {/* --- INPUT ROW 2 + BUTTON --- */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-          <div className="md:col-span-9">
+          <div
+            className={
+              type === "responsibility" ? "md:col-span-6" : "md:col-span-9"
+            }
+          >
             <label className="text-xs font-semibold text-slate-500 mb-2 block ml-1">
               Description optional
             </label>
@@ -190,6 +200,23 @@ const MasterEntryForm = ({ type, onSaveSuccess }) => {
               <FaInfoCircle className="absolute right-4 top-4 text-slate-200" />
             </div>
           </div>
+
+          {type === "responsibility" && (
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-500 mb-2 block ml-1">
+                Last submission date
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={submissionDeadline}
+                  onChange={(e) => setSubmissionDeadline(e.target.value)}
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 transition-all font-medium text-sm outline-none"
+                />
+                <FaCalendarAlt className="absolute right-4 top-4 text-slate-200 pointer-events-none" />
+              </div>
+            </div>
+          )}
 
           <div className="md:col-span-3">
             <button

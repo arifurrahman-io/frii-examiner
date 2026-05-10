@@ -145,22 +145,22 @@ const AssignmentCard = ({
 
   // ✅ Updated List with Subject Integration
   const CompactList = ({ list, title, icon: Icon, color, showAll = false }) => (
-    <div className="flex flex-col space-y-1.5">
-      <div className="flex items-center gap-1.5">
-        <Icon className={`text-[8px] sm:text-[10px] ${color}`} />
-        <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">
+    <div className="flex flex-col space-y-2">
+      <div className="flex items-center gap-2">
+        <Icon className={`text-xs ${color}`} />
+        <p className="truncate text-xs font-semibold text-slate-500">
           {title}
         </p>
       </div>
-      <div className="space-y-1 max-h-40 overflow-y-auto no-scrollbar">
+      <div className="max-h-40 space-y-1 overflow-y-auto">
         {list.length > 0 ? (
           (showAll ? list : list.slice(0, 2)).map((a, i) => (
             <p
               key={i}
-              className="text-[10px] sm:text-[11px] font-bold text-slate-600 truncate leading-tight"
+              className="truncate text-xs font-semibold leading-tight text-slate-700"
             >
               {a.name?.name || a.name || "N/A"}{" "}
-              <span className="text-slate-400 font-medium italic">
+              <span className="font-medium text-slate-400">
                 (
                 {typeof a.class === "object" ? a.class?.name : a.class || "N/A"}{" "}
                 |{" "}
@@ -172,13 +172,13 @@ const AssignmentCard = ({
             </p>
           ))
         ) : (
-          <p className="text-[9px] text-slate-300 italic font-bold">
-            Empty Node
+          <p className="text-xs font-semibold text-slate-300">
+            No data
           </p>
         )}
         {!showAll && list.length > 2 && (
-          <p className="text-[8px] font-black text-indigo-400">
-            + {list.length - 2} Vectors
+          <p className="text-xs font-bold text-teal-700">
+            + {list.length - 2} more
           </p>
         )}
       </div>
@@ -187,26 +187,25 @@ const AssignmentCard = ({
 
   return (
     <>
-      <div className="group relative bg-white/80 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 border border-white shadow-sm hover:shadow-indigo-100 transition-all duration-500 overflow-hidden">
+      <div className="border border-slate-200 bg-white p-5 transition-colors hover:bg-slate-50">
         {/* --- HEADER: RESPONSIVE --- */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4 pb-4 border-b border-slate-50 relative z-10">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 group-hover:rotate-6 transition-transform">
-              <span className="text-sm sm:text-lg font-black uppercase">
+        <div className="mb-4 flex flex-col items-start justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-slate-900 text-white">
+              <span className="text-sm font-bold">
                 {teacher.name?.charAt(0)}
               </span>
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight leading-none mb-1.5 truncate">
+              <h3 className="truncate text-base font-bold leading-tight text-slate-900">
                 {teacher.name}
               </h3>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
                 <span className="flex items-center gap-1 shrink-0">
-                  <FaIdBadge className="text-indigo-400" /> {teacher.teacherId}
+                  <FaIdBadge className="text-slate-300" /> {teacher.teacherId}
                 </span>
-                <span className="hidden sm:block h-0.5 w-0.5 rounded-full bg-slate-300"></span>
-                <span className="text-indigo-500 flex items-center gap-1 truncate">
-                  <FaUniversity className="text-indigo-400 shrink-0" />{" "}
+                <span className="flex items-center gap-1 truncate">
+                  <FaUniversity className="shrink-0 text-slate-300" />{" "}
                   {teacher.campus?.name || "Global"}
                 </span>
               </div>
@@ -214,20 +213,20 @@ const AssignmentCard = ({
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto h-9 sm:h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-teal-800 sm:w-auto"
           >
-            <FaEdit /> ASSIGN
+            <FaEdit /> Assign
           </button>
         </div>
 
         {/* --- MATRIX: ADAPTIVE --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-b border-slate-50 pb-4">
-          <div className="sm:border-r border-slate-100 sm:pr-4">
+        <div className="grid grid-cols-1 gap-5 border-b border-slate-200 pb-4 sm:grid-cols-2">
+          <div className="sm:border-r sm:border-slate-200 sm:pr-4">
             <CompactList
               list={assignmentsCurrent}
               title={`Cycle ${selectedYear}`}
               icon={FaLayerGroup}
-              color="text-indigo-500"
+              color="text-teal-700"
             />
           </div>
           <div className="sm:pl-1">
@@ -245,10 +244,10 @@ const AssignmentCard = ({
         <div className="pt-3">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full flex justify-between items-center py-1 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-indigo-600 transition-colors"
+            className="flex w-full items-center justify-between py-1 text-xs font-semibold text-slate-500 hover:text-teal-700"
           >
             <span className="flex items-center gap-2">
-              <FaBook className="text-indigo-300" /> Routine Matrix
+              <FaBook className="text-teal-700" /> Routine
             </span>
             <FaChevronDown
               className={`transition-transform duration-500 ${
@@ -257,19 +256,19 @@ const AssignmentCard = ({
             />
           </button>
           {isOpen && (
-            <div className="mt-3 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-1">
+            <div className="mt-3 flex flex-wrap gap-2">
               {routineDataCurrentYear.length > 0 ? (
                 routineDataCurrentYear.map((item) => (
                   <span
                     key={item._id}
-                    className="px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-500 rounded-lg text-[8px] font-bold uppercase tracking-tighter"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600"
                   >
                     {item.display}
                   </span>
                 ))
               ) : (
-                <p className="text-[9px] text-slate-300 italic font-bold">
-                  Zero routine data.
+                <p className="text-xs font-semibold text-slate-300">
+                  No routine data.
                 </p>
               )}
             </div>

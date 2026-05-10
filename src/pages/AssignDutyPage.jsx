@@ -7,8 +7,11 @@ import {
   FaSyncAlt,
   FaExclamationCircle,
   FaLayerGroup,
-  FaTerminal,
   FaShieldAlt,
+  FaCalendarAlt,
+  FaBook,
+  FaGraduationCap,
+  FaUsers,
 } from "react-icons/fa";
 import AssignmentCard from "../components/cards/AssignmentCard";
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -18,8 +21,6 @@ import {
   getSubjects,
   getResponsibilityTypes,
   getEligibleTeachers,
-  getTeacherProfile,
-  getTeacherRoutines,
 } from "../api/apiService";
 
 const initialFilters = {
@@ -28,6 +29,20 @@ const initialFilters = {
   classId: "",
   subjectId: "",
 };
+
+const StatPanel = ({ icon: Icon, label, value }) => (
+  <div className="border border-slate-200 bg-white p-4">
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+      </div>
+      <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal-50 text-teal-700">
+        <Icon />
+      </div>
+    </div>
+  </div>
+);
 
 const AssignDutyPage = () => {
   const { user } = useAuth();
@@ -102,24 +117,7 @@ const AssignDutyPage = () => {
         classId,
         subjectId,
       });
-      if (eligibleList.length === 0) {
-        setEligibleTeachers([]);
-        return;
-      }
-      const finalTeachersList = await Promise.all(
-        eligibleList.map(async (teacher) => {
-          const [profileRes, routinesRes] = await Promise.all([
-            getTeacherProfile(teacher._id),
-            getTeacherRoutines(teacher._id, year),
-          ]);
-          return {
-            ...teacher,
-            assignmentsByYear: profileRes.data.assignmentsByYear || [],
-            routineSchedule: routinesRes.data || [],
-          };
-        })
-      );
-      setEligibleTeachers(finalTeachersList);
+      setEligibleTeachers(Array.isArray(eligibleList) ? eligibleList : []);
     } catch (error) {
       toast.error("Eligible teacher lookup failed.");
     } finally {
@@ -159,49 +157,81 @@ const AssignDutyPage = () => {
   if (!user || (user.role !== "admin" && user.role !== "incharge")) return null;
 
   return (
-    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-8 relative overflow-hidden">
-
-      <div className="max-w-[1500px] mx-auto relative z-10">
-        {/* --- HEADER --- */}
-        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-slate-900 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center text-indigo-400 shadow-2xl">
-              <FaTasks className="text-xl sm:text-2xl" />
+    <div className="min-h-screen bg-transparent px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1500px] space-y-6">
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 flex-none place-items-center rounded-lg bg-slate-900 text-white">
+              <FaTasks />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase leading-none mb-1 sm:mb-2">
-                Assign Duty <span className="text-indigo-600">.</span>
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                Assign Duty
               </h1>
-              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] flex items-center gap-2">
-                <FaTerminal className="text-indigo-500" /> SYNCING DUTY
-                DISTRIBUTION
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Find eligible teachers and assign exam responsibilities
               </p>
             </div>
           </div>
 
-          <div className="self-start md:self-auto px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-indigo-50 shadow-xl flex items-center gap-3 sm:gap-4">
-            <FaShieldAlt className="text-indigo-600 text-xs sm:text-base" />
-            <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              {user.role === "admin" ? "ADMIN" : "INCHARGE"} PROTOCOL ACTIVE
+          <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600">
+            <FaShieldAlt className="text-teal-700" />
+            <span>
+              {user.role === "admin" ? "Admin" : "Incharge"} Access
             </span>
-            <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="h-2 w-2 rounded-full bg-teal-600" />
           </div>
         </div>
 
-        {/* --- FILTER INTERFACE --- */}
-        <div className="bg-white/90 backdrop-blur-2xl p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white mb-8 sm:mb-12 relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-6 sm:mb-10">
-            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <FaFilter size={12} />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <StatPanel icon={FaCalendarAlt} label="Year" value={filters.year} />
+          <StatPanel
+            icon={FaTasks}
+            label="Duty type"
+            value={selectedType?.name || "-"}
+          />
+          <StatPanel
+            icon={FaGraduationCap}
+            label="Class"
+            value={selectedClass?.name || "-"}
+          />
+          <StatPanel
+            icon={FaUsers}
+            label="Eligible"
+            value={allFiltersSelected ? eligibleTeachers.length : "-"}
+          />
+        </div>
+
+        <section className="border border-slate-200 bg-white p-5">
+          <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal-50 text-teal-700">
+                <FaFilter />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Assignment Filters
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Select all filters to load eligible teachers
+                </p>
+              </div>
             </div>
-            <h3 className="text-[10px] sm:text-sm font-black text-slate-800 uppercase tracking-widest">
-              Assignment filters
-            </h3>
+
+            {allFiltersSelected && (
+              <button
+                onClick={() => setTriggerRefresh((prev) => prev + 1)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                <FaSyncAlt className={loading ? "animate-spin" : ""} size={12} />
+                Refresh
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 relative z-10">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <SelectDropdown
-              label="Academic Cycle"
+              label="Academic Year"
               name="year"
               value={filters.year}
               onChange={handleChange}
@@ -209,73 +239,67 @@ const AssignDutyPage = () => {
               required
             />
             <SelectDropdown
-              label="Duty type"
+              label="Duty Type"
               name="responsibilityType"
               value={filters.responsibilityType}
               onChange={handleChange}
               options={masterData.types}
-              placeholder="Assign Prototype..."
+              placeholder="Select duty type"
               required
             />
             <SelectDropdown
-              label="Class Cohort"
+              label="Class"
               name="classId"
               value={filters.classId}
               onChange={handleChange}
-              options={filteredClasses} // Updated to use filtered list
-              placeholder="Select class..."
+              options={filteredClasses}
+              placeholder="Select class"
               required
             />
             <SelectDropdown
-              label="Knowledge Area"
+              label="Subject"
               name="subjectId"
               value={filters.subjectId}
               onChange={handleChange}
               options={masterData.subjects}
-              placeholder="Select Vector..."
+              placeholder="Select subject"
               required
             />
           </div>
-        </div>
+        </section>
 
-        {/* --- ELIGIBLE CANDIDATES LIST --- */}
-        <div className="flex flex-col sm:row sm:items-center justify-between mb-8 px-2 sm:px-6 gap-4">
-          <div className="flex items-center gap-3 sm:gap-5">
-            <h3
-              className={`text-lg sm:text-xl font-black transition-all duration-700 ${
-                allFiltersSelected ? "text-slate-900" : "text-slate-200"
-              }`}
-            >
-              {allFiltersSelected
-                ? `Verified Candidates (${eligibleTeachers.length})`
-                : "Choose filters to begin"}
-            </h3>
-            {allFiltersSelected && (
-              <div className="h-1 w-8 sm:w-12 bg-indigo-600 rounded-full"></div>
+        <section className="border border-slate-200 bg-white">
+          <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                {allFiltersSelected
+                  ? "Eligible Teachers"
+                  : "Candidate Search"}
+              </h2>
+              <p className="text-sm text-slate-500">
+                {allFiltersSelected
+                  ? `${eligibleTeachers.length} teachers match the selected routine`
+                  : "Choose year, duty type, class, and subject to begin"}
+              </p>
+            </div>
+            {selectedSubject && (
+              <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                <FaBook className="text-teal-700" />
+                {selectedSubject.name}
+              </div>
             )}
           </div>
 
-          {allFiltersSelected && (
-            <button
-              onClick={() => setTriggerRefresh((p) => p + 1)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 text-[8px] sm:text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-600 hover:text-white transition-all"
-            >
-              <FaSyncAlt className={loading ? "animate-spin" : ""} /> Force
-              Resync
-            </button>
-          )}
-        </div>
-
-        <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          <div className="p-5">
           {loading ? (
-            <div className="bg-white/40 backdrop-blur-md p-16 sm:p-32 rounded-[2rem] sm:rounded-[4rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-              <FaSyncAlt className="animate-spin text-4xl sm:text-7xl text-indigo-500/20 mb-4 sm:mb-8" />
-              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] sm:tracking-[0.5em] animate-pulse">
+            <div className="flex flex-col items-center justify-center border border-dashed border-slate-200 bg-slate-50 p-16 text-center">
+              <FaSyncAlt className="mb-5 animate-spin text-4xl text-teal-700/40" />
+              <p className="text-sm font-semibold text-slate-500">
                 Finding eligible teachers
               </p>
             </div>
           ) : allFiltersSelected && eligibleTeachers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-8">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {eligibleTeachers.map((teacher) => (
                 <AssignmentCard
                   key={teacher._id}
@@ -291,27 +315,27 @@ const AssignDutyPage = () => {
               ))}
             </div>
           ) : allFiltersSelected && eligibleTeachers.length === 0 ? (
-            <div className="bg-white p-12 sm:p-24 rounded-[2rem] sm:rounded-[4rem] shadow-sm border border-rose-100 flex flex-col items-center justify-center text-center">
-              <div className="h-16 w-16 sm:h-24 sm:w-24 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-6 sm:mb-8">
-                <FaExclamationCircle size={32} className="sm:text-5xl" />
+            <div className="flex flex-col items-center justify-center border border-rose-100 bg-rose-50 p-16 text-center">
+              <div className="mb-5 grid h-14 w-14 place-items-center rounded-lg bg-white text-rose-500">
+                <FaExclamationCircle size={28} />
               </div>
-              <p className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-tight">
+              <p className="text-lg font-bold text-slate-900">
                 No eligible teachers
               </p>
-              <p className="text-[10px] sm:text-xs font-bold text-slate-400 mt-2 sm:mt-3 max-w-sm uppercase tracking-widest leading-relaxed">
+              <p className="mt-2 max-w-sm text-sm text-slate-500">
                 No staff member matches the selected routine vector for the
                 current academic session.
               </p>
             </div>
           ) : (
-            <div className="bg-white/40 border-2 border-dashed border-slate-200 p-16 sm:p-32 rounded-[2rem] sm:rounded-[4rem] flex flex-col items-center justify-center text-center">
-              <div className="h-16 w-16 sm:h-28 sm:w-28 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6 sm:mb-8 transition-all">
-                <FaLayerGroup size={40} className="sm:text-5xl" />
+            <div className="flex flex-col items-center justify-center border border-dashed border-slate-200 bg-slate-50 p-16 text-center">
+              <div className="mb-5 grid h-14 w-14 place-items-center rounded-lg bg-white text-slate-300">
+                <FaLayerGroup size={28} />
               </div>
-              <p className="text-[8px] sm:text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] sm:tracking-[0.5em]">
-                Input Sequence Required to Initiate Search
+              <p className="text-sm font-semibold text-slate-500">
+                Select filters to load eligible teachers
               </p>
-              <div className="mt-6 sm:mt-8 flex gap-2 sm:gap-3">
+              <div className="mt-5 flex gap-2">
                 {[
                   filters.year,
                   filters.responsibilityType,
@@ -320,23 +344,16 @@ const AssignDutyPage = () => {
                 ].map((f, i) => (
                   <div
                     key={i}
-                    className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ${
-                      f
-                        ? "bg-indigo-500 w-6 sm:w-8"
-                        : "bg-slate-200 w-1.5 sm:w-2"
+                    className={`h-2 rounded-full transition-all ${
+                      f ? "w-8 bg-teal-700" : "w-2 bg-slate-200"
                     }`}
-                  ></div>
+                  />
                 ))}
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="mt-20 text-center opacity-10 select-none pointer-events-none hidden sm:block">
-        <p className="text-[8px] sm:text-[10px] font-black text-slate-900 uppercase tracking-[1.5em]">
-          Duty allocation
-        </p>
+          </div>
+        </section>
       </div>
     </div>
   );

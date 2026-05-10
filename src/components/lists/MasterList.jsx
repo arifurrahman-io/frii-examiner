@@ -10,6 +10,7 @@ import {
   FaDatabase,
   FaCheck,
   FaFingerprint,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import {
   getMasterDataList,
@@ -32,11 +33,30 @@ const getTitles = (type) => {
   }
 };
 
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
+
+const formatDisplayDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};
+
 const MasterList = ({ type, refreshTrigger }) => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
+  const [editSubmissionDeadline, setEditSubmissionDeadline] = useState("");
 
   const titles = getTitles(type);
 
@@ -72,7 +92,14 @@ const MasterList = ({ type, refreshTrigger }) => {
       const currentItem = list.find((item) => item._id === id);
       const updatePayload = {
         name: editName,
-        ...(type === "responsibility" && { category: currentItem.category }),
+        description: currentItem.description || "",
+        ...(type === "responsibility" && {
+          category: currentItem.category,
+          requiresClassSubject: currentItem.requiresClassSubject,
+        }),
+        ...(type === "responsibility" && {
+          submissionDeadline: editSubmissionDeadline || null,
+        }),
         ...(type === "class" && { level: currentItem.level }),
         ...(type === "subject" && { code: currentItem.code }),
       };
@@ -120,26 +147,41 @@ const MasterList = ({ type, refreshTrigger }) => {
               }`}
             >
               {editId === item._id ? (
-                <div className="flex items-center gap-3 animate-in zoom-in-95 duration-300">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
-                  <button
-                    onClick={() => handleUpdate(item._id)}
-                    className="h-10 w-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
-                  >
-                    <FaCheck size={14} />
-                  </button>
-                  <button
-                    onClick={() => setEditId(null)}
-                    className="h-10 w-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
-                  >
-                    <FaTimes size={14} />
-                  </button>
+                <div className="flex flex-col gap-3 animate-in zoom-in-95 duration-300">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <button
+                      onClick={() => handleUpdate(item._id)}
+                      className="h-10 w-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                    >
+                      <FaCheck size={14} />
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      className="h-10 w-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                    >
+                      <FaTimes size={14} />
+                    </button>
+                  </div>
+                  {type === "responsibility" && (
+                    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                      <FaCalendarAlt className="text-slate-300" size={12} />
+                      <input
+                        type="date"
+                        value={editSubmissionDeadline}
+                        onChange={(e) =>
+                          setEditSubmissionDeadline(e.target.value)
+                        }
+                        className="w-full bg-transparent text-xs font-bold text-slate-600 outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex justify-between items-center">
@@ -167,6 +209,13 @@ const MasterList = ({ type, refreshTrigger }) => {
                           <FaTag size={8} /> {item.category}
                         </span>
                       )}
+                      {type === "responsibility" &&
+                        formatDisplayDate(item.submissionDeadline) && (
+                          <span className="text-[9px] font-black px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg uppercase border border-emerald-100 flex items-center gap-1">
+                            <FaCalendarAlt size={8} /> Due:{" "}
+                            {formatDisplayDate(item.submissionDeadline)}
+                          </span>
+                        )}
                     </div>
                   </div>
 
@@ -175,6 +224,9 @@ const MasterList = ({ type, refreshTrigger }) => {
                       onClick={() => {
                         setEditId(item._id);
                         setEditName(item.name);
+                        setEditSubmissionDeadline(
+                          toDateInputValue(item.submissionDeadline)
+                        );
                       }}
                       className="h-9 w-9 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center justify-center transition-all"
                     >

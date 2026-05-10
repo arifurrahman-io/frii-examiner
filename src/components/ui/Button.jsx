@@ -26,14 +26,14 @@ const Button = ({
 }) => {
   // ১. ভেরিয়েন্ট অনুযায়ী স্টাইল সেট করা
   const baseStyle =
-    "flex items-center justify-center gap-2 p-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-4 disabled:transform-none";
+    "flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-150 focus:outline-none focus:ring-2 disabled:transform-none";
 
   let variantStyle = "";
 
   switch (variant) {
     case "secondary":
       variantStyle =
-        "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-950 focus:ring-slate-200";
+        "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:ring-slate-200";
       break;
     case "danger":
       variantStyle =
@@ -41,12 +41,12 @@ const Button = ({
       break;
     case "success":
       variantStyle =
-        "bg-teal-700 text-white hover:bg-teal-800 focus:ring-teal-100";
+        "bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-200";
       break;
     case "primary": // Default
     default:
       variantStyle =
-        "bg-teal-700 text-white hover:bg-teal-800 focus:ring-teal-100";
+        "bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-200";
       break;
   }
 

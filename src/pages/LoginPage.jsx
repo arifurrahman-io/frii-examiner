@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
 import {
-  FaArrowRight,
-  FaCheckCircle,
-  FaFingerprint,
-  FaLock,
-  FaShieldAlt,
-  FaUserTie,
+  FaBookOpen,
+  FaFolder,
+  FaGoogle,
+  FaGripLines,
+  FaPlay,
+  FaRegBookmark,
+  FaSearch,
+  FaSlidersH,
+  FaSyncAlt,
+  FaUser,
 } from "react-icons/fa";
 import { Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext.jsx";
-import Button from "../components/ui/Button";
-import InputField from "../components/ui/InputField";
+
+const mockRows = Array.from({ length: 8 }, (_, index) => index + 1);
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
@@ -63,177 +67,217 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] px-4 py-6 font-sans text-slate-900 selection:bg-emerald-100 sm:px-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-48px)] max-w-6xl items-center gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-        <section className="hidden h-full min-h-[640px] rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:flex lg:flex-col">
-          <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-700 text-white">
-              <FaFingerprint className="text-xl" />
-            </div>
-            <div>
-              <p className="text-lg font-bold tracking-tight text-emerald-950">
-                FRII
-              </p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Teacher Platform
-              </p>
-            </div>
+    <div className="login-screen min-h-screen px-3 py-3 text-slate-950 sm:px-4 sm:py-5">
+      <div className="login-shell mx-auto grid min-h-[calc(100vh-24px)] w-full max-w-[1320px] overflow-hidden rounded-lg bg-white shadow-[0_18px_50px_rgba(32,43,77,0.16)] lg:min-h-[calc(100vh-40px)] lg:grid-cols-[1.05fr_1fr]">
+        <section className="login-visual relative hidden overflow-hidden lg:block">
+          <div className="absolute left-9 top-8 z-20 grid h-7 w-7 place-items-center rounded-md bg-white/95 text-[#3157e8] shadow-[0_10px_24px_rgba(20,35,117,0.18)]">
+            <FaRegBookmark className="text-sm" />
           </div>
 
-          <div className="my-auto max-w-md">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-              <FaShieldAlt />
-              Secure institutional access
-            </div>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-950">
-              Manage teachers, duties, and routines from one calm workspace.
+          <div className="absolute left-[14%] top-[20%] z-20 max-w-[330px] text-white">
+            <h1 className="text-[25px] font-normal leading-tight text-white">
+              Designed for Individuals
             </h1>
-            <p className="mt-5 text-base font-medium leading-7 text-slate-500">
-              Built for focused academic administration with clean navigation,
-              reliable access control, and fast daily operations.
+            <p className="mt-4 text-sm leading-6 text-white/72">
+              See the analytics and grow your data remotely, from anywhere!
             </p>
-
-            <div className="mt-10 grid gap-3">
-              {[
-                "Teacher routine management",
-                "Campus-based responsibility control",
-                "Protected reporting workflow",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3"
-                >
-                  <FaCheckCircle className="text-emerald-600" />
-                  <span className="text-sm font-semibold text-slate-600">
-                    {item}
-                  </span>
-                </div>
-              ))}
+            <div className="mt-16 flex items-center gap-1.5">
+              <span className="h-1.5 w-5 rounded-full bg-white/50" />
+              <span className="h-1.5 w-1.5 rounded-full bg-white/35" />
+              <span className="h-1.5 w-1.5 rounded-full bg-white/35" />
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-5">
-            <p className="text-xs font-semibold text-slate-400">
-              Faizur Rahman Ideal Institute
-            </p>
+          <div className="login-file absolute bottom-0 left-[26%] z-30 h-[53%] w-[78%] overflow-hidden rounded-t-xl bg-white shadow-[0_22px_50px_rgba(19,39,129,0.22)]">
+            <div className="absolute left-0 top-0 h-full w-[72px] bg-[#234ee6]">
+              <div className="flex h-full flex-col items-center py-8 text-white">
+                <FaRegBookmark className="mb-12 text-xl" />
+                <div className="mb-7 grid h-12 w-12 place-items-center rounded-lg bg-white/22">
+                  <FaFolder />
+                </div>
+                <FaPlay className="mb-7 text-sm opacity-70" />
+                <FaGripLines className="mb-7 opacity-70" />
+                <FaSlidersH className="opacity-70" />
+                <div className="mt-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white/30 bg-[#f4f2eb] text-[#23315c]">
+                  <FaUser />
+                </div>
+              </div>
+            </div>
+
+            <div className="ml-[72px] h-full">
+              <div className="flex h-[72px] items-center gap-4 border-b border-[#edf0f7] px-8">
+                <FaBookOpen className="text-[#3157e8]" />
+                <h2 className="text-xl font-normal text-[#1f2633]">
+                  Example File
+                </h2>
+                <div className="ml-auto grid h-11 w-11 place-items-center rounded-full border-4 border-white bg-[#ffe8da] text-[#222] shadow-[0_8px_20px_rgba(24,32,62,0.18)]">
+                  <FaUser />
+                </div>
+              </div>
+
+              <div className="border-b border-[#edf0f7] px-8 py-4">
+                <div className="flex items-center gap-8 text-[#566179]">
+                  <FaRegBookmark />
+                  <FaFolder />
+                  <FaBookOpen />
+                  <FaSearch />
+                  <FaSyncAlt />
+                  <FaSlidersH />
+                </div>
+              </div>
+
+              <div className="px-8 py-4">
+                <div className="mb-4 grid grid-cols-[42px_1fr_38px] items-center gap-4">
+                  <button className="grid h-9 w-9 place-items-center rounded-md border border-[#e2e6ef] text-[#7a8396]">
+                    x
+                  </button>
+                  <div className="h-7 rounded-md bg-[#eef0f4]" />
+                  <div className="h-5 rounded-full bg-[#d9dde7]" />
+                </div>
+
+                <div className="grid grid-cols-[34px_1.3fr_1fr_1fr] border-t border-l border-[#edf0f7] text-xs text-[#5d6678]">
+                  <div className="border-b border-r border-[#edf0f7] p-2 font-semibold">
+                    #
+                  </div>
+                  <div className="border-b border-r border-[#edf0f7] p-2 font-semibold">
+                    Tt
+                  </div>
+                  <div className="border-b border-r border-[#edf0f7] p-2 font-semibold">
+                    AZ
+                  </div>
+                  <div className="border-b border-r border-[#edf0f7] p-2 font-semibold">
+                    AZ
+                  </div>
+                  {mockRows.map((row) => (
+                    <React.Fragment key={row}>
+                      <div className="border-b border-r border-[#edf0f7] px-2 py-2">
+                        {row}
+                      </div>
+                      <div className="border-b border-r border-[#edf0f7] px-3 py-2">
+                        <div className="h-4 w-[72%] rounded bg-[#edf0f4]" />
+                      </div>
+                      <div className="border-b border-r border-[#edf0f7] px-3 py-2">
+                        <div className="h-4 w-[64%] rounded bg-[#edf0f4]" />
+                      </div>
+                      <div className="border-b border-r border-[#edf0f7] px-3 py-2">
+                        <div className="h-4 w-[82%] rounded bg-[#edf0f4]" />
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="flex items-center justify-center">
-          <div className="w-full max-w-[460px] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="mb-9 flex items-center gap-3 lg:hidden">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-700 text-white">
-                <FaFingerprint className="text-lg" />
+        <section className="flex min-h-[620px] items-center justify-center px-6 py-10 sm:px-10 lg:px-16">
+          <div className="w-full max-w-[430px]">
+            <div className="mb-10 flex items-center gap-3 lg:hidden">
+              <div className="grid h-9 w-9 place-items-center rounded-md bg-[#3157e8] text-white">
+                <FaRegBookmark className="text-sm" />
               </div>
               <div>
-                <p className="text-base font-bold text-emerald-950">FRII</p>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-base font-semibold text-[#171b26]">FRII</p>
+                <p className="text-xs font-medium text-[#7a8291]">
                   Teacher Platform
                 </p>
               </div>
             </div>
 
-            <div className="mb-8">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                Welcome back
-              </p>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-                Sign in
-              </h2>
-              <p className="mt-2 text-sm font-medium text-slate-500">
-                Enter your teacher ID or email to continue.
-              </p>
-            </div>
+            <h2 className="mb-11 text-[27px] font-normal leading-none text-[#151922]">
+              Login
+            </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-5">
-                <InputField
-                  label="Teacher ID / Email"
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label
+                  htmlFor="teacherIdOrEmail"
+                  className="mb-3 block text-sm font-medium text-[#252a36]"
+                >
+                  Email address
+                </label>
+                <input
+                  id="teacherIdOrEmail"
                   name="teacherIdOrEmail"
-                  icon={FaUserTie}
-                  placeholder="e.g. T-10293"
+                  type="text"
                   value={credentials.teacherIdOrEmail}
                   onChange={handleChange}
+                  placeholder="name@mail.com"
                   required
+                  className="login-input h-12 w-full rounded-lg border border-[#e1e5ef] bg-white px-4 text-sm text-[#1e2533] outline-none placeholder:text-[#7a8291] focus:border-[#3157e8] focus:ring-4 focus:ring-[#3157e8]/10"
                 />
+              </div>
 
-                <div className="space-y-1.5">
-                  <div className="flex items-end justify-between px-1 pt-2">
-                    <label className="text-[13px] font-bold text-slate-700">
-                      Security Key
-                    </label>
-                    <button
-                      type="button"
-                      tabIndex="-1"
-                      className="text-[12px] font-bold text-emerald-700 underline-offset-4 transition-colors hover:underline"
-                    >
-                      Recovery?
-                    </button>
-                  </div>
-                  <InputField
-                    type="password"
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-3 block text-sm font-medium text-[#252a36]"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
                     name="password"
-                    icon={FaLock}
-                    placeholder="Password"
+                    type="password"
                     value={credentials.password}
                     onChange={handleChange}
+                    placeholder="**********"
                     required
+                    className="login-input h-12 w-full rounded-lg border border-[#e1e5ef] bg-white px-4 pr-36 text-sm text-[#1e2533] outline-none placeholder:text-[#7a8291] focus:border-[#3157e8] focus:ring-4 focus:ring-[#3157e8]/10"
                   />
+                  <button
+                    type="button"
+                    tabIndex="-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[#3157e8] hover:text-[#2444c7]"
+                  >
+                    Reset Password
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between px-1">
-                <label className="group flex cursor-pointer select-none items-center gap-3">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="h-5 w-5 rounded-lg border-2 border-slate-300 bg-white shadow-sm transition-all duration-200 peer-checked:border-emerald-700 peer-checked:bg-emerald-700" />
-                    <svg
-                      className="pointer-events-none absolute left-1 top-1 h-3 w-3 text-white opacity-0 transition-opacity duration-200 peer-checked:opacity-100"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-slate-500 transition-colors group-hover:text-slate-800">
-                    Trust this device
-                  </span>
-                </label>
-              </div>
+              <label className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-[#737b8b]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="login-check h-3.5 w-3.5 rounded border-[#cdd3df] text-[#3157e8] focus:ring-[#3157e8]/20"
+                />
+                Remember Password
+              </label>
 
-              <Button
+              <button
                 type="submit"
-                fullWidth
-                loading={loading}
-                className="group h-14 rounded-xl bg-emerald-700 text-[15px] font-bold shadow-sm hover:bg-emerald-800 active:scale-[0.98]"
+                disabled={loading}
+                className="login-primary mt-5 flex h-12 w-full items-center justify-center rounded-lg bg-[#3157e8] text-sm font-medium text-white shadow-[0_9px_20px_rgba(49,87,232,0.22)] transition hover:bg-[#2449d9] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? (
-                  "Securing Connection..."
-                ) : (
-                  <>
-                    <span>Authorize Access</span>
-                    <FaArrowRight className="text-[10px] transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
-              </Button>
+                {loading ? "Logging in..." : "Login"}
+              </button>
             </form>
 
-            <div className="mt-10 border-t border-slate-100 pt-6">
-              <p className="text-[11px] font-semibold text-slate-400">
-                FRII Teacher Management Platform
-              </p>
+            <p className="mt-6 text-sm font-medium text-[#252a36]">
+              Don&apos;t have an account?{" "}
+              <button
+                type="button"
+                className="font-medium text-[#3157e8] hover:text-[#2444c7]"
+              >
+                Sign up
+              </button>
+            </p>
+
+            <div className="my-10 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <span className="h-px bg-[#eaedf4]" />
+              <span className="text-xs text-[#9aa1af]">or</span>
+              <span className="h-px bg-[#eaedf4]" />
             </div>
+
+            <button
+              type="button"
+              className="login-google flex h-12 w-full items-center justify-center gap-4 rounded-lg border border-[#e3e7f0] bg-white text-sm font-medium text-[#252a36] transition hover:border-[#cbd3e2] hover:bg-[#fbfcff]"
+            >
+              <FaGoogle className="text-base text-[#4285f4]" />
+              Authorize with Google
+            </button>
           </div>
         </section>
       </div>

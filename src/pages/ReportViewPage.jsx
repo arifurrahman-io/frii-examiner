@@ -17,6 +17,7 @@ import {
   FaCubes,
   FaTerminal,
   FaShieldAlt,
+  FaChevronDown,
 } from "react-icons/fa";
 
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -40,6 +41,124 @@ const displayValue = (value, fallback = "-") => {
   return value;
 };
 
+const DutyTypeMultiSelect = ({
+  label,
+  types,
+  selectedIds,
+  onToggle,
+  onSelectAll,
+  onClear,
+  required = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedCount = selectedIds.length;
+  const allSelected = types.length > 0 && selectedCount === types.length;
+  const selectedTypes = types.filter((type) => selectedIds.includes(type._id));
+  const summaryText = allSelected
+    ? "All duty types"
+    : selectedCount
+    ? `${selectedCount} selected`
+    : required
+    ? "Select duty types"
+    : "All duty types";
+
+  return (
+    <div className="relative space-y-1">
+      <p className="block text-sm font-medium text-slate-700">
+        {label} {required && <span className="text-rose-500">*</span>}
+      </p>
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        className={`flex h-[48px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3 text-left shadow-sm transition-all ${
+          isOpen
+            ? "border-indigo-300 ring-4 ring-indigo-50"
+            : "border-slate-200 hover:border-slate-300"
+        }`}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-slate-800">
+              {summaryText}
+            </span>
+            {selectedCount > 0 && !allSelected && (
+              <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[9px] font-black uppercase text-indigo-700">
+                {selectedCount}
+              </span>
+            )}
+          </div>
+          {selectedCount > 0 && !allSelected && (
+            <p className="mt-0.5 truncate text-[9px] font-bold uppercase tracking-tight text-slate-400">
+              {selectedTypes
+                .slice(0, 2)
+                .map((type) => type.name)
+                .join(", ")}
+              {selectedCount > 2 ? ` +${selectedCount - 2}` : ""}
+            </p>
+          )}
+        </div>
+        <FaChevronDown className="flex-none text-xs text-slate-400" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
+          <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+              {summaryText}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onSelectAll}
+                className="rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-widest text-teal-700 hover:bg-teal-50"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={onClear}
+                className="rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="grid max-h-56 grid-cols-1 gap-1.5 overflow-y-auto p-2 custom-scrollbar sm:grid-cols-2">
+            {types.map((type) => {
+              const isSelected = selectedIds.includes(type._id);
+              return (
+                <button
+                  type="button"
+                  key={type._id}
+                  onClick={() => onToggle(type._id)}
+                  className={`flex min-w-0 items-center justify-between gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${
+                    isSelected
+                      ? "border-teal-200 bg-teal-50 text-teal-800"
+                      : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200 hover:bg-white"
+                  }`}
+                >
+                  <span className="truncate text-[10px] font-black uppercase tracking-tight">
+                    {type.name}
+                  </span>
+                  <span
+                    className={`grid h-4 w-4 flex-none place-items-center rounded-md border ${
+                      isSelected
+                        ? "border-teal-600 bg-teal-600 text-white"
+                        : "border-slate-200 bg-white text-transparent"
+                    }`}
+                  >
+                    <FaCheckCircle size={8} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- 1. Modern Responsive Table/Card Component ---
 const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,7 +167,7 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
       ? ["Sl.", "TEACHERID", "TEACHER", "CAMPUS", "YEAR", "MISSING_DUTIES"]
       : reportType === "INACTIVE_NO_ROUTINE"
       ? ["Sl.", "TEACHERID", "TEACHER", "CAMPUS", "YEAR", "STATUS", "ROUTINE_STATUS"]
-      : ["Sl.", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
+      : ["Sl.", "RESPONSIBILITY_TYPE", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
 
   const headerLabel = (key) => {
     const labels = {
@@ -86,27 +205,27 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-2 sm:p-4 shadow-sm border border-white overflow-hidden transition-all hover:shadow-indigo-50">
+    <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm transition-all hover:shadow-indigo-50">
       {/* Desktop View: Table */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full border-separate border-spacing-0">
+        <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-slate-50/50">
+            <tr className="bg-slate-100">
               {displayedHeaders.map((header, index) => (
                 <th
                   key={index}
-                  className="px-6 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100"
+                  className="border border-slate-400 px-5 py-4 text-left text-[9px] font-black uppercase tracking-widest text-slate-700"
                 >
                   {headerLabel(header)}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody>
             {paginatedData.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                className="group hover:bg-indigo-50/30 transition-all"
+                className="group transition-all hover:bg-indigo-50/40"
               >
                 {displayedHeaders.map((key, colIndex) => {
                   let cellValue = row[key];
@@ -117,8 +236,8 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
                   return (
                     <td
                       key={colIndex}
-                      className={`px-6 py-5 text-[11px] font-bold ${
-                        key === "Sl." ? "text-indigo-400" : "text-slate-600"
+                      className={`border border-slate-300 px-5 py-4 text-[11px] font-bold ${
+                        key === "Sl." ? "text-indigo-700" : "text-slate-800"
                       } uppercase tracking-tight`}
                     >
                       {cellValue || "-"}
@@ -132,7 +251,7 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
       </div>
 
       {/* Mobile View: Cards */}
-      <div className="md:hidden divide-y divide-slate-100">
+      <div className="divide-y divide-slate-300 md:hidden">
         {paginatedData.map((row, rowIndex) => (
           <div key={rowIndex} className="p-5 space-y-3">
             <div className="flex justify-between items-center">
@@ -191,6 +310,14 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    Duty
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase">
+                    {displayValue(row.RESPONSIBILITY_TYPE)}
+                  </p>
+                </div>
                 <div>
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
                     Class
@@ -272,6 +399,7 @@ const ReportViewPage = () => {
 
   const [includePrevious, setIncludePrevious] = useState(true);
   const [selectedRespTypes, setSelectedRespTypes] = useState([]);
+  const [selectedDetailedTypeIds, setSelectedDetailedTypeIds] = useState([]);
   const [selectedUnassignedTypeIds, setSelectedUnassignedTypeIds] = useState(
     []
   );
@@ -313,19 +441,27 @@ const ReportViewPage = () => {
   const fetchReport = useCallback(async () => {
     if (fetchTrigger === 0) return;
     const isUnassignedReport = filters.reportType === "UNASSIGNED_TEACHERS";
+    const isDetailedReport = filters.reportType === "DETAILED_ASSIGNMENT";
     if (isUnassignedReport && selectedUnassignedTypeIds.length === 0) {
       setReportData([]);
       return;
     }
     setLoading(true);
     try {
-      const reportFilters = isUnassignedReport
-        ? {
-            ...filters,
-            typeId: "",
-            typeIds: selectedUnassignedTypeIds.join(","),
-          }
-        : filters;
+      let reportFilters = filters;
+      if (isUnassignedReport) {
+        reportFilters = {
+          ...filters,
+          typeId: "",
+          typeIds: selectedUnassignedTypeIds.join(","),
+        };
+      } else if (isDetailedReport) {
+        reportFilters = {
+          ...filters,
+          typeId: "",
+          typeIds: selectedDetailedTypeIds.join(","),
+        };
+      }
       const { data } = await getReportData(reportFilters);
       setReportData(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -333,7 +469,7 @@ const ReportViewPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, fetchTrigger, selectedUnassignedTypeIds]);
+  }, [filters, fetchTrigger, selectedDetailedTypeIds, selectedUnassignedTypeIds]);
 
   useEffect(() => {
     fetchReport();
@@ -356,12 +492,16 @@ const ReportViewPage = () => {
     }));
   };
 
-  const toggleUnassignedDutyType = (typeId) => {
-    setSelectedUnassignedTypeIds((prev) =>
+  const toggleTypeId = (setter) => (typeId) => {
+    setter((prev) =>
       prev.includes(typeId)
         ? prev.filter((id) => id !== typeId)
         : [...prev, typeId]
     );
+  };
+
+  const selectAllTypeIds = (setter) => {
+    setter(masterData.types.map((type) => type._id));
   };
 
   const handleExportAction = async (exportType) => {
@@ -404,8 +544,9 @@ const ReportViewPage = () => {
       exportFilters.reportType = "INACTIVE_NO_ROUTINE";
       exportFilters.typeId = "";
     } else {
-      if (!filters.typeId) return setExportError("Duty prototype required.");
       exportFilters.reportType = exportType;
+      exportFilters.typeId = "";
+      exportFilters.typeIds = selectedDetailedTypeIds.join(",");
       if (exportType === "EXPORT_CLASS_DETAILED" && !filters.classId)
         return setExportError("Class node required.");
       if (exportType === "EXPORT_BRANCH_DETAILED" && !filters.branchId)
@@ -449,7 +590,11 @@ const ReportViewPage = () => {
           <div className="flex bg-white p-1 rounded-2xl sm:rounded-[1.5rem] shadow-xl border border-slate-100 self-start md:self-auto">
             <button
               onClick={() =>
-                setFilters((p) => ({ ...p, reportType: "DETAILED_ASSIGNMENT" }))
+                setFilters((p) => ({
+                  ...p,
+                  reportType: "DETAILED_ASSIGNMENT",
+                  status: "Assigned",
+                }))
               }
               className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
                 filters.reportType === "DETAILED_ASSIGNMENT"
@@ -516,9 +661,8 @@ const ReportViewPage = () => {
         </div>
 
         {/* --- DYNAMIC FILTER PANEL --- */}
-        <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white mb-8 sm:mb-10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/5 rounded-full -mr-40 -mt-40 blur-3xl"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8 items-end relative z-10">
+        <div className="relative z-50 mb-8 overflow-visible rounded-2xl border border-white bg-white/85 p-4 shadow-sm backdrop-blur-xl sm:p-5">
+          <div className="relative z-10 grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[0.75fr_1fr_1.25fr_0.85fr_0.75fr]">
             <SelectDropdown
               label="Cycle Year"
               name="year"
@@ -536,39 +680,27 @@ const ReportViewPage = () => {
               placeholder="All Sectors"
             />
             {filters.reportType === "DETAILED_ASSIGNMENT" && (
-              <>
-                <SelectDropdown
-                  label="Protocol Prototype"
-                  name="typeId"
-                  value={filters.typeId}
-                  onChange={handleChange}
-                  options={masterData.types}
-                  placeholder="All Prototypes"
-                />
-              </>
+              <DutyTypeMultiSelect
+                label="Duty Prototypes"
+                types={masterData.types}
+                selectedIds={selectedDetailedTypeIds}
+                onToggle={toggleTypeId(setSelectedDetailedTypeIds)}
+                onSelectAll={() => selectAllTypeIds(setSelectedDetailedTypeIds)}
+                onClear={() => setSelectedDetailedTypeIds([])}
+              />
             )}
             {filters.reportType === "UNASSIGNED_TEACHERS" && (
-              <div className="sm:col-span-2 lg:col-span-2 space-y-2">
-                <p className="block text-sm font-medium text-slate-700">
-                  Duty Prototypes <span className="text-rose-500">*</span>
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-slate-200 rounded-xl bg-white max-h-36 overflow-y-auto custom-scrollbar">
-                  {masterData.types.map((type) => (
-                    <label
-                      key={type._id}
-                      className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-tight cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        className="rounded text-indigo-600"
-                        checked={selectedUnassignedTypeIds.includes(type._id)}
-                        onChange={() => toggleUnassignedDutyType(type._id)}
-                      />
-                      <span className="truncate">{type.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <DutyTypeMultiSelect
+                label="Duty Prototypes"
+                types={masterData.types}
+                selectedIds={selectedUnassignedTypeIds}
+                onToggle={toggleTypeId(setSelectedUnassignedTypeIds)}
+                onSelectAll={() =>
+                  selectAllTypeIds(setSelectedUnassignedTypeIds)
+                }
+                onClear={() => setSelectedUnassignedTypeIds([])}
+                required
+              />
             )}
             {filters.reportType === "DETAILED_ASSIGNMENT" && (
               <>
@@ -585,7 +717,7 @@ const ReportViewPage = () => {
             <button
               onClick={() => setFetchTrigger((p) => p + 1)}
               disabled={loading}
-              className="h-[48px] sm:h-[52px] w-full rounded-xl sm:rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white font-black text-[9px] sm:text-[10px] tracking-widest uppercase flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl"
+              className="h-[48px] w-full rounded-xl bg-slate-900 text-[9px] font-black uppercase tracking-widest text-white shadow-sm transition-all hover:bg-indigo-600 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <FaSyncAlt className={loading ? "animate-spin" : ""} /> Sync
               Matrix
@@ -594,7 +726,7 @@ const ReportViewPage = () => {
         </div>
 
         {/* --- RESULTS --- */}
-        <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000 relative">
+        <div className="relative z-0 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setIsExportModalOpen(true)}

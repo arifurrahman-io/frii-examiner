@@ -8,9 +8,12 @@ import {
   FaChevronRight,
   FaClipboardList,
   FaCogs,
+  FaBook,
+  FaBuilding,
   FaFingerprint,
   FaLayerGroup,
   FaSignOutAlt,
+  FaTasks,
   FaTimes,
   FaUserCircle,
   FaUserTie,
@@ -29,14 +32,14 @@ const AppSidebar = ({
   <div className="flex h-full flex-col">
     <div className="flex items-center justify-between gap-3 px-2">
       <Link to="/" onClick={onNavigate} className="flex min-w-0 items-center gap-3">
-        <div className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-emerald-700 text-white shadow-sm">
+        <div className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-slate-900 text-white">
           <FaFingerprint className="text-lg" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-black tracking-tight text-emerald-950">
+          <p className="text-sm font-semibold tracking-tight text-slate-950">
             FRII
           </p>
-          <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          <p className="truncate text-xs font-medium text-slate-500">
             Teacher Platform
           </p>
         </div>
@@ -52,25 +55,70 @@ const AppSidebar = ({
     </div>
 
     <div className="mt-9">
-      <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+      <p className="mb-3 px-3 text-xs font-medium text-slate-500">
         Workspace
       </p>
       <div className="space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.path);
+          const active = item.children
+            ? item.children.some((child) => isActive(child.path))
+            : isActive(item.path);
+
+          if (item.children) {
+            return (
+              <div key={item.name}>
+                <div
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
+                    active ? "bg-slate-100 text-slate-950" : "text-slate-600"
+                  }`}
+                >
+                  <Icon
+                    className={active ? "text-slate-900" : "text-slate-400"}
+                  />
+                  <span>{item.name}</span>
+                </div>
+                <div className="ml-5 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                  {item.children.map((child) => {
+                    const ChildIcon = child.icon;
+                    const childActive = isActive(child.path);
+                    return (
+                      <Link
+                        key={child.name}
+                        to={child.path}
+                        onClick={onNavigate}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                          childActive
+                            ? "bg-slate-100 text-slate-950"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+                        }`}
+                      >
+                        <ChildIcon
+                          className={
+                            childActive ? "text-slate-900" : "text-slate-400"
+                          }
+                        />
+                        <span>{child.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.name}
               to={item.path}
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 active
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-emerald-800"
+                  ? "bg-slate-100 text-slate-950"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
               }`}
             >
-              <Icon className={active ? "text-emerald-700" : "text-slate-400"} />
+              <Icon className={active ? "text-slate-900" : "text-slate-400"} />
               <span>{item.name}</span>
             </Link>
           );
@@ -87,7 +135,7 @@ const AppSidebar = ({
           <p className="truncate text-xs font-bold text-slate-800">
             {user?.name}
           </p>
-          <p className="text-[10px] font-semibold uppercase text-emerald-700">
+          <p className="text-xs font-medium text-slate-500">
             {user?.role}
           </p>
         </div>
@@ -117,7 +165,7 @@ const IconRail = ({
     <Link
       to="/"
       onClick={onNavigate}
-      className="grid h-10 w-10 place-items-center rounded-xl text-emerald-700"
+      className="grid h-10 w-10 place-items-center rounded-lg text-slate-900"
       title="Dashboard"
     >
       <FaFingerprint className="text-xl" />
@@ -137,7 +185,46 @@ const IconRail = ({
     <div className={`${collapsed ? "mt-6" : "mt-8"} space-y-3`}>
       {navItems.map((item) => {
         const Icon = item.icon;
-        const active = isActive(item.path);
+        const active = item.children
+          ? item.children.some((child) => isActive(child.path))
+          : isActive(item.path);
+
+        if (item.children) {
+          return (
+            <div key={item.name} className="space-y-2">
+              <div
+                title={item.name}
+                className={`grid h-9 w-9 place-items-center rounded-lg text-sm ${
+                  active ? "bg-slate-100 text-slate-900" : "text-slate-400"
+                }`}
+              >
+                <Icon />
+              </div>
+              <div className="space-y-1 border-l border-slate-200 pl-1">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const childActive = isActive(child.path);
+                  return (
+                    <Link
+                      key={child.name}
+                      to={child.path}
+                      onClick={onNavigate}
+                      title={child.name}
+                      className={`grid h-8 w-8 place-items-center rounded-lg text-xs transition-colors ${
+                        childActive
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      <ChildIcon />
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
         return (
           <Link
             key={item.name}
@@ -146,8 +233,8 @@ const IconRail = ({
             title={item.name}
             className={`grid h-9 w-9 place-items-center rounded-lg text-sm transition-colors ${
               active
-                ? "bg-emerald-50 text-emerald-700"
-                : "text-slate-400 hover:bg-slate-50 hover:text-emerald-700"
+                ? "bg-slate-100 text-slate-900"
+                : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             <Icon />
@@ -189,9 +276,14 @@ const LayoutContainer = ({ children }) => {
 
     if (user?.role === "admin") {
       items.splice(1, 0, {
-        name: "Setting",
-        path: "/setup/branch",
+        name: "Settings",
         icon: FaCogs,
+        children: [
+          { name: "Branch/Shift", path: "/setup/branch", icon: FaBuilding },
+          { name: "Class", path: "/setup/class", icon: FaLayerGroup },
+          { name: "Subject", path: "/setup/subject", icon: FaBook },
+          { name: "Duty Type", path: "/setup/responsibility", icon: FaTasks },
+        ],
       });
       items.push(
         { name: "Assign Duty", path: "/assign", icon: FaClipboardList },
@@ -235,7 +327,7 @@ const LayoutContainer = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {sidebarCollapsed ? (
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-[72px] border-r border-slate-200 bg-white px-4 py-6 lg:block">
           <IconRail
@@ -248,7 +340,7 @@ const LayoutContainer = ({ children }) => {
           />
         </aside>
       ) : (
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[224px] border-r border-slate-200 bg-[#fafafa] px-5 py-7 lg:block">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[224px] border-r border-slate-200 bg-white px-5 py-7 lg:block">
           <AppSidebar
             navItems={navItems}
             isActive={isActive}
@@ -263,7 +355,7 @@ const LayoutContainer = ({ children }) => {
       <button
         type="button"
         onClick={() => setDrawerOpen(true)}
-        className="fixed left-4 top-4 z-40 grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-emerald-800 shadow-sm lg:hidden"
+        className="fixed left-4 top-4 z-40 grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-white text-slate-800 lg:hidden"
         aria-label="Open menu"
       >
         <FaBars />

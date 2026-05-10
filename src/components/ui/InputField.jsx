@@ -23,11 +23,11 @@ const InputField = ({
 
   // dynamic styling based on error state
   const inputBaseStyle =
-    "w-full p-3 rounded-xl outline-none transition-all duration-200 border bg-white shadow-sm";
+    "w-full px-3 py-2.5 rounded-lg outline-none transition-colors duration-150 border bg-white text-sm shadow-none";
 
   const inputStyle = error
     ? "border-rose-500 bg-rose-50 focus:ring-4 focus:ring-rose-100"
-    : "border-slate-200 bg-white focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-100";
+    : "border-slate-300 bg-white focus:border-slate-700 focus:bg-white focus:ring-2 focus:ring-slate-200";
 
   // Handle padding for icons and the password toggle
   const paddingLeft = Icon ? "pl-11" : "pl-4";
@@ -37,10 +37,7 @@ const InputField = ({
     <div className={`flex flex-col space-y-1.5 ${className}`}>
       {/* 1. Label with Red Asterisk */}
       {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-bold text-slate-700 ml-1"
-        >
+        <label htmlFor={name} className="block text-sm font-medium text-slate-700">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
@@ -51,10 +48,10 @@ const InputField = ({
         {Icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10">
             <Icon
-              className={`text-lg transition-colors duration-200 ${
+              className={`text-sm transition-colors duration-150 ${
                 error
                   ? "text-rose-500"
-                  : "text-slate-400 group-focus-within:text-teal-700"
+                  : "text-slate-400 group-focus-within:text-slate-700"
               }`}
             />
           </div>
@@ -84,7 +81,7 @@ const InputField = ({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-slate-400 hover:text-teal-700 focus:outline-none transition-colors p-1"
+              className="text-slate-400 hover:text-slate-700 focus:outline-none transition-colors p-1"
               title={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -95,11 +92,7 @@ const InputField = ({
 
       {/* 3. Error Message Section */}
       <div className="min-h-[20px] ml-1">
-        {error && (
-          <p className="text-xs font-semibold text-rose-600 flex items-center animate-in fade-in slide-in-from-top-1">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-xs font-medium text-rose-600">{error}</p>}
       </div>
     </div>
   );

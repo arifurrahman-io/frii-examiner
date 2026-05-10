@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
+  FaAddressBook,
+  FaBuilding,
+  FaFileExcel,
   FaUserPlus,
   FaSearch,
   FaUsers,
-  FaTerminal,
   FaCloudUploadAlt,
   FaShieldAlt,
 } from "react-icons/fa";
@@ -44,130 +46,130 @@ const TeacherViewPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent pb-10 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="max-w-[1600px] mx-auto relative z-10">
-        {/* --- DYNAMIC HEADER --- */}
-        <div className="mb-8 sm:mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl flex-shrink-0 transition-transform hover:scale-105 duration-500">
-              <FaUsers className="text-xl sm:text-2xl" />
+    <div className="min-h-screen bg-transparent px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] space-y-6">
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 flex-none place-items-center rounded-lg bg-slate-900 text-white">
+              <FaUsers />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">
-                Teachers
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                Teacher Directory
               </h1>
-              <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
+              <p className="mt-1 text-sm font-medium text-slate-500">
                 {isAdmin
-                  ? "Complete teacher directory"
+                  ? "Manage teachers across all branches and shifts"
                   : `${user?.campus?.name || "Campus"} Teachers' Directory`}
               </p>
             </div>
           </div>
 
-          {/* --- PILL TABS --- */}
-          <div className="flex bg-white p-1 sm:p-1.5 rounded-2xl sm:rounded-[1.5rem] shadow-xl shadow-indigo-100/20 border border-slate-100 self-start lg:self-auto w-full sm:w-auto">
+          <div className="flex w-full gap-2 rounded-lg border border-slate-200 bg-white p-1 sm:w-auto">
             <button
               onClick={() => setViewMode("list")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black transition-all duration-500 uppercase tracking-widest ${
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${
                 viewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-lg scale-100 sm:scale-105"
-                  : "text-slate-400 hover:text-indigo-500"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
               }`}
             >
-              <FaSearch size={12} /> Directory
+              <span className="inline-flex items-center justify-center gap-2">
+                <FaSearch size={12} /> Directory
+              </span>
             </button>
 
             <button
               onClick={() => setViewMode("add")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black transition-all duration-500 uppercase tracking-widest ${
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${
                 viewMode === "add"
-                  ? "bg-indigo-600 text-white shadow-lg scale-100 sm:scale-105"
-                  : "text-slate-400 hover:text-indigo-500"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
               }`}
             >
-              <FaUserPlus size={12} /> Add
+              <span className="inline-flex items-center justify-center gap-2">
+                <FaUserPlus size={12} /> Add Teacher
+              </span>
             </button>
           </div>
         </div>
 
-        {/* --- CONTENT ENGINE --- */}
-        <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
-          {viewMode === "list" ? (
-            <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-3 sm:p-4 shadow-sm border border-white overflow-x-auto">
-              <TeacherSearchList key={refreshList} />
-            </div>
-          ) : (
-            /* --- ADD MODE: ADMIN vs INCHARGE LAYOUT --- */
-            <div
-              className={`grid grid-cols-1 ${
-                isAdmin ? "lg:grid-cols-12" : "max-w-4xl mx-auto"
-              } gap-6 sm:gap-10`}
-            >
-              {/* 1. Manual Entry Column */}
-              <div className={isAdmin ? "lg:col-span-7" : "w-full"}>
-                <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm border border-white relative overflow-hidden transition-all hover:shadow-indigo-100">
-                  <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-indigo-500/5 rounded-full -mr-24 -mt-24 sm:-mr-32 -mt-32 blur-3xl"></div>
-
-                  <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10 border-b border-slate-50 pb-4 sm:pb-6 relative z-10">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-indigo-50 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-600">
-                      <FaTerminal size={14} />
-                    </div>
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest leading-none">
-                        {isIncharge
-                          ? "Campus teacher registration"
-                          : "Staff entry"}
-                      </h3>
-                      <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
-                        {isAdmin ? "All campuses" : user?.campus?.name}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10">
-                    <AddTeacherForm onSaveSuccess={handleSaveSuccess} />
-                  </div>
+        {viewMode === "list" ? (
+          <TeacherSearchList key={refreshList} />
+        ) : (
+          <div
+            className={`grid grid-cols-1 gap-6 ${
+              isAdmin ? "xl:grid-cols-[minmax(0,1.4fr)_minmax(340px,0.8fr)]" : ""
+            }`}
+          >
+            <section className="border border-slate-200 bg-white p-5">
+              <div className="mb-5 flex items-center gap-3 border-b border-slate-200 pb-4">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal-50 text-teal-700">
+                  <FaAddressBook />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {isIncharge
+                      ? "Campus Teacher Registration"
+                      : "Teacher Registration"}
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    {isAdmin ? "All branches and shifts" : user?.campus?.name}
+                  </p>
                 </div>
               </div>
 
-              {/* 2. BULK SYNC ENGINE (ADMIN ONLY) */}
-              {isAdmin && (
-                <div className="lg:col-span-5 flex flex-col gap-6 animate-in slide-in-from-bottom-4 lg:slide-in-from-right-8 duration-1000">
-                  <div className="bg-slate-200 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full -mr-24 -mt-24 blur-[60px]"></div>
+              <AddTeacherForm onSaveSuccess={handleSaveSuccess} />
+            </section>
 
-                    <div className="flex items-center justify-between mb-8 sm:mb-10 border-b border-white/5 pb-4 sm:pb-6 relative z-10">
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-indigo-500/10 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                          <FaCloudUploadAlt size={16} />
-                        </div>
-                        <div>
-                          <h3 className="text-sm sm:text-base font-black text-blue-600 uppercase tracking-tighter leading-none">
-                            Bulk Add
-                          </h3>
-                          <p className="text-[8px] sm:text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1">
-                            Spreadsheet import
-                          </p>
-                        </div>
+            {isAdmin && (
+              <aside className="space-y-6">
+                <section className="border border-slate-200 bg-white p-5">
+                  <div className="mb-5 flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal-50 text-teal-700">
+                        <FaCloudUploadAlt />
                       </div>
-
-                      <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
-                        <FaShieldAlt className="text-indigo-500 text-[8px]" />
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                          Admin only
-                        </span>
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900">
+                          Bulk Add
+                        </h2>
+                        <p className="text-sm text-slate-500">
+                          Spreadsheet import
+                        </p>
                       </div>
                     </div>
 
-                    <div className="relative z-10">
-                      <BulkUploadSection onSaveSuccess={handleSaveSuccess} />
+                    <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-500 sm:flex">
+                      <FaShieldAlt />
+                      Admin only
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+
+                  <BulkUploadSection onUploadSuccess={handleSaveSuccess} />
+                </section>
+
+                <section className="border border-slate-200 bg-white p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-500">
+                      <FaFileExcel />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900">
+                        Import format
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        Required columns: teacherId, name, phone, campus, and
+                        designation. Campus values should match Branch/Shift
+                        setup names.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
