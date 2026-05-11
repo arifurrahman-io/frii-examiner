@@ -32,8 +32,10 @@ import {
   exportCustomReportToPDF,
   getBranches,
   getClasses,
+  getExaminerExchangeDates,
   getReportData,
   getResponsibilityTypes,
+  saveExaminerExchangeDates,
 } from "../api/apiService";
 
 const hasRows = (data) => Array.isArray(data) && data.length > 0;
@@ -74,26 +76,34 @@ const reportTypes = [
 const getReportTitle = (reportType) =>
   reportTypes.find((item) => item.id === reportType)?.label || "Report";
 
-const DutyTypeMultiSelect = ({
+const getExchangeDateIdKey = ({
+  responsibilityType,
+  targetClass,
+  targetSubject,
+}) => [responsibilityType, targetClass, targetSubject].join("|||");
+
+const FilterMultiSelect = ({
   label,
-  types,
+  items = [],
   selectedIds,
   onToggle,
   onSelectAll,
   onClear,
+  allLabel,
+  emptyLabel,
   required = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedCount = selectedIds.length;
-  const allSelected = types.length > 0 && selectedCount === types.length;
-  const selectedTypes = types.filter((type) => selectedIds.includes(type._id));
+  const allSelected = items.length > 0 && selectedCount === items.length;
+  const selectedItems = items.filter((item) => selectedIds.includes(item._id));
   const summaryText = allSelected
-    ? "All duty types"
+    ? allLabel
     : selectedCount
     ? `${selectedCount} selected`
     : required
-    ? "Select duty types"
-    : "All duty types";
+    ? emptyLabel
+    : allLabel;
 
   return (
     <div className="relative space-y-1.5">
@@ -122,9 +132,9 @@ const DutyTypeMultiSelect = ({
           </div>
           {selectedCount > 0 && !allSelected && (
             <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
-              {selectedTypes
+              {selectedItems
                 .slice(0, 2)
-                .map((type) => type.name)
+                .map((item) => item.name)
                 .join(", ")}
               {selectedCount > 2 ? ` +${selectedCount - 2}` : ""}
             </p>
@@ -157,13 +167,13 @@ const DutyTypeMultiSelect = ({
             </div>
           </div>
           <div className="grid max-h-56 grid-cols-1 gap-1.5 overflow-y-auto p-2 sm:grid-cols-2">
-            {types.map((type) => {
-              const isSelected = selectedIds.includes(type._id);
+            {items.map((item) => {
+              const isSelected = selectedIds.includes(item._id);
               return (
                 <button
                   type="button"
-                  key={type._id}
-                  onClick={() => onToggle(type._id)}
+                  key={item._id}
+                  onClick={() => onToggle(item._id)}
                   className={`flex min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
                     isSelected
                       ? "border-teal-200 bg-teal-50 text-teal-800"
@@ -171,7 +181,7 @@ const DutyTypeMultiSelect = ({
                   }`}
                 >
                   <span className="truncate text-xs font-semibold">
-                    {type.name}
+                    {item.name}
                   </span>
                   <span
                     className={`grid h-5 w-5 flex-none place-items-center rounded-md border ${
@@ -254,7 +264,15 @@ const StatCard = ({ icon: Icon, label, value }) => (
 
 const getHeaders = (reportType) => {
   if (reportType === "UNASSIGNED_TEACHERS") {
-    return ["Sl.", "TEACHERID", "TEACHER", "CAMPUS", "YEAR", "MISSING_DUTIES"];
+    return [
+      "Sl.",
+      "TEACHERID",
+      "TEACHER",
+      "CAMPUS",
+      "YEAR",
+      "CLASSES",
+      "MISSING_DUTIES",
+    ];
   }
 
   if (reportType === "INACTIVE_NO_ROUTINE") {
@@ -281,6 +299,7 @@ const headerLabel = (key) => {
     CAMPUS: "Campus",
     TEACHERID: "Teacher ID",
     YEAR: "Year",
+    CLASSES: "Class",
     RESPONSIBILITY_TYPE: "Duty Type",
     MISSING_DUTIES: "Missing Duties",
     STATUS: "Status",
@@ -453,6 +472,7 @@ const ReportViewPage = () => {
   const [selectedRespTypes, setSelectedRespTypes] = useState([]);
   const [selectedDetailedTypeIds, setSelectedDetailedTypeIds] = useState([]);
   const [selectedUnassignedTypeIds, setSelectedUnassignedTypeIds] = useState([]);
+  const [selectedUnassignedClassIds, setSelectedUnassignedClassIds] = useState([]);
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
     classes: [],
@@ -464,6 +484,8 @@ const ReportViewPage = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
+  const [exchangeDates, setExchangeDates] = useState({});
+  const [exchangeDateSaveLoading, setExchangeDateSaveLoading] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -515,6 +537,8 @@ const ReportViewPage = () => {
           ...filters,
           typeId: "",
           typeIds: selectedUnassignedTypeIds.join(","),
+          classId: "",
+          classIds: selectedUnassignedClassIds.join(","),
         };
       } else if (isDetailedReport) {
         reportFilters = {
@@ -530,7 +554,13 @@ const ReportViewPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, fetchTrigger, selectedDetailedTypeIds, selectedUnassignedTypeIds]);
+  }, [
+    filters,
+    fetchTrigger,
+    selectedDetailedTypeIds,
+    selectedUnassignedClassIds,
+    selectedUnassignedTypeIds,
+  ]);
 
   useEffect(() => {
     fetchReport();
@@ -609,6 +639,8 @@ const ReportViewPage = () => {
       exportFilters.reportType = "UNASSIGNED_TEACHERS";
       exportFilters.typeId = "";
       exportFilters.typeIds = selectedUnassignedTypeIds.join(",");
+      exportFilters.classId = "";
+      exportFilters.classIds = selectedUnassignedClassIds.join(",");
     } else if (exportType === "EXPORT_INACTIVE_NO_ROUTINE") {
       exportFilters.reportType = "INACTIVE_NO_ROUTINE";
       exportFilters.typeId = "";
@@ -628,6 +660,21 @@ const ReportViewPage = () => {
 
     setExportLoading(true);
     try {
+      if (
+        exportType === "EXPORT_CLASS_DETAILED" &&
+        hasSelectedExaminerDuty &&
+        exchangeDateRows.length > 0
+      ) {
+        await saveExaminerExchangeDates({
+          year: filters.year,
+          entries: exchangeDateRows.map((row) => ({
+            responsibilityType: row.responsibilityType,
+            targetClass: row.targetClass,
+            targetSubject: row.targetSubject,
+            lastDateOfExchange: exchangeDates[row.key] || "",
+          })),
+        });
+      }
       await exportCustomReportToPDF(exportFilters);
       toast.success("Report export initialized.");
       setIsExportModalOpen(false);
@@ -644,6 +691,122 @@ const ReportViewPage = () => {
   const selectedClass = masterData.classes.find(
     (item) => String(item._id) === String(filters.classId)
   );
+  const selectedDetailedTypes = masterData.types.filter((type) =>
+    selectedDetailedTypeIds.includes(type._id)
+  );
+  const hasSelectedExaminerDuty =
+    selectedDetailedTypes.length > 0 &&
+    selectedDetailedTypes.every((type) =>
+      type.name?.trim().toUpperCase().startsWith("E")
+    );
+  const exchangeDateRows = useMemo(() => {
+    if (!hasSelectedExaminerDuty || filters.reportType !== "DETAILED_ASSIGNMENT") {
+      return [];
+    }
+
+    const rowMap = new Map();
+    reportData.forEach((row) => {
+      if (
+        !row.RESPONSIBILITY_TYPE_ID ||
+        !row.CLASS_ID ||
+        !row.SUBJECT_ID ||
+        !row.CLASS ||
+        !row.SUBJECT
+      ) {
+        return;
+      }
+      const key = getExchangeDateIdKey({
+        responsibilityType: row.RESPONSIBILITY_TYPE_ID,
+        targetClass: row.CLASS_ID,
+        targetSubject: row.SUBJECT_ID,
+      });
+      if (!rowMap.has(key)) {
+        rowMap.set(key, {
+          key,
+          responsibilityType: row.RESPONSIBILITY_TYPE_ID,
+          targetClass: row.CLASS_ID,
+          targetSubject: row.SUBJECT_ID,
+          dutyType: row.RESPONSIBILITY_TYPE,
+          className: row.CLASS,
+          subjectName: row.SUBJECT,
+        });
+      }
+    });
+    return [...rowMap.values()].sort((first, second) => {
+      const classCompare = first.className.localeCompare(second.className);
+      if (classCompare !== 0) return classCompare;
+      return first.subjectName.localeCompare(second.subjectName);
+    });
+  }, [filters.reportType, hasSelectedExaminerDuty, reportData]);
+
+  useEffect(() => {
+    if (!isExportModalOpen || exchangeDateRows.length === 0) return;
+
+    const fetchExchangeDates = async () => {
+      try {
+        const typeIds = [
+          ...new Set(exchangeDateRows.map((row) => row.responsibilityType)),
+        ].join(",");
+        const classIds = [
+          ...new Set(exchangeDateRows.map((row) => row.targetClass)),
+        ].join(",");
+        const subjectIds = [
+          ...new Set(exchangeDateRows.map((row) => row.targetSubject)),
+        ].join(",");
+
+        const { data } = await getExaminerExchangeDates({
+          year: filters.year,
+          typeIds,
+          classIds,
+          subjectIds,
+        });
+
+        const savedDates = Object.fromEntries(
+          (Array.isArray(data) ? data : []).map((item) => [
+            item.key,
+            item.lastDateOfExchange || "",
+          ])
+        );
+        setExchangeDates(savedDates);
+      } catch (error) {
+        toast.error("Failed to load exchange dates.");
+      }
+    };
+
+    fetchExchangeDates();
+  }, [exchangeDateRows, filters.year, isExportModalOpen]);
+
+  const handleSaveExchangeDates = async () => {
+    setExportError(null);
+    setExchangeDateSaveLoading(true);
+    try {
+      await saveExaminerExchangeDates({
+        year: filters.year,
+        entries: exchangeDateRows.map((row) => ({
+          responsibilityType: row.responsibilityType,
+          targetClass: row.targetClass,
+          targetSubject: row.targetSubject,
+          lastDateOfExchange: exchangeDates[row.key] || "",
+        })),
+      });
+      toast.success("Exchange dates saved.");
+    } catch (error) {
+      toast.error("Failed to save exchange dates.");
+    } finally {
+      setExchangeDateSaveLoading(false);
+    }
+  };
+  const selectedUnassignedClasses = masterData.classes.filter((item) =>
+    selectedUnassignedClassIds.includes(item._id)
+  );
+  const activeClassLabel =
+    filters.reportType === "UNASSIGNED_TEACHERS"
+      ? selectedUnassignedClasses.length > 0
+        ? `${selectedUnassignedClasses.map((item) => item.name).join(", ")} class filter active`
+        : "All routine classes included"
+      : selectedClass
+      ? `${selectedClass.name} class filter active`
+      : "Filtered output is ready for review";
 
   if (user?.role !== "admin") return null;
 
@@ -718,24 +881,44 @@ const ReportViewPage = () => {
               placeholder="All campuses"
             />
             {filters.reportType === "DETAILED_ASSIGNMENT" && (
-              <DutyTypeMultiSelect
+              <FilterMultiSelect
                 label="Duty types"
-                types={masterData.types}
+                items={masterData.types}
                 selectedIds={selectedDetailedTypeIds}
                 onToggle={toggleTypeId(setSelectedDetailedTypeIds)}
                 onSelectAll={() => selectAllTypeIds(setSelectedDetailedTypeIds)}
                 onClear={() => setSelectedDetailedTypeIds([])}
+                allLabel="All duty types"
+                emptyLabel="Select duty types"
               />
             )}
             {filters.reportType === "UNASSIGNED_TEACHERS" && (
-              <DutyTypeMultiSelect
+              <FilterMultiSelect
                 label="Duty types"
-                types={masterData.types}
+                items={masterData.types}
                 selectedIds={selectedUnassignedTypeIds}
                 onToggle={toggleTypeId(setSelectedUnassignedTypeIds)}
                 onSelectAll={() => selectAllTypeIds(setSelectedUnassignedTypeIds)}
                 onClear={() => setSelectedUnassignedTypeIds([])}
+                allLabel="All duty types"
+                emptyLabel="Select duty types"
                 required
+              />
+            )}
+            {filters.reportType === "UNASSIGNED_TEACHERS" && (
+              <FilterMultiSelect
+                label="Classes"
+                items={masterData.classes}
+                selectedIds={selectedUnassignedClassIds}
+                onToggle={toggleTypeId(setSelectedUnassignedClassIds)}
+                onSelectAll={() =>
+                  setSelectedUnassignedClassIds(
+                    masterData.classes.map((item) => item._id)
+                  )
+                }
+                onClear={() => setSelectedUnassignedClassIds([])}
+                allLabel="All routine classes"
+                emptyLabel="Select classes"
               />
             )}
             {filters.reportType === "DETAILED_ASSIGNMENT" && (
@@ -772,7 +955,7 @@ const ReportViewPage = () => {
                 Report results
               </h2>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                {selectedClass ? `${selectedClass.name} class filter active` : "Filtered output is ready for review"}
+                {activeClassLabel}
               </p>
             </div>
             <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">
@@ -905,48 +1088,104 @@ const ReportViewPage = () => {
                 {exportLoading ? "Exporting..." : "Export No Routine Report"}
               </button>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
-                  disabled={exportLoading}
-                  className="flex min-h-[116px] flex-col items-start justify-between rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <FaBuilding className="text-teal-700" />
-                  <div>
+              <div className="space-y-4">
+                {hasSelectedExaminerDuty && (
+                  <div className="rounded-lg border border-slate-200 bg-white p-4">
                     <p className="text-sm font-semibold text-slate-950">
-                      Campus detail
+                      Last Date of Exchange
                     </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      Requires campus filter
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                      Saved dates are reused automatically when printing this report.
                     </p>
+
+                    {exchangeDateRows.length > 0 ? (
+                      <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2">
+                        {exchangeDateRows.map((row) => (
+                          <label
+                            key={row.key}
+                            className="space-y-1.5 rounded-lg border border-slate-100 bg-slate-50 p-3"
+                          >
+                            <span className="block truncate text-xs font-semibold text-slate-600">
+                              {row.className} - {row.subjectName}
+                              {row.dutyType ? ` (${row.dutyType})` : ""}
+                            </span>
+                            <input
+                              type="date"
+                              value={exchangeDates[row.key] || ""}
+                              onChange={(event) =>
+                                setExchangeDates((prev) => ({
+                                  ...prev,
+                                  [row.key]: event.target.value,
+                                }))
+                              }
+                              className="h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-slate-700 focus:ring-2 focus:ring-slate-200"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                        Sync the report after selecting class and E-duty type to add exchange dates.
+                      </p>
+                    )}
+                    {exchangeDateRows.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSaveExchangeDates}
+                        disabled={exchangeDateSaveLoading}
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {exchangeDateSaveLoading
+                          ? "Saving..."
+                          : "Save Exchange Dates"}
+                      </button>
+                    )}
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
-                  disabled={exportLoading}
-                  className="flex min-h-[116px] flex-col items-start justify-between rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <FaGraduationCap className="text-teal-700" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">
-                      Class detail
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      Requires class filter
-                    </p>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
-                  disabled={exportLoading}
-                  className="sm:col-span-2 flex items-center justify-center gap-2 rounded-lg border border-dashed border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <FaBookOpen />
-                  Export Campus Routine Index
-                </button>
+                )}
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleExportAction("EXPORT_BRANCH_DETAILED")}
+                    disabled={exportLoading}
+                    className="flex min-h-[116px] flex-col items-start justify-between rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FaBuilding className="text-teal-700" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        Campus detail
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">
+                        Requires campus filter
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAction("EXPORT_CLASS_DETAILED")}
+                    disabled={exportLoading}
+                    className="flex min-h-[116px] flex-col items-start justify-between rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FaGraduationCap className="text-teal-700" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        Class detail
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">
+                        Requires class filter
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportAction("EXPORT_CAMPUS_ROUTINE")}
+                    disabled={exportLoading}
+                    className="sm:col-span-2 flex items-center justify-center gap-2 rounded-lg border border-dashed border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FaBookOpen />
+                    Export Campus Routine Index
+                  </button>
+                </div>
               </div>
             )}
 

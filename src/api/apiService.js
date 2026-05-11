@@ -170,6 +170,12 @@ export const deleteMasterData = (type, id) =>
 export const getReportData = (filters) =>
   api.get("/reports/data", { params: filters });
 
+export const getExaminerExchangeDates = (filters) =>
+  api.get("/reports/examiner-exchange-dates", { params: filters });
+
+export const saveExaminerExchangeDates = (payload) =>
+  api.put("/reports/examiner-exchange-dates", payload);
+
 /**
  * 📄 PDF এক্সপোর্ট ফিক্স
  * সরাসরি window.open না করে বেস URL এর সাথে কনক্যাট করা হয়েছে
