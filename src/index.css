@@ -34,15 +34,24 @@
   html {
     background: var(--surface-page);
     color-scheme: light;
+    min-height: 100%;
     text-rendering: optimizeLegibility;
   }
 
   body {
     min-width: 320px;
+    min-height: 100%;
     background: var(--surface-page);
     color: var(--text-body);
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   ::selection {
@@ -94,6 +103,12 @@
     min-height: 44px;
     border-radius: 8px !important;
     box-shadow: none !important;
+  }
+
+  button,
+  [role="button"],
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
 
   table {
@@ -627,10 +642,19 @@
   }
 }
 
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .login-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   background:
-    radial-gradient(circle at top left, rgba(206, 215, 240, 0.55), transparent 34%),
-    #d8dbe5;
+    radial-gradient(circle at top left, rgba(143, 207, 200, 0.22), transparent 32%),
+    linear-gradient(135deg, #f6faf9 0%, #eef7f5 46%, #ffffff 100%);
 }
 
 .login-shell,
@@ -639,7 +663,7 @@
 }
 
 .login-visual {
-  background: #3157e8;
+  background: #075753;
 }
 
 .login-visual::before,
@@ -652,22 +676,18 @@
 
 .login-visual::before {
   background:
-    linear-gradient(135deg, transparent 0 31%, rgba(255, 255, 255, 0.16) 31.2% 43%, transparent 43.2%),
-    linear-gradient(137deg, transparent 0 51%, rgba(255, 255, 255, 0.2) 51.2% 63%, transparent 63.2%),
-    linear-gradient(18deg, transparent 0 51%, rgba(255, 255, 255, 0.14) 51.2% 100%),
-    linear-gradient(132deg, transparent 0 44%, rgba(32, 63, 205, 0.55) 44.2% 100%);
+    linear-gradient(135deg, transparent 0 31%, rgba(255, 255, 255, 0.12) 31.2% 43%, transparent 43.2%),
+    linear-gradient(137deg, transparent 0 51%, rgba(255, 255, 255, 0.16) 51.2% 63%, transparent 63.2%),
+    linear-gradient(18deg, transparent 0 51%, rgba(143, 207, 200, 0.16) 51.2% 100%),
+    linear-gradient(132deg, transparent 0 44%, rgba(13, 116, 111, 0.72) 44.2% 100%);
 }
 
 .login-visual::after {
   background:
-    linear-gradient(135deg, transparent 0 63%, rgba(255, 255, 255, 0.18) 63.3% 75%, transparent 75.2%),
-    linear-gradient(135deg, rgba(35, 74, 218, 0.3), rgba(91, 126, 245, 0.38));
+    linear-gradient(135deg, transparent 0 63%, rgba(255, 255, 255, 0.14) 63.3% 75%, transparent 75.2%),
+    linear-gradient(135deg, rgba(31, 159, 152, 0.3), rgba(143, 207, 200, 0.28));
   mix-blend-mode: screen;
   opacity: 0.82;
-}
-
-.login-file {
-  color: #1f2633;
 }
 
 .login-input {
@@ -675,21 +695,17 @@
 }
 
 .login-input:focus {
-  border-color: #3157e8 !important;
+  border-color: var(--primary-700) !important;
 }
 
 .login-primary {
-  background-color: #3157e8 !important;
+  background-color: var(--primary-800) !important;
 }
 
 .login-primary:hover {
-  background-color: #2449d9 !important;
+  background-color: var(--primary-700) !important;
 }
 
 .login-check {
-  accent-color: #3157e8;
-}
-
-.login-google {
-  border-color: #e3e7f0 !important;
+  accent-color: var(--primary-700);
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import {
   FaCalendarCheck,
+  FaChalkboardTeacher,
   FaChartLine,
   FaChevronLeft,
   FaEdit,
@@ -94,6 +95,15 @@ const ProfileHeader = ({
             Report
           </Button>
 
+          <Button
+            onClick={() => toggleModal("classPerformance", true)}
+            variant="secondary"
+            className="px-3 py-2.5 text-sm"
+          >
+            <FaChalkboardTeacher size={13} />
+            Observe
+          </Button>
+
           {isAdmin && (
             <>
               <Button
@@ -128,12 +138,13 @@ const ProfileHeader = ({
       </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-3 bg-slate-50 p-5 sm:grid-cols-5 sm:p-6">
+    <div className="grid grid-cols-2 gap-3 bg-slate-50 p-5 sm:grid-cols-6 sm:p-6">
       <StatPill label="Current duties" value={stats.currentAssignments} />
       <StatPill label="All duties" value={stats.totalAssignments} />
       <StatPill label="Routine items" value={stats.currentRoutine} />
       <StatPill label="Granted leaves" value={stats.leaves} />
       <StatPill label="Reports" value={stats.reports} />
+      <StatPill label="Class avg" value={stats.classAverage} />
     </div>
   </section>
 );

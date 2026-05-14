@@ -26,8 +26,11 @@ const TeacherViewPage = () => {
   const [viewMode, setViewMode] = useState("list");
   const [refreshList, setRefreshList] = useState(0);
 
+  const hasGlobalTeacherAccess =
+    user?.role === "admin" || user?.role === "head_teacher";
   const isAdmin = user?.role === "admin";
   const isIncharge = user?.role === "incharge";
+  const canAddTeacher = isAdmin || isIncharge;
 
   // --- Success Handler ---
   const handleSaveSuccess = () => {
@@ -58,7 +61,7 @@ const TeacherViewPage = () => {
                 Teacher Directory
               </h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                {isAdmin
+                {hasGlobalTeacherAccess
                   ? "Manage teachers across all branches and shifts"
                   : `${user?.campus?.name || "Campus"} Teachers' Directory`}
               </p>
@@ -79,18 +82,20 @@ const TeacherViewPage = () => {
               </span>
             </button>
 
-            <button
-              onClick={() => setViewMode("add")}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${
-                viewMode === "add"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-              }`}
-            >
-              <span className="inline-flex items-center justify-center gap-2">
-                <FaUserPlus size={12} /> Add Teacher
-              </span>
-            </button>
+            {canAddTeacher && (
+              <button
+                onClick={() => setViewMode("add")}
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${
+                  viewMode === "add"
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                }`}
+              >
+                <span className="inline-flex items-center justify-center gap-2">
+                  <FaUserPlus size={12} /> Add Teacher
+                </span>
+              </button>
+            )}
           </div>
         </div>
 

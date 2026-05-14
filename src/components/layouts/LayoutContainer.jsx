@@ -287,7 +287,7 @@ const IconRail = ({ navItems, isActive, onNavigate, onLogout, onExpand, user }) 
 );
 
 const MobileTopBar = ({ pageTitle, onOpen }) => (
-  <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm lg:hidden">
+  <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-sm lg:hidden">
     <div className="flex items-center justify-between gap-3">
       <button
         type="button"
@@ -328,7 +328,7 @@ const MobileDrawer = ({
     />
 
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] w-[min(88vw,336px)] border-r border-slate-200 bg-white p-5 shadow-2xl transition-transform duration-300 lg:hidden ${
+      className={`fixed inset-y-0 left-0 z-[60] w-[min(88vw,336px)] border-r border-slate-200 bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 lg:hidden ${
         open ? "translate-x-0" : "-translate-x-full"
       }`}
       aria-label="Mobile navigation"
@@ -404,11 +404,18 @@ const LayoutContainer = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
 
   const navItems = useMemo(() => {
-    const items = [
-      { name: "Dashboard", path: "/", icon: FaLayerGroup },
-      { name: "Teachers", path: "/teachers", icon: FaUserTie },
-      { name: "Routine", path: "/routine", icon: FaCalendarAlt },
-    ];
+    const items = [];
+    const canRateReportTeachers = ["admin", "head_teacher", "incharge"].includes(
+      user?.role
+    );
+
+    if (canRateReportTeachers) {
+      items.push(
+        { name: "Dashboard", path: "/", icon: FaLayerGroup },
+        { name: "Teachers", path: "/teachers", icon: FaUserTie },
+        { name: "Performance", path: "/performance-report", icon: FaChartBar }
+      );
+    }
 
     if (user?.role === "admin") {
       items.splice(1, 0, {
@@ -422,11 +429,13 @@ const LayoutContainer = ({ children }) => {
         ],
       });
       items.push(
+        { name: "Routine", path: "/routine", icon: FaCalendarAlt },
         { name: "Assign Duty", path: "/assign", icon: FaClipboardList },
         { name: "Report", path: "/report", icon: FaChartBar },
         { name: "Users", path: "/users", icon: FaUsersCog }
       );
     } else if (user?.role === "incharge") {
+      items.push({ name: "Routine", path: "/routine", icon: FaCalendarAlt });
       items.push({
         name: "Assign Duty",
         path: "/assign",
@@ -468,7 +477,7 @@ const LayoutContainer = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="app-shell min-h-screen bg-slate-50 text-slate-900">
       {sidebarCollapsed ? (
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-[80px] border-r border-slate-200 bg-white px-5 py-6 lg:block">
           <IconRail
@@ -506,7 +515,7 @@ const LayoutContainer = ({ children }) => {
       />
 
       <main
-        className={`min-h-screen transition-[padding] duration-300 ${
+        className={`min-h-screen pb-[env(safe-area-inset-bottom)] transition-[padding] duration-300 ${
           sidebarCollapsed ? "lg:pl-[80px]" : "lg:pl-[260px]"
         }`}
       >

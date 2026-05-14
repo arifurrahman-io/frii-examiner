@@ -1,26 +1,73 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import {
+  FaArrowLeft,
+  FaClipboardCheck,
+  FaShieldAlt,
+  FaSyncAlt,
+} from "react-icons/fa";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import SelectDropdown from "../ui/SelectDropdown";
 import { addAnnualReport, getResponsibilityTypes } from "../../api/apiService";
-import { FaSyncAlt } from "react-icons/fa"; // 👈 এটি যোগ করা হয়নি
+import { useAuth } from "../../context/AuthContext";
 
-const AnnualReportModal = ({ isOpen, onClose, teacherId, onSuccess }) => {
+const createEmptyForm = () => ({
+  year: new Date().getFullYear(),
+  responsibility: "",
+  performanceReport: "",
+});
+
+const getReviewScope = (user) => {
+  if (user?.role === "head_teacher") {
+    return {
+      label: "Headmaster approval",
+      detail: "School-wide access for all teachers",
+    };
+  }
+
+  if (user?.role === "incharge") {
+    return {
+      label: "Branch incharge approval",
+      detail: user?.campus?.name
+        ? `Limited to ${user.campus.name}`
+        : "Limited to assigned branch",
+    };
+  }
+
+  return {
+    label: "Admin approval",
+    detail: "School-wide access for all teachers",
+  };
+};
+
+const AnnualReportModal = ({
+  isOpen,
+  onClose,
+  teacherId,
+  teacher,
+  onSuccess,
+}) => {
+  const { user } = useAuth();
   const [responsibilities, setResponsibilities] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    year: new Date().getFullYear(),
-    responsibility: "",
-    performanceReport: "",
-  });
+  const [confirming, setConfirming] = useState(false);
+  const [formData, setFormData] = useState(createEmptyForm);
 
-  // 🚀 ডাটাবেস থেকে Responsibility Types ফেচ করা
+  const selectedResponsibility = useMemo(
+    () =>
+      responsibilities.find(
+        (responsibility) => responsibility._id === formData.responsibility
+      ),
+    [responsibilities, formData.responsibility]
+  );
+
+  const reviewScope = useMemo(() => getReviewScope(user), [user]);
+
   useEffect(() => {
     const fetchResponsibilities = async () => {
       try {
         const response = await getResponsibilityTypes();
-        // নিশ্চিত করুন যে response.data একটি অ্যারে
         setResponsibilities(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching responsibilities:", error);
@@ -29,89 +76,177 @@ const AnnualReportModal = ({ isOpen, onClose, teacherId, onSuccess }) => {
     };
 
     if (isOpen) {
+      setConfirming(false);
       fetchResponsibilities();
     }
   }, [isOpen]);
 
-  const handleSubmit = async () => {
-    if (!formData.responsibility || !formData.performanceReport) {
-      return toast.error("Please fill all required fields.");
+  const validate = () => {
+    if (!formData.responsibility || !formData.performanceReport.trim()) {
+      toast.error("Please fill all required fields.");
+      return false;
     }
+
+    if (!formData.year || Number(formData.year) < 2000) {
+      toast.error("Enter a valid session year.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+
     setLoading(true);
     try {
-      await addAnnualReport(teacherId, formData);
+      await addAnnualReport(teacherId, {
+        ...formData,
+        year: Number(formData.year),
+        performanceReport: formData.performanceReport.trim(),
+      });
       toast.success("Annual report submitted successfully.");
-      onSuccess();
+      setFormData(createEmptyForm());
+      setConfirming(false);
+      onSuccess?.();
       onClose();
     } catch (error) {
-      toast.error("Failed to save report.");
+      toast.error(error.response?.data?.message || "Failed to save report.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleClose = () => {
+    if (loading) return;
+    setConfirming(false);
+    onClose();
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Add Annual Performance Report"
-    >
-      <div className="space-y-5 p-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-              Session Year
-            </label>
-            <input
-              type="number"
-              className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-sm"
-              value={formData.year}
-              onChange={(e) =>
-                setFormData({ ...formData, year: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-              Assign Responsibility
-            </label>
-            <SelectDropdown
-              options={responsibilities} // 👈 এখন এটি ডাটাবেস থেকে আসা ডাটা ব্যবহার করবে
-              value={formData.responsibility}
-              onChange={(e) =>
-                setFormData({ ...formData, responsibility: e.target.value })
-              }
-            />
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Performance Report">
+      <div className="space-y-5 p-1">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-white text-teal-700">
+              <FaShieldAlt />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-teal-700">
+                {reviewScope.label}
+              </p>
+              <p className="mt-1 text-sm font-medium text-slate-600">
+                {reviewScope.detail}
+              </p>
+              {teacher?.name && (
+                <p className="mt-2 text-sm font-bold text-slate-900">
+                  {teacher.name} | {teacher.campus?.name || "Campus"}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
-            Performance Summary
-          </label>
-          <textarea
-            className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm min-h-[120px]"
-            placeholder="Describe teacher's performance during this session..."
-            value={formData.performanceReport}
-            onChange={(e) =>
-              setFormData({ ...formData, performanceReport: e.target.value })
-            }
-          />
-        </div>
+        {!confirming ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">
+                  Session year
+                </label>
+                <input
+                  type="number"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:ring-2 focus:ring-slate-200"
+                  value={formData.year}
+                  onChange={(event) =>
+                    setFormData({ ...formData, year: event.target.value })
+                  }
+                />
+              </div>
 
-        <div className="pt-4">
-          <Button
-            onClick={handleSubmit}
-            fullWidth
-            variant="primary"
-            disabled={loading}
-          >
+              <SelectDropdown
+                label="Responsibility"
+                options={responsibilities}
+                value={formData.responsibility}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    responsibility: event.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-slate-700">
+                Performance summary
+              </span>
+              <textarea
+                className="min-h-[128px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-slate-700 focus:ring-2 focus:ring-slate-200"
+                placeholder="Describe teacher performance during this session..."
+                value={formData.performanceReport}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    performanceReport: event.target.value,
+                  })
+                }
+              />
+            </label>
+          </>
+        ) : (
+          <div className="space-y-3 rounded-lg border border-teal-200 bg-teal-50 p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-teal-900">
+              <FaClipboardCheck />
+              Confirm report before submission
+            </div>
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-teal-700">Year</p>
+                <p className="font-bold text-slate-900">{formData.year}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-teal-700">
+                  Responsibility
+                </p>
+                <p className="font-bold text-slate-900">
+                  {selectedResponsibility?.name || "Selected responsibility"}
+                </p>
+              </div>
+            </div>
+            <div className="rounded-lg bg-white p-3 text-sm leading-6 text-slate-700">
+              {formData.performanceReport}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          {confirming ? (
+            <Button
+              variant="secondary"
+              onClick={() => setConfirming(false)}
+              disabled={loading}
+            >
+              <FaArrowLeft size={13} />
+              Edit
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={handleClose} disabled={loading}>
+              Cancel
+            </Button>
+          )}
+          <Button onClick={handleSubmit} disabled={loading}>
             {loading ? (
-              <FaSyncAlt className="animate-spin mx-auto" />
+              <FaSyncAlt className="animate-spin" />
             ) : (
-              "SUBMIT ANNUAL REPORT"
+              <FaClipboardCheck size={13} />
             )}
+            {confirming ? "Confirm report" : "Review report"}
           </Button>
         </div>
       </div>

@@ -29,6 +29,7 @@ import {
 
 const roleOptions = [
   { _id: "admin", name: "Admin" },
+  { _id: "head_teacher", name: "Head Teacher" },
   { _id: "teacher", name: "Teacher" },
   { _id: "incharge", name: "Incharge" },
 ];
@@ -39,6 +40,12 @@ const roleMeta = {
     icon: FaUserShield,
     badge: "border-rose-200 bg-rose-50 text-rose-700",
     avatar: "bg-rose-600 text-white",
+  },
+  head_teacher: {
+    label: "Head Teacher",
+    icon: FaUserCog,
+    badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    avatar: "bg-indigo-700 text-white",
   },
   incharge: {
     label: "Incharge",
@@ -407,6 +414,7 @@ const UserManagementPage = () => {
     () => ({
       total: users.length,
       admins: users.filter((user) => user.role === "admin").length,
+      headTeachers: users.filter((user) => user.role === "head_teacher").length,
       incharges: users.filter((user) => user.role === "incharge").length,
     }),
     [users]
@@ -549,9 +557,14 @@ const UserManagementPage = () => {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard icon={FaUsers} label="Total Users" value={stats.total} />
           <StatCard icon={FaUserShield} label="Admins" value={stats.admins} />
+          <StatCard
+            icon={FaUserCog}
+            label="Head Teachers"
+            value={stats.headTeachers}
+          />
           <StatCard
             icon={FaUserCheck}
             label="Incharges"
@@ -596,6 +609,7 @@ const UserManagementPage = () => {
                 >
                   <option value="all">All roles</option>
                   <option value="admin">Admin</option>
+                  <option value="head_teacher">Head Teacher</option>
                   <option value="incharge">Incharge</option>
                   <option value="teacher">Teacher</option>
                 </select>

@@ -12,6 +12,7 @@ import {
   deleteLeave,
   deleteTeacher,
   deletePerformanceReport,
+  getTeacherPerformanceSummary,
 } from "../../api/apiService";
 
 // UI/Sections
@@ -25,6 +26,7 @@ import UpdateTeacherForm from "../forms/UpdateTeacherForm";
 import GrantLeaveModal from "../modals/GrantLeaveModal";
 import RoutineEntryModal from "../modals/RoutineEntryModal";
 import AnnualReportModal from "../modals/AnnualReportModal";
+import ClassPerformanceModal from "../modals/ClassPerformanceModal";
 import YearlyRoutineViewModal from "../modals/YearlyRoutineViewModal";
 
 const TeacherProfile = ({ teacherId }) => {
@@ -40,11 +42,13 @@ const TeacherProfile = ({ teacherId }) => {
   const [modals, setModals] = useState({
     leave: false,
     report: false,
+    classPerformance: false,
     routine: false,
     yearlyView: false,
   });
   const [grantedLeaves, setGrantedLeaves] = useState([]);
   const [routineSchedule, setRoutineSchedule] = useState([]);
+  const [performanceSummary, setPerformanceSummary] = useState(null);
 
   const isAdmin = user?.role === "admin";
   const isIncharge = user?.role === "incharge";
@@ -82,13 +86,16 @@ const TeacherProfile = ({ teacherId }) => {
       const promises = [
         getTeacherProfile(teacherId),
         getTeacherRoutines(teacherId),
+        getTeacherPerformanceSummary(teacherId),
       ];
       if (isAdmin || isIncharge)
         promises.push(getGrantedLeavesByTeacher(teacherId));
 
-      const [profileRes, routinesRes, leavesRes] = await Promise.all(promises);
+      const [profileRes, routinesRes, performanceRes, leavesRes] =
+        await Promise.all(promises);
       setTeacherData(profileRes.data);
       setRoutineSchedule(routinesRes.data || []);
+      setPerformanceSummary(performanceRes.data || null);
       if (leavesRes) setGrantedLeaves(leavesRes.data || []);
     } catch (error) {
       toast.error("Protocol Error: Synchronization failed.");
@@ -187,6 +194,8 @@ const TeacherProfile = ({ teacherId }) => {
         .length || 0,
     leaves: grantedLeaves.length,
     reports: teacherDetails.reports?.length || 0,
+    observedClasses: performanceSummary?.totalObservations || 0,
+    classAverage: performanceSummary?.averages?.overall || "-",
   };
 
   return (
@@ -359,7 +368,29 @@ const TeacherProfile = ({ teacherId }) => {
         </table>
 
         {/* সেকশন ৪: একাডেমিক রুটিন */}
-        <div className="section-header">4. Academic Schedule Matrix</div>
+        <div className="section-header">4. Class Performance Rating</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Observed Classes</th>
+              <th>Presentation</th>
+              <th>Discipline</th>
+              <th>Subject Depth</th>
+              <th>Overall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{performanceSummary?.totalObservations || 0}</td>
+              <td>{performanceSummary?.averages?.presentation || "-"}</td>
+              <td>{performanceSummary?.averages?.discipline || "-"}</td>
+              <td>{performanceSummary?.averages?.subjectDepth || "-"}</td>
+              <td>{performanceSummary?.averages?.overall || "-"}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="section-header">5. Academic Schedule Matrix</div>
         <table>
           <thead>
             <tr>
@@ -423,6 +454,7 @@ const TeacherProfile = ({ teacherId }) => {
               <ProfileSidebar
                 teacherDetails={teacherDetails}
                 grantedLeaves={grantedLeaves}
+                performanceSummary={performanceSummary}
                 isAdmin={isAdmin}
                 handleLeaveDelete={handleLeaveDelete}
                 handleReportDelete={handleReportDelete}
@@ -453,6 +485,15 @@ const TeacherProfile = ({ teacherId }) => {
         isOpen={modals.report}
         onClose={() => setModals((p) => ({ ...p, report: false }))}
         teacherId={teacherId}
+        teacher={teacherDetails}
+        onSuccess={fetchProfile}
+      />
+      <ClassPerformanceModal
+        isOpen={modals.classPerformance}
+        onClose={() => setModals((p) => ({ ...p, classPerformance: false }))}
+        teacherId={teacherId}
+        teacher={teacherDetails}
+        routineSchedule={routineSchedule}
         onSuccess={fetchProfile}
       />
       <YearlyRoutineViewModal

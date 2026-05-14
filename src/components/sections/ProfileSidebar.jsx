@@ -1,6 +1,7 @@
 import React from "react";
 import {
   FaBuilding,
+  FaChartLine,
   FaClipboardCheck,
   FaHistory,
   FaPhoneAlt,
@@ -17,7 +18,7 @@ const InfoRow = ({ icon: Icon, label, value }) => (
     <div className="min-w-0">
       <p className="text-xs font-medium text-slate-500">{label}</p>
       <p className="truncate text-sm font-semibold text-slate-800">
-        {value || "Not provided"}
+        {value ?? "Not provided"}
       </p>
     </div>
   </div>
@@ -44,6 +45,7 @@ const EmptyList = ({ children }) => (
 const ProfileSidebar = ({
   teacherDetails,
   grantedLeaves,
+  performanceSummary,
   isAdmin,
   handleLeaveDelete,
   handleReportDelete,
@@ -61,6 +63,31 @@ const ProfileSidebar = ({
           icon={FaClipboardCheck}
           label="Designation"
           value={teacherDetails.designation}
+        />
+      </div>
+    </Panel>
+
+    <Panel icon={FaChartLine} title="Class Rating Average">
+      <div className="grid grid-cols-2 gap-3">
+        <InfoRow
+          icon={FaClipboardCheck}
+          label="Observed"
+          value={performanceSummary?.totalObservations || 0}
+        />
+        <InfoRow
+          icon={FaStar}
+          label="Overall"
+          value={performanceSummary?.averages?.overall || "-"}
+        />
+        <InfoRow
+          icon={FaStar}
+          label="Presentation"
+          value={performanceSummary?.averages?.presentation || "-"}
+        />
+        <InfoRow
+          icon={FaStar}
+          label="Discipline"
+          value={performanceSummary?.averages?.discipline || "-"}
         />
       </div>
     </Panel>

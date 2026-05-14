@@ -248,13 +248,15 @@ const LeaveTimeline = ({ leaves, onViewAll }) => {
           </div>
         ))}
       </div>
-      <button
-        onClick={onViewAll}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50"
-      >
-        View all leave
-        <FaChevronRight className="text-xs" />
-      </button>
+      {onViewAll && (
+        <button
+          onClick={onViewAll}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50"
+        >
+          View all leave
+          <FaChevronRight className="text-xs" />
+        </button>
+      )}
     </>
   );
 };
@@ -561,6 +563,14 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
+  const isHeadTeacher = user?.role === "head_teacher";
+  const isIncharge = user?.role === "incharge";
+  const assignedCampusName = user?.campus?.name || "Assigned shift";
+  const workspaceLabel = isAdmin
+    ? "Admin workspace"
+    : isHeadTeacher
+      ? "Headmaster workspace"
+      : "Incharge workspace";
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [loading, setLoading] = useState(true);
   const [deletingRoutineYear, setDeletingRoutineYear] = useState(false);
@@ -574,6 +584,13 @@ const AdminDashboard = () => {
     branchData: [],
     recentLeaves: [],
   });
+
+  const dashboardTitle = isIncharge
+    ? `${assignedCampusName} dashboard`
+    : "School operations dashboard";
+  const dashboardDescription = isIncharge
+    ? `Monitor teacher capacity, duty distribution, and leave movement for your assigned shift in ${selectedYear}.`
+    : `Monitor teacher capacity, routine coverage, duty distribution, and recent leave movement for ${selectedYear}.`;
 
   const fetchData = useCallback(async (year) => {
     setLoading(true);
@@ -652,79 +669,107 @@ const AdminDashboard = () => {
     [data.branchData]
   );
 
-  const quickActions = isAdmin
-    ? [
-        {
-          icon: FaBuilding,
-          title: "Branches",
-          subtitle: "Campus and shift setup",
-          path: "/setup/branch",
-        },
-        {
-          icon: FaUsers,
-          title: "Classes",
-          subtitle: "Class directory",
-          path: "/setup/class",
-        },
-        {
-          icon: FaBookOpen,
-          title: "Subjects",
-          subtitle: "Subject catalog",
-          path: "/setup/subject",
-        },
-        {
-          icon: FaTasks,
-          title: "Duty Types",
-          subtitle: "Responsibility labels",
-          path: "/setup/responsibility",
-        },
+  const quickActions = useMemo(() => {
+    if (isAdmin) {
+      return [
+          {
+            icon: FaBuilding,
+            title: "Branches",
+            subtitle: "Campus and shift setup",
+            path: "/setup/branch",
+          },
+          {
+            icon: FaUsers,
+            title: "Classes",
+            subtitle: "Class directory",
+            path: "/setup/class",
+          },
+          {
+            icon: FaBookOpen,
+            title: "Subjects",
+            subtitle: "Subject catalog",
+            path: "/setup/subject",
+          },
+          {
+            icon: FaTasks,
+            title: "Duty Types",
+            subtitle: "Responsibility labels",
+            path: "/setup/responsibility",
+          },
+          {
+            icon: FaUserTie,
+            title: "Teachers",
+            subtitle: "Staff records",
+            path: "/teachers",
+          },
+          {
+            icon: FaCalendarCheck,
+            title: "Routines",
+            subtitle: "Schedule planning",
+            path: "/routine",
+          },
+          {
+            icon: FaClipboard,
+            title: "Assign",
+            subtitle: "Duty allocation",
+            path: "/assign",
+          },
+          {
+            icon: FaChartBar,
+            title: "Reports",
+            subtitle: "Export analytics",
+            path: "/report",
+            featured: true,
+          },
+        ];
+    }
+
+    if (isHeadTeacher) {
+      return [
         {
           icon: FaUserTie,
           title: "Teachers",
-          subtitle: "Staff records",
+          subtitle: "School-wide staff review",
           path: "/teachers",
-        },
-        {
-          icon: FaCalendarCheck,
-          title: "Routines",
-          subtitle: "Schedule planning",
-          path: "/routine",
-        },
-        {
-          icon: FaClipboard,
-          title: "Assign",
-          subtitle: "Duty allocation",
-          path: "/assign",
         },
         {
           icon: FaChartBar,
-          title: "Reports",
-          subtitle: "Export analytics",
-          path: "/report",
-          featured: true,
-        },
-      ]
-    : [
-        {
-          icon: FaUserTie,
-          title: "Teacher List",
-          subtitle: "Campus staff",
-          path: "/teachers",
-        },
-        {
-          icon: FaCalendarCheck,
-          title: "Master Routine",
-          subtitle: "Daily schedule sync",
-          path: "/routine",
-        },
-        {
-          icon: FaClipboard,
-          title: "Assign Duty",
-          subtitle: "Local allocation",
-          path: "/assign",
+          title: "Performance",
+          subtitle: "School-wide ratings",
+          path: "/performance-report",
           featured: true,
         },
       ];
+    }
+
+    return [
+      {
+        icon: FaUserTie,
+        title: "Shift Teachers",
+        subtitle: assignedCampusName,
+        path: "/teachers",
+      },
+      {
+        icon: FaChartBar,
+        title: "Shift Performance",
+        subtitle: "Ratings in your shift",
+        path: "/performance-report",
+      },
+      {
+        icon: FaCalendarCheck,
+        title: "Shift Routine",
+        subtitle: "Daily schedule sync",
+        path: "/routine",
+      },
+      {
+        icon: FaClipboard,
+        title: "Assign Duty",
+        subtitle: "Local allocation",
+        path: "/assign",
+        featured: true,
+      },
+    ];
+  }, [assignedCampusName, isAdmin, isHeadTeacher]);
 
   if (loading && !data.totals.teachers) {
     return (
@@ -742,14 +787,13 @@ const AdminDashboard = () => {
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
                 <FaShieldAlt size={12} />
-                {isAdmin ? "Admin workspace" : "Incharge workspace"}
+                {workspaceLabel}
               </div>
               <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">
-                School operations dashboard
+                {dashboardTitle}
               </h1>
               <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-                Monitor teacher capacity, routine coverage, duty distribution,
-                and recent leave movement for {selectedYear}.
+                {dashboardDescription}
               </p>
             </div>
 
@@ -789,10 +833,12 @@ const AdminDashboard = () => {
             caption="Active teacher profiles"
           />
           <KpiCard
-            title="Campuses"
-            value={isAdmin ? data.totals.branches : 1}
+            title={isIncharge ? "Assigned shift" : "Campuses"}
+            value={isIncharge ? 1 : data.totals.branches}
             icon={FaBuilding}
-            caption={isAdmin ? "Branches under management" : "Assigned campus"}
+            caption={
+              isIncharge ? assignedCampusName : "Branches under management"
+            }
           />
           <KpiCard
             title="Ongoing duties"
@@ -808,7 +854,11 @@ const AdminDashboard = () => {
               <SectionHeader
                 icon={FaChartPie}
                 title="Load distribution"
-                subtitle="Responsibility spread by duty type and campus."
+                subtitle={
+                  isIncharge
+                    ? `Responsibility spread inside ${assignedCampusName}.`
+                    : "Responsibility spread by duty type and campus."
+                }
                 action={
                   <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
                     <FaRegClock />
@@ -830,30 +880,12 @@ const AdminDashboard = () => {
                     selectedYear={selectedYear}
                   />
                 </div>
-                {isAdmin ? (
-                  <CampusBarPanel
-                    data={data.branchData}
-                    title="Campus load"
-                    total={branchTotal}
-                  />
-                ) : (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-white text-slate-700">
-                        <FaBuilding size={16} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-950">
-                          Campus focused view
-                        </h3>
-                        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                          Incharge users see responsibility activity for their
-                          assigned campus.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <CampusBarPanel
+                  data={data.branchData}
+                  title={isIncharge ? "Assigned shift load" : "Campus load"}
+                  total={branchTotal}
+                  groupLabel={isIncharge ? "shift" : "campuses"}
+                />
               </div>
             </section>
 
@@ -903,7 +935,11 @@ const AdminDashboard = () => {
               <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <LeaveTimeline
                   leaves={data.recentLeaves}
-                  onViewAll={() => navigate("/leaves/granted")}
+                  onViewAll={
+                    isAdmin || isIncharge
+                      ? () => navigate("/leaves/granted")
+                      : undefined
+                  }
                 />
               </div>
             </section>
@@ -1013,7 +1049,7 @@ const DutyDonutPanel = ({ data, title, total }) => {
   );
 };
 
-const CampusBarPanel = ({ data, title, total }) => {
+const CampusBarPanel = ({ data, title, total, groupLabel = "campuses" }) => {
   const chartData = useMemo(() => {
     return getChartData(data).sort((left, right) => right.value - left.value);
   }, [data]);
@@ -1029,7 +1065,7 @@ const CampusBarPanel = ({ data, title, total }) => {
           </p>
         </div>
         <span className="rounded-lg px-2.5 py-1 text-xs font-semibold text-[#0f172a]" style={{ backgroundColor: GRAPH_THEME.tint }}>
-          {chartData.length} campuses
+          {chartData.length} {groupLabel}
         </span>
       </div>
 

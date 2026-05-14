@@ -50,14 +50,15 @@ const TeacherSearchList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTeachers, setTotalTeachers] = useState(0);
 
-  const isAdmin = user?.role === "admin";
+  const hasGlobalTeacherAccess =
+    user?.role === "admin" || user?.role === "head_teacher";
   const inchargeCampusId = user?.campus?._id || user?.campus;
 
   const fetchTeachers = useCallback(
     async (search = "", pageNum = 1) => {
       setLoading(true);
       try {
-        const campusIdFilter = !isAdmin ? inchargeCampusId : "";
+        const campusIdFilter = hasGlobalTeacherAccess ? "" : inchargeCampusId;
         const { data } = await getTeachers(
           search,
           pageNum,
@@ -67,7 +68,7 @@ const TeacherSearchList = () => {
         );
 
         let teacherList = data.teachers || [];
-        if (!isAdmin && inchargeCampusId) {
+        if (!hasGlobalTeacherAccess && inchargeCampusId) {
           teacherList = teacherList.filter((teacher) => {
             const teacherCampusId = teacher.campus?._id || teacher.campus;
             return teacherCampusId === inchargeCampusId;
@@ -85,7 +86,7 @@ const TeacherSearchList = () => {
         setLoading(false);
       }
     },
-    [limit, isAdmin, inchargeCampusId]
+    [limit, hasGlobalTeacherAccess, inchargeCampusId]
   );
 
   useEffect(() => {
@@ -126,7 +127,7 @@ const TeacherSearchList = () => {
             <input
               type="text"
               placeholder={
-                !isAdmin
+                !hasGlobalTeacherAccess
                   ? `Search ${user?.campus?.name || "assigned campus"} teachers`
                   : "Search by name, ID, or phone"
               }

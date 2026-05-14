@@ -1,8 +1,20 @@
 import axios from "axios";
 
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  if (window.location.protocol === "capacitor:") {
+    return "https://exam.smarteducationbd.com/api";
+  }
+
+  return "/api";
+};
+
 // কাস্টম axios ইনস্ট্যান্স তৈরি
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: getApiBaseUrl(),
 });
 
 /**
@@ -105,6 +117,28 @@ export const deletePerformanceReport = (teacherId, reportId) => {
 
 export const addAnnualReport = (teacherId, data) =>
   api.post(`/teachers/${teacherId}/report`, data);
+
+export const addClassPerformanceObservation = (teacherId, data) =>
+  api.post(`/class-performance/teachers/${teacherId}`, data);
+
+export const getTeacherPerformanceObservations = (
+  teacherId,
+  params = {}
+) => api.get(`/class-performance/teachers/${teacherId}`, { params });
+
+export const getTeacherPerformanceSummary = (teacherId) =>
+  api.get(`/class-performance/teachers/${teacherId}/summary`);
+
+export const getShiftPerformanceReport = (params = {}) =>
+  api.get("/class-performance/reports/shift", { params });
+
+export const exportShiftPerformanceReportPDF = async (params = {}) => {
+  const response = await api.get("/class-performance/reports/shift/pdf", {
+    params,
+    responseType: "blob",
+  });
+  return openPdfResponse(response, "class-performance-report.pdf");
+};
 
 export const uploadBulkTeachers = (formData) =>
   api.post("/teachers/bulk-upload", formData, {

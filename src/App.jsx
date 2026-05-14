@@ -2,16 +2,15 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-// --- Global Layouts ---
 import LayoutContainer from "./components/layouts/LayoutContainer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// --- Page Components ---
 import AdminDashboard from "./pages/AdminDashboard";
 import MasterSetupPage from "./pages/MasterSetupPage";
 import RoutineSetupPage from "./pages/RoutineSetupPage";
 import AssignDutyPage from "./pages/AssignDutyPage";
 import ReportViewPage from "./pages/ReportViewPage";
+import PerformanceReportPage from "./pages/PerformanceReportPage";
 import TeacherViewPage from "./pages/TeacherViewPage";
 import LoginPage from "./pages/LoginPage";
 import GrantedLeavesPage from "./pages/GrantedLeavesPage";
@@ -21,113 +20,139 @@ function App() {
   return (
     <Router>
       <LayoutContainer>
-          <Routes>
-            {/* --- 🔓 PUBLIC NODES --- */}
-            <Route path="/login" element={<LoginPage />} />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-            {/* --- 🔒 PROTECTED CORE NODES --- */}
-            <Route
-              path="/"
-              element={<ProtectedRoute element={<AdminDashboard />} />}
-            />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute
+                element={<AdminDashboard />}
+                allowedRoles={["admin", "head_teacher", "incharge"]}
+              />
+            }
+          />
 
-            {/* 🛡️ ADMIN ONLY: System Governance */}
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute
-                  element={<UserManagementPage />}
-                  allowedRoles={["admin"]} // শুধুমাত্র অ্যাডমিন এক্সেস পাবে
-                />
-              }
-            />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute
+                element={<UserManagementPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
 
-            {/* ⚙️ SETUP NODES: Admin & Incharge Access */}
-            <Route
-              path="/setup/:type"
-              element={
-                <ProtectedRoute
-                  element={<MasterSetupPage />}
-                  allowedRoles={["admin", "incharge"]}
-                />
-              }
-            />
+          <Route
+            path="/setup/:type"
+            element={
+              <ProtectedRoute
+                element={<MasterSetupPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
 
-            <Route
-              path="/routine"
-              element={
-                <ProtectedRoute
-                  element={<RoutineSetupPage />}
-                  allowedRoles={["admin", "incharge"]}
-                />
-              }
-            />
+          <Route
+            path="/routine"
+            element={
+              <ProtectedRoute
+                element={<RoutineSetupPage />}
+                allowedRoles={["admin", "incharge"]}
+              />
+            }
+          />
 
-            {/* 👥 TEACHER NODES */}
-            <Route
-              path="/teachers"
-              element={<ProtectedRoute element={<TeacherViewPage />} />}
-            />
-            <Route
-              path="/teacher/profile/:id"
-              element={<ProtectedRoute element={<TeacherViewPage />} />}
-            />
+          <Route
+            path="/teachers"
+            element={
+              <ProtectedRoute
+                element={<TeacherViewPage />}
+                allowedRoles={["admin", "head_teacher", "incharge"]}
+              />
+            }
+          />
 
-            {/* 📋 DUTY ALLOCATION: Restricted Logic inside component for Incharge */}
-            <Route
-              path="/assign"
-              element={
-                <ProtectedRoute
-                  element={<AssignDutyPage />}
-                  allowedRoles={["admin", "incharge"]}
-                />
-              }
-            />
+          <Route
+            path="/teacher/profile/:id"
+            element={
+              <ProtectedRoute
+                element={<TeacherViewPage />}
+                allowedRoles={["admin", "head_teacher", "incharge"]}
+              />
+            }
+          />
 
-            {/* 📊 AUDIT & ARCHIVE: Global vs Campus Node */}
-            <Route
-              path="/report"
-              element={
-                <ProtectedRoute
-                  element={<ReportViewPage />}
-                  allowedRoles={["admin"]} // অডিট সাধারণত এডমিনদের জন্য
-                />
-              }
-            />
-            <Route
-              path="/leaves/granted"
-              element={
-                <ProtectedRoute
-                  element={<GrantedLeavesPage />}
-                  allowedRoles={["admin", "incharge"]}
-                />
-              }
-            />
+          <Route
+            path="/assign"
+            element={
+              <ProtectedRoute
+                element={<AssignDutyPage />}
+                allowedRoles={["admin", "incharge"]}
+              />
+            }
+          />
 
-            {/* --- ⚠️ 404 INTERRUPT --- */}
-            <Route
-              path="*"
-              element={
-                <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-6 bg-[#F8FAFC]">
-                  <div className="h-24 w-24 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-6 shadow-inner animate-pulse">
-                    <span className="text-4xl font-black italic">404</span>
+          <Route
+            path="/report"
+            element={
+              <ProtectedRoute
+                element={<ReportViewPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+
+          <Route
+            path="/performance-report"
+            element={
+              <ProtectedRoute
+                element={<PerformanceReportPage />}
+                allowedRoles={["admin", "head_teacher", "incharge"]}
+              />
+            }
+          />
+
+          <Route
+            path="/leaves/granted"
+            element={
+              <ProtectedRoute
+                element={<GrantedLeavesPage />}
+                allowedRoles={["admin", "incharge"]}
+              />
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <div className="grid min-h-[80vh] place-items-center bg-slate-50 p-6 text-center">
+                <div>
+                  <div className="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-lg bg-rose-50 text-2xl font-semibold text-rose-600">
+                    404
                   </div>
-                  <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-2">
-                    Matrix Link Interrupted
+                  <h1 className="text-2xl font-semibold text-slate-950">
+                    Page not found
                   </h1>
-                  <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">
-                    The requested node does not exist in the current session.
+                  <p className="mt-2 text-sm font-medium text-slate-500">
+                    The requested workspace page is not available.
                   </p>
                 </div>
-              }
-            />
-          </Routes>
+              </div>
+            }
+          />
+        </Routes>
       </LayoutContainer>
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerStyle={{
+          top: "max(16px, env(safe-area-inset-top))",
+          left: 16,
+          right: 16,
+        }}
         toastOptions={{
           className:
-            "font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-2xl border border-slate-100",
+            "max-w-[calc(100vw-32px)] rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-800 shadow-lg",
           duration: 4000,
         }}
       />

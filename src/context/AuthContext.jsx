@@ -61,7 +61,12 @@ export const AuthProvider = ({ children }) => {
       toast.success(`Welcome, ${data.user.name}!`);
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed.");
+      const message =
+        error.response?.data?.message ||
+        (error.request
+          ? "Cannot reach the server. Check the app network or backend CORS settings."
+          : "Login failed.");
+      toast.error(message);
       return false;
     } finally {
       setIsLoading(false);
@@ -100,8 +105,13 @@ export const AuthProvider = ({ children }) => {
       }}
     >
       {isLoading ? (
-        <div className="text-center p-20 text-xl text-indigo-500">
-          Loading session...
+        <div className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center">
+          <div>
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-teal-100 border-t-teal-700" />
+            <p className="mt-4 text-sm font-semibold text-slate-700">
+              Loading workspace...
+            </p>
+          </div>
         </div>
       ) : (
         children
