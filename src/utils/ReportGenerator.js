@@ -1,6 +1,13 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import toast from "react-hot-toast";
+import {
+  createUniformRowDidParseCell,
+  getUniformBodyStyles,
+  getUniformTableStyles,
+  withUniformHeadStyles,
+} from "./pdfTableRows";
+import { drawProfessionalReportHeader } from "./reportBranding";
 
 const getReportGeneratedAt = () =>
   new Intl.DateTimeFormat("en-GB", {
@@ -69,21 +76,18 @@ export const generatePDFReport = (data, filters, title) => {
     // --- ১. হেডার কনফিগারেশন ---
     const pageTitle = title || "Teacher Responsibility Assignment Report";
     const now = new Date().toLocaleString();
-
-    doc.setFontSize(18);
-    doc.text(pageTitle, 148, 15, null, null, "center");
-
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generated On: ${now}`, 10, 25);
-
     const filterInfo = [
       `Year: ${filters.year || "All"}`,
       `Type: ${filters.typeName || "All"}`,
       `Class: ${filters.className || "All"}`,
     ].join(" | ");
-
-    doc.text(`Filters: ${filterInfo}`, 285, 25, null, null, "right");
+    const headerStartY = drawProfessionalReportHeader(doc, {
+      y: 12,
+      title: pageTitle,
+      subtitle: `Generated On: ${now} | Filters: ${filterInfo}`,
+      titleFontSize: 14,
+      subtitleFontSize: 9,
+    });
 
     // --- ২. টেবিল ডেটা প্রসেসিং ---
 
@@ -117,18 +121,28 @@ export const generatePDFReport = (data, filters, title) => {
 
     doc.autoTable({
       startY: 30,
-      // head এবং body ডেটা jspdf-autotable-এর প্রত্যাশিত বিন্যাসে দেওয়া হলো
       head: [tableColumn.map((col) => col.header)],
       body: tableRows.map((row) => tableColumn.map((col) => row[col.dataKey])),
       theme: "striped",
-      headStyles: {
+      headStyles: withUniformHeadStyles({
         fillColor: [30, 64, 175],
         textColor: 255,
         fontSize: 9,
         halign: "center",
-      },
-      styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
-      margin: { top: 30, right: 10, left: 10, bottom: 16 },
+      }),
+      styles: getUniformTableStyles({ fontSize: 8, cellPadding: 2 }),
+      bodyStyles: getUniformBodyStyles(),
+      didParseCell: createUniformRowDidParseCell(doc, {
+        fontSize: 8,
+        cellPadding: 2,
+        columnMaxLines: Object.fromEntries(
+          tableColumn
+            .map((col, index) => [index, col.dataKey])
+            .filter(([, key]) => /teacher/i.test(key))
+            .map(([index]) => [index, 2])
+        ),
+      }),
+      margin: { top: headerStartY + 8, right: 10, left: 10, bottom: 16 },
       didDrawPage: (data) => {
         drawReportFooter(doc, data.pageNumber);
       },

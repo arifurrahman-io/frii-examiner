@@ -1,19 +1,36 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   FaCalendarTimes,
+  FaDownload,
+  FaPrint,
   FaSearch,
   FaUniversity,
   FaHistory,
-  FaUserAlt,
 } from "react-icons/fa";
 import { getAllGrantedLeavesForReport } from "../api/apiService";
+import { useAuth } from "../context/AuthContext";
+import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
+import "../styles/grantedLeavesPrint.css";
+import { INSTITUTE_NAME } from "../utils/reportBranding";
+import {
+  exportGrantedLeavesPrintToPdf,
+  formatLeaveDate,
+  formatPrintTimestamp,
+  getGrantedLeaveStats,
+  mapLeaveRowsForExport,
+  sanitizeFilename,
+} from "../utils/grantedLeavesReport";
 
 const GrantedLeavesPage = () => {
+  const { user } = useAuth();
+  const printRef = useRef(null);
   const [leavesData, setLeavesData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [printTimestamp, setPrintTimestamp] = useState(() => new Date());
 
   useEffect(() => {
     const fetchLeaves = async () => {
@@ -37,6 +54,47 @@ const GrantedLeavesPage = () => {
       leave.teacher?.teacherId?.includes(searchTerm)
   );
 
+  const reportRows = useMemo(() => mapLeaveRowsForExport(leavesData), [leavesData]);
+  const reportStats = useMemo(
+    () => getGrantedLeaveStats(leavesData),
+    [leavesData]
+  );
+
+  const ensureReportData = () => {
+    if (!leavesData.length) {
+      toast.error("No granted leave records available to export.");
+      return false;
+    }
+    return true;
+  };
+
+  const handlePrint = () => {
+    if (!ensureReportData()) return;
+    setPrintTimestamp(new Date());
+    window.requestAnimationFrame(() => window.print());
+  };
+
+  const exportPdf = async () => {
+    if (!ensureReportData()) return;
+
+    setExporting(true);
+    try {
+      const generatedAt = new Date();
+      setPrintTimestamp(generatedAt);
+
+      await exportGrantedLeavesPrintToPdf(
+        printRef.current,
+        `Granted_Leaves_Report_${sanitizeFilename(
+          new Intl.DateTimeFormat("en-GB").format(generatedAt)
+        )}.pdf`
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "PDF export failed.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
@@ -46,11 +104,8 @@ const GrantedLeavesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent pb-10 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 relative overflow-hidden">
-      {/* Background Subtle Pattern */}
-
-      <div className="max-w-[1600px] mx-auto relative z-10">
-        {/* --- HEADER & SEARCH BAR --- */}
+    <div className="granted-leaves-page min-h-screen bg-transparent pb-10 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 relative overflow-hidden">
+      <div className="granted-leaves-screen max-w-[1600px] mx-auto relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 sm:mb-10">
           <div className="animate-in fade-in slide-in-from-left duration-700">
             <div className="flex items-center gap-3 sm:gap-4 mb-2">
@@ -66,24 +121,42 @@ const GrantedLeavesPage = () => {
             </p>
           </div>
 
-          {/* Search Input */}
-          <div className="relative group w-full lg:w-96 animate-in fade-in slide-in-from-right duration-700">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FaSearch className="text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+          <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant="secondary"
+                onClick={handlePrint}
+                disabled={!leavesData.length}
+              >
+                <FaPrint size={13} />
+                Print
+              </Button>
+              <Button
+                onClick={exportPdf}
+                loading={exporting}
+                disabled={!leavesData.length}
+              >
+                <FaDownload size={13} />
+                Download PDF
+              </Button>
             </div>
-            <input
-              type="text"
-              placeholder="Search Teacher Name or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 sm:py-4 bg-white border border-slate-100 rounded-xl sm:rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-sm outline-none"
-            />
+
+            <div className="relative group w-full lg:w-96 animate-in fade-in slide-in-from-right duration-700">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <FaSearch className="text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search Teacher Name or ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-3.5 sm:py-4 bg-white border border-slate-100 rounded-xl sm:rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-sm outline-none"
+              />
+            </div>
           </div>
         </div>
 
-        {/* --- REPORT AREA --- */}
         <div className="bg-white/70 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-white overflow-hidden">
-          {/* Desktop Table View (Visible on MD and up) */}
           <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full border-separate border-spacing-0">
               <thead>
@@ -116,18 +189,18 @@ const GrantedLeavesPage = () => {
                   ? filteredLeaves.map((leave, index) => (
                       <tr
                         key={leave._id}
-                        className="group hover:bg-indigo-50/30 transition-all"
+                        className="group h-14 hover:bg-indigo-50/30 transition-all"
                       >
-                        <td className="px-6 py-4 text-xs font-black text-slate-300 group-hover:text-indigo-400">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2 text-xs font-black text-slate-300 group-hover:text-indigo-400">
                           {String(index + 1).padStart(2, "0")}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2">
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black text-xs uppercase shadow-inner">
                               {leave.teacher?.name?.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-black text-slate-800 uppercase tracking-tighter truncate max-w-[150px]">
+                              <p className="text-sm font-black leading-snug text-slate-800 uppercase tracking-tighter line-clamp-2 break-words">
                                 {leave.teacher?.name}
                               </p>
                               <p className="text-[10px] font-bold text-indigo-400 uppercase">
@@ -136,7 +209,7 @@ const GrantedLeavesPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2">
                           <div className="flex items-center gap-2 text-slate-500">
                             <FaUniversity
                               className="text-slate-300"
@@ -147,33 +220,26 @@ const GrantedLeavesPage = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2">
                           <span className="px-3 py-1.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded-lg uppercase border border-rose-100">
                             {leave.responsibilityType?.name || "Standard"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2 text-center">
                           <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
                             {leave.year}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs text-slate-500 font-medium line-clamp-1 italic max-w-xs group-hover:line-clamp-none transition-all">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2">
+                          <p className="text-xs text-slate-500 font-medium line-clamp-2 italic max-w-xs">
                             {leave.reason || "Not specified"}
                           </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="h-14 max-h-14 align-middle px-6 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-slate-400">
                             <FaHistory size={10} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">
-                              {new Date(leave.createdAt).toLocaleDateString(
-                                "en-GB",
-                                {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )}
+                              {formatLeaveDate(leave.createdAt)}
                             </span>
                           </div>
                         </td>
@@ -184,7 +250,6 @@ const GrantedLeavesPage = () => {
             </table>
           </div>
 
-          {/* Mobile Card View (Visible on small screens) */}
           <div className="md:hidden divide-y divide-slate-100">
             {filteredLeaves.length > 0
               ? filteredLeaves.map((leave, index) => (
@@ -240,10 +305,7 @@ const GrantedLeavesPage = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <FaHistory size={10} />{" "}
-                        {new Date(leave.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
+                        {formatLeaveDate(leave.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -251,7 +313,6 @@ const GrantedLeavesPage = () => {
               : null}
           </div>
 
-          {/* Empty State */}
           {filteredLeaves.length === 0 && (
             <div className="py-24 flex flex-col items-center justify-center opacity-30 grayscale">
               <FaCalendarTimes size={80} className="text-slate-200 mb-4" />
@@ -262,13 +323,112 @@ const GrantedLeavesPage = () => {
           )}
         </div>
 
-        {/* --- FOOTER INFO --- */}
         <div className="mt-8 flex justify-center">
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] text-center">
             Authorized Data Entry Only • Neural Matrix V2.0
           </p>
         </div>
       </div>
+
+      <section
+        ref={printRef}
+        className="granted-leaves-print-surface"
+        aria-label="Printable granted leave register"
+      >
+        <header className="performance-print-header performance-print-header-stacked">
+          <div className="performance-print-header-main">
+            <p className="performance-print-institute">{INSTITUTE_NAME}</p>
+            <h1>Granted Leave Register</h1>
+            <p className="performance-print-subtitle">
+              Complete list of granted leave records
+            </p>
+          </div>
+          <div className="performance-print-meta">
+            <span>Generated</span>
+            <strong>{formatPrintTimestamp(printTimestamp)}</strong>
+            <span>Prepared by</span>
+            <strong>{user?.name || "System User"}</strong>
+          </div>
+        </header>
+
+        <section
+          className="performance-print-summary"
+          aria-label="Report summary"
+        >
+          <div>
+            <span>Total records</span>
+            <strong>{reportStats.recordCount}</strong>
+          </div>
+          <div>
+            <span>Teachers</span>
+            <strong>{reportStats.teacherCount}</strong>
+          </div>
+          <div>
+            <span>Campuses</span>
+            <strong>{reportStats.campusCount}</strong>
+          </div>
+          <div>
+            <span>Session span</span>
+            <strong>{reportStats.yearSpan}</strong>
+          </div>
+        </section>
+
+        <div className="performance-print-table-wrap">
+          <div className="performance-print-section-title">
+            <h2>Granted Leave Records</h2>
+            <p>Official register of excused duties and granted leave entries.</p>
+          </div>
+
+          <table className="performance-print-table granted-leaves-print-table">
+            <thead>
+              <tr>
+                <th>SL</th>
+                <th>Teacher</th>
+                <th>ID</th>
+                <th>Campus</th>
+                <th>Leave Type</th>
+                <th>Year</th>
+                <th>Reason</th>
+                <th>Granted On</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportRows.length > 0 ? (
+                reportRows.map((row) => (
+                  <tr key={`print-${row.sl}-${row.teacherId}-${row.year}`}>
+                    <td>{row.sl}</td>
+                    <td>{row.teacherName}</td>
+                    <td>{row.teacherId}</td>
+                    <td>{row.campus}</td>
+                    <td>{row.leaveType}</td>
+                    <td>{row.year}</td>
+                    <td>{row.reason}</td>
+                    <td>{row.grantedOn}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="performance-print-empty">
+                    No granted leave records found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <footer className="performance-print-footer">
+          <div>
+            <span>Prepared by</span>
+          </div>
+          <div>
+            <span>Reviewed by</span>
+          </div>
+          <div>
+            <span>Approved by</span>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 };

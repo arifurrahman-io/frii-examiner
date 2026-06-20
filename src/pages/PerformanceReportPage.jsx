@@ -15,6 +15,13 @@ import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
 import InputField from "../components/ui/InputField";
 import SelectDropdown from "../components/ui/SelectDropdown";
+import {
+  createUniformRowDidParseCell,
+  getUniformBodyStyles,
+  getUniformTableStyles,
+  withUniformHeadStyles,
+} from "../utils/pdfTableRows";
+import { drawInstituteHeader, INSTITUTE_NAME } from "../utils/reportBranding";
 
 const RatingCell = ({ value }) => (
   <span className="inline-flex min-w-12 justify-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
@@ -111,49 +118,59 @@ const createPerformanceReportPdf = ({
     });
   };
 
+  const instituteBaselineY = 18;
+  const dividerY = drawInstituteHeader(doc, {
+    y: instituteBaselineY,
+    fontSize: 17,
+    withDivider: true,
+  });
+  const headerBlockY = dividerY + 12;
+
   doc.setFillColor(...teal);
-  doc.roundedRect(marginX, 28, 42, 42, 6, 6, "F");
+  doc.roundedRect(marginX, headerBlockY, 42, 42, 6, 6, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("FRII", marginX + 21, 54, { align: "center" });
-
-  doc.setTextColor(...teal);
-  doc.setFontSize(9);
-  doc.text("FRII Teacher Platform", marginX + 54, 39);
+  doc.text("FRII", marginX + 21, headerBlockY + 26, { align: "center" });
 
   doc.setTextColor(...slate);
-  doc.setFontSize(21);
-  doc.text("Class Performance Report", marginX + 54, 60);
+  doc.setFontSize(18);
+  doc.text("Class Performance Report", marginX + 54, headerBlockY + 18);
 
   doc.setTextColor(51, 65, 85);
   doc.setFontSize(10);
-  doc.text(`Campus/Shift: ${campusName}`, marginX + 54, 76);
+  doc.text(`Campus/Shift: ${campusName}`, marginX + 54, headerBlockY + 36);
 
   const metaWidth = 176;
   const metaX = pageWidth - marginX - metaWidth;
   doc.setDrawColor(...line);
   doc.setLineWidth(0.6);
-  doc.roundedRect(metaX, 30, metaWidth, 60, 4, 4, "S");
+  doc.roundedRect(metaX, headerBlockY + 2, metaWidth, 60, 4, 4, "S");
 
   doc.setFontSize(7.5);
   doc.setTextColor(...muted);
-  doc.text("Generated", metaX + metaWidth - 12, 43, { align: "right" });
-  doc.text("Prepared by", metaX + metaWidth - 12, 69, { align: "right" });
+  doc.text("Generated", metaX + metaWidth - 12, headerBlockY + 15, {
+    align: "right",
+  });
+  doc.text("Prepared by", metaX + metaWidth - 12, headerBlockY + 41, {
+    align: "right",
+  });
 
   doc.setFontSize(9);
   doc.setTextColor(...slate);
-  doc.text(formatPrintTimestamp(generatedAt), metaX + metaWidth - 12, 55, {
+  doc.text(formatPrintTimestamp(generatedAt), metaX + metaWidth - 12, headerBlockY + 27, {
     align: "right",
   });
-  doc.text(preparedBy, metaX + metaWidth - 12, 81, { align: "right" });
+  doc.text(preparedBy, metaX + metaWidth - 12, headerBlockY + 53, {
+    align: "right",
+  });
 
   doc.setDrawColor(...teal);
   doc.setLineWidth(1.4);
-  doc.line(marginX, 104, pageWidth - marginX, 104);
+  doc.line(marginX, headerBlockY + 68, pageWidth - marginX, headerBlockY + 68);
 
   const cardGap = 8;
-  const cardY = 120;
+  const cardY = headerBlockY + 84;
   const cardHeight = 44;
   const cardWidth = (pageWidth - marginX * 2 - cardGap * 3) / 4;
   [
@@ -178,7 +195,7 @@ const createPerformanceReportPdf = ({
 
   doc.setFontSize(12);
   doc.setTextColor(...slate);
-  doc.text("Teacher Performance Averages", marginX, 188);
+  doc.text("Teacher Performance Averages", marginX, cardY + 68);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -186,12 +203,12 @@ const createPerformanceReportPdf = ({
   doc.text(
     "Scores are calculated from recorded class observations.",
     pageWidth - marginX,
-    188,
+    cardY + 68,
     { align: "right" }
   );
 
   autoTable(doc, {
-    startY: 198,
+    startY: cardY + 78,
     head: [
       [
         "SL",
@@ -229,22 +246,21 @@ const createPerformanceReportPdf = ({
           ],
         ],
     theme: "grid",
-    headStyles: {
+    headStyles: withUniformHeadStyles({
       fillColor: teal,
       textColor: 255,
       fontStyle: "bold",
       fontSize: 8,
       halign: "left",
       lineColor: teal,
-    },
-    styles: {
+    }),
+    styles: getUniformTableStyles({
       cellPadding: { top: 6, right: 7, bottom: 6, left: 7 },
       fontSize: 8.5,
       lineColor: line,
       lineWidth: 0.4,
-      overflow: "linebreak",
       textColor: slate,
-    },
+    }),
     columnStyles: {
       0: { cellWidth: 28, halign: "center" },
       1: { cellWidth: 132 },
@@ -258,15 +274,28 @@ const createPerformanceReportPdf = ({
     alternateRowStyles: {
       fillColor: [248, 250, 252],
     },
-    bodyStyles: {
-      minCellHeight: 22,
-    },
-    didParseCell: (data) => {
-      if (data.section === "body" && data.column.index === 7) {
-        data.cell.styles.fillColor = [236, 253, 245];
-        data.cell.styles.fontStyle = "bold";
-      }
-    },
+    bodyStyles: getUniformBodyStyles(),
+    didParseCell: createUniformRowDidParseCell(doc, {
+      fontSize: 8.5,
+      cellPadding: 7,
+      columnWidths: {
+        0: 28,
+        1: 132,
+        2: 78,
+        3: 48,
+        4: 48,
+        5: 48,
+        6: 48,
+        7: 48,
+      },
+      columnMaxLines: { 1: 2 },
+      afterParse: (data) => {
+        if (data.section === "body" && data.column.index === 7) {
+          data.cell.styles.fillColor = [236, 253, 245];
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+    }),
     margin: { left: marginX, right: marginX, bottom: 46 },
     didDrawPage: (data) => {
       drawFooter(data.pageNumber);
@@ -582,28 +611,31 @@ const PerformanceReportPage = () => {
                   </tr>
                 ) : report?.rows?.length ? (
                   report.rows.map((row) => (
-                    <tr key={row.teacherObjectId} className="hover:bg-slate-50">
-                      <td className="border-b border-slate-100 px-5 py-4">
-                        <p className="text-sm font-bold text-slate-950">
+                    <tr
+                      key={row.teacherObjectId}
+                      className="h-16 hover:bg-slate-50"
+                    >
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2">
+                        <p className="line-clamp-2 text-sm font-bold leading-snug text-slate-950">
                           {row.teacherName}
                         </p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">
+                        <p className="line-clamp-1 text-xs font-medium text-slate-500">
                           {row.teacherId}
                         </p>
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4 text-sm font-semibold">
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2 text-sm font-semibold">
                         {row.totalObservations}
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4">
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2">
                         <RatingCell value={row.presentationAverage} />
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4">
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2">
                         <RatingCell value={row.disciplineAverage} />
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4">
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2">
                         <RatingCell value={row.subjectDepthAverage} />
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4">
+                      <td className="h-16 max-h-16 align-middle border-b border-slate-100 px-5 py-2">
                         <span className="inline-flex min-w-12 justify-center rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800">
                           {row.overallAverage || "-"}
                         </span>
@@ -627,9 +659,9 @@ const PerformanceReportPage = () => {
       </main>
 
       <section className="performance-print" aria-label="Printable performance report">
-        <header className="performance-print-header">
-          <div>
-            <p className="performance-print-kicker">FRII Teacher Platform</p>
+        <header className="performance-print-header performance-print-header-stacked">
+          <div className="performance-print-header-main">
+            <p className="performance-print-institute">{INSTITUTE_NAME}</p>
             <h1>Class Performance Report</h1>
             <p className="performance-print-subtitle">
               Campus/Shift: {selectedCampusName}

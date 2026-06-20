@@ -14,6 +14,7 @@ import {
   deletePerformanceReport,
   getTeacherPerformanceSummary,
 } from "../../api/apiService";
+import { INSTITUTE_NAME } from "../../utils/reportBranding";
 
 // UI/Sections
 import ProfileHeader from "./../sections/ProfileHeader";
@@ -223,6 +224,19 @@ const TeacherProfile = ({ teacherId }) => {
                 margin-top: -5px !important; /* নেগেটিভ মার্জিন দিয়ে টাইটেলকে আরও উপরে তোলা হয়েছে */
               }
               
+              /* --- Institute header --- */
+              .print-institute-name {
+                border-bottom: 1.5px solid #0f766e;
+                color: #0f172a !important;
+                font-size: 18pt !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.01em;
+                line-height: 1.15;
+                margin: 0 0 10px !important;
+                padding-bottom: 2px;
+                text-align: center;
+              }
+              
               /* --- রিপোর্ট টাইটেল সেকশন (ছবি অনুযায়ী) --- */
               .report-title { 
                 border-bottom: 2px solid #1e293b; 
@@ -265,6 +279,9 @@ const TeacherProfile = ({ teacherId }) => {
 
       {/* --- প্রিন্ট টেমপ্লেট --- */}
       <div className="print-container">
+        <p className="print-institute-name mb-4 text-center text-lg font-bold leading-tight text-slate-900">
+          {INSTITUTE_NAME}
+        </p>
         <div className="report-title">
           <div>
             <h1 className="text-2xl font-black uppercase text-slate-900 leading-tight">
@@ -319,6 +336,7 @@ const TeacherProfile = ({ teacherId }) => {
           <thead>
             <tr>
               <th style={{ width: "12%" }}>Year</th>
+              <th style={{ width: "20%" }}>Responsibility Type</th>
               <th>Leave Reason / Narrative</th>
             </tr>
           </thead>
@@ -327,12 +345,13 @@ const TeacherProfile = ({ teacherId }) => {
               grantedLeaves.map((leave) => (
                 <tr key={leave._id}>
                   <td>{leave.year}</td>
+                  <td>{leave.responsibilityType?.name || "—"}</td>
                   <td className="italic">{leave.reason}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="2" className="text-center text-slate-300 italic">
+                <td colSpan="3" className="text-center text-slate-300 italic">
                   No leave nodes indexed
                 </td>
               </tr>

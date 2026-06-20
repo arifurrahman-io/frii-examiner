@@ -151,8 +151,8 @@ export const updateRoutine = (routineId, routineData) =>
   api.put(`/routines/${routineId}`, routineData);
 export const deleteRoutine = (routineId) =>
   api.delete(`/routines/${routineId}`);
-export const deleteRoutinesByYear = (year, password) =>
-  api.delete(`/routines/year/${year}`, { data: { password } });
+export const deleteRoutinesByYear = (year, password, confirmYear) =>
+  api.delete(`/routines/year/${year}`, { data: { password, confirmYear } });
 export const getEligibleTeachers = (filters) =>
   api.get("/routines/filter", { params: filters });
 export const getTeacherRoutines = (teacherId, year) =>

@@ -355,7 +355,10 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {paginatedData.map((row, rowIndex) => (
-              <tr key={rowIndex} className="transition-colors hover:bg-slate-50">
+              <tr
+                key={rowIndex}
+                className="h-14 transition-colors hover:bg-slate-50"
+              >
                 {displayedHeaders.map((key) => {
                   let cellValue = row[key];
                   if (key === "Sl.") {
@@ -365,11 +368,13 @@ const ReportTable = ({ data, reportType, rowsPerPage = 10 }) => {
                   return (
                     <td
                       key={key}
-                      className={`px-5 py-4 text-sm font-medium ${
+                      className={`h-14 max-h-14 align-middle px-5 py-2 text-sm font-medium ${
                         key === "Sl." ? "text-teal-700" : "text-slate-800"
                       }`}
                     >
-                      {displayValue(cellValue)}
+                      <span className="line-clamp-2 leading-snug">
+                        {displayValue(cellValue)}
+                      </span>
                     </td>
                   );
                 })}

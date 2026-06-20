@@ -1,0 +1,287 @@
+.granted-leaves-print-surface {
+  display: none;
+  color: #0f172a;
+  font-family: "Anek Bangla", Arial, Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.35;
+  background: #ffffff;
+}
+
+.granted-leaves-print-surface .performance-print-header {
+  align-items: flex-start;
+  border-bottom: 2px solid #0f766e;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 14px;
+}
+
+.granted-leaves-print-surface .performance-print-header-stacked {
+  align-items: flex-end;
+}
+
+.granted-leaves-print-surface .performance-print-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.granted-leaves-print-surface .performance-print-institute,
+.granted-leaves-print-surface .performance-print-kicker {
+  border-bottom: 1.5px solid #0f766e;
+  color: #0f172a;
+  font-size: 17pt;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  padding-bottom: 2px;
+  text-align: center;
+  text-transform: none;
+}
+
+.granted-leaves-print-surface .performance-print-header h1 {
+  color: #0f172a;
+  font-size: 14pt;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 10px 0 0;
+  text-align: center;
+}
+
+.granted-leaves-print-surface .performance-print-subtitle {
+  color: #475569;
+  font-size: 10pt;
+  font-weight: 500;
+  margin: 6px 0 0;
+  text-align: center;
+}
+
+.granted-leaves-print-surface .performance-print-meta {
+  border: 1px solid #cbd5e1;
+  min-width: 180px;
+  padding: 10px 12px;
+  text-align: right;
+}
+
+.granted-leaves-print-surface .performance-print-meta span {
+  color: #64748b;
+  display: block;
+  font-size: 8.5pt;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.granted-leaves-print-surface .performance-print-meta span:first-child {
+  margin-top: 0;
+}
+
+.granted-leaves-print-surface .performance-print-meta strong {
+  color: #0f172a;
+  display: block;
+  font-size: 9.5pt;
+  margin-top: 2px;
+}
+
+.granted-leaves-print-surface .performance-print-summary {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 0.8fr);
+  gap: 8px;
+  margin: 16px 0 18px;
+}
+
+.granted-leaves-print-surface .performance-print-summary div {
+  border: 1px solid #cbd5e1;
+  padding: 9px 10px;
+}
+
+.granted-leaves-print-surface .performance-print-summary span {
+  color: #64748b;
+  display: block;
+  font-size: 8.5pt;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.granted-leaves-print-surface .performance-print-summary strong {
+  color: #0f172a;
+  display: block;
+  font-size: 12pt;
+}
+
+.granted-leaves-print-surface .performance-print-section-title {
+  align-items: flex-end;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.granted-leaves-print-surface .performance-print-section-title h2 {
+  color: #0f172a;
+  font-size: 13pt;
+  margin: 0;
+}
+
+.granted-leaves-print-surface .performance-print-section-title p {
+  color: #64748b;
+  font-size: 8.5pt;
+  margin: 0;
+  text-align: right;
+}
+
+.granted-leaves-print-surface .performance-print-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.granted-leaves-print-surface .performance-print-table thead {
+  display: table-header-group;
+}
+
+.granted-leaves-print-surface .performance-print-table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.granted-leaves-print-surface .performance-print-table th,
+.granted-leaves-print-surface .performance-print-table td {
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  padding: 7px 8px;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.granted-leaves-print-surface .performance-print-table th {
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 8.5pt;
+  font-weight: 700;
+  text-align: left;
+  height: 26pt;
+}
+
+.granted-leaves-print-surface .performance-print-table td {
+  font-size: 9pt;
+  height: 26pt;
+  max-height: 26pt;
+  overflow: hidden;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(1),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(1),
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(5),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(5),
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(6),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(6),
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(8),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(8) {
+  text-align: center;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(2),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(2),
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(7),
+.granted-leaves-print-surface .granted-leaves-print-table td:nth-child(7) {
+  text-align: left;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(1) {
+  width: 34px;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(2) {
+  width: 16%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(3) {
+  width: 10%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(4) {
+  width: 12%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(5) {
+  width: 12%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(6) {
+  width: 7%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(7) {
+  width: 24%;
+}
+
+.granted-leaves-print-surface .granted-leaves-print-table th:nth-child(8) {
+  width: 10%;
+}
+
+.granted-leaves-print-surface .performance-print-table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.granted-leaves-print-surface .performance-print-empty {
+  color: #64748b;
+  font-weight: 700;
+  padding: 22px;
+  text-align: center;
+}
+
+.granted-leaves-print-surface .performance-print-footer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 42px;
+  page-break-inside: avoid;
+}
+
+.granted-leaves-print-surface .performance-print-footer div {
+  border-top: 1px solid #334155;
+  padding-top: 7px;
+}
+
+.granted-leaves-print-surface .performance-print-footer span {
+  color: #334155;
+  font-size: 9pt;
+  font-weight: 700;
+}
+
+.granted-leaves-print-export.granted-leaves-print-surface {
+  display: block !important;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 210mm;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  background: #ffffff;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
+  .granted-leaves-page {
+    width: 100% !important;
+    min-height: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .granted-leaves-page .granted-leaves-screen {
+    display: none !important;
+  }
+
+  .granted-leaves-page .granted-leaves-print-surface {
+    display: block !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -644,7 +644,8 @@
   .app-shell,
   .app-shell main,
   .app-shell main > div,
-  .performance-report-page {
+  .performance-report-page,
+  .granted-leaves-page {
     width: 100% !important;
     min-height: auto !important;
     max-width: none !important;
@@ -687,27 +688,44 @@
     padding-bottom: 14px;
   }
 
+  .performance-print-header-stacked {
+    align-items: flex-end;
+  }
+
+  .performance-print-header-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .performance-print-institute,
   .performance-print-kicker {
-    color: #0f766e !important;
-    font-size: 9pt;
-    font-weight: 700;
-    letter-spacing: 0 !important;
-    margin: 0 0 4px;
-    text-transform: uppercase !important;
+    color: #0f172a !important;
+    font-size: 17pt !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.15 !important;
+    margin: 0 0 10px !important;
+    padding-bottom: 2px !important;
+    text-align: center !important;
+    text-transform: none !important;
+    border-bottom: 1.5px solid #0f766e;
   }
 
   .performance-print-header h1 {
     color: #0f172a !important;
-    font-size: 22pt;
-    line-height: 1.1;
-    margin: 0;
+    font-size: 14pt !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    margin: 10px 0 0 !important;
+    text-align: center !important;
   }
 
   .performance-print-subtitle {
-    color: #334155 !important;
-    font-size: 10.5pt;
-    font-weight: 700;
-    margin: 6px 0 0;
+    color: #475569 !important;
+    font-size: 10pt !important;
+    font-weight: 500 !important;
+    margin: 6px 0 0 !important;
+    text-align: center !important;
   }
 
   .performance-print-meta {
@@ -816,6 +834,13 @@
 
   .performance-print-table td {
     font-size: 9pt;
+    height: 26pt;
+    max-height: 26pt;
+    overflow: hidden;
+  }
+
+  .performance-print-table th {
+    height: 26pt;
   }
 
   .performance-print-table th:nth-child(1),

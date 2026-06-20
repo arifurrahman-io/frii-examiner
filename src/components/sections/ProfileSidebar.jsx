@@ -101,9 +101,16 @@ const ProfileSidebar = ({
               className="group rounded-lg border border-slate-200 bg-white p-4"
             >
               <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">
-                  {leave.year}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">
+                    {leave.year}
+                  </span>
+                  {leave.responsibilityType?.name && (
+                    <span className="rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">
+                      {leave.responsibilityType.name}
+                    </span>
+                  )}
+                </div>
                 {isAdmin && (
                   <button
                     type="button"

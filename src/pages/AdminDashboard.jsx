@@ -388,9 +388,8 @@ const DangerZone = ({
             Delete complete routine
           </h3>
           <p className="mt-1 max-w-2xl text-sm font-medium text-slate-500">
-            This removes every routine entry for {year}. Current dashboard total:
-            {" "}
-            {formatNumber(responsibilities)} ongoing duties.
+            Permanently removes every routine entry for {year}. Admin password
+            and year confirmation are required before deletion.
           </p>
         </div>
       </div>
@@ -410,14 +409,24 @@ const RoutineDeleteConfirmModal = ({
   isOpen,
   year,
   responsibilities,
+  confirmYear,
   password,
   error,
   deleting,
   onClose,
   onConfirm,
+  onConfirmYearChange,
   onPasswordChange,
 }) => {
   if (!isOpen) return null;
+
+  const yearMatches = String(confirmYear).trim() === String(year);
+  const canDelete = Boolean(password.trim()) && yearMatches;
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (canDelete && !deleting) onConfirm();
+  };
 
   return (
     <div
@@ -467,7 +476,8 @@ const RoutineDeleteConfirmModal = ({
 
           <p className="text-sm font-medium leading-6 text-slate-600">
             This will permanently remove every routine record for the selected
-            academic year. The dashboard will refresh after deletion.
+            academic year. You must confirm the year and verify your admin
+            password before deletion starts.
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -492,38 +502,65 @@ const RoutineDeleteConfirmModal = ({
           </div>
 
           <div className="mt-5 flex gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3">
-            <FaExclamationTriangle className="mt-0.5 flex-none text-rose-600" />
+            <FaShieldAlt className="mt-0.5 flex-none text-rose-600" />
             <p className="text-sm font-medium leading-5 text-rose-700">
-              This action cannot be undone from the dashboard.
+              Re-enter the academic year and your admin password to authorize
+              this permanent deletion.
             </p>
           </div>
 
-          <div className="mt-5">
-            <label
-              htmlFor="routine-delete-password"
-              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800"
-            >
-              <FaLock size={13} className="text-slate-500" />
-              Confirm with your admin password
-            </label>
-            <input
-              id="routine-delete-password"
-              type="password"
-              value={password}
-              onChange={(event) => onPasswordChange(event.target.value)}
-              disabled={deleting}
-              autoComplete="current-password"
-              className={`w-full rounded-lg border bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
-                error ? "border-rose-300" : "border-slate-300"
-              }`}
-              placeholder="Enter admin password"
-            />
-            {error && (
-              <p className="mt-2 text-sm font-semibold text-rose-600">
-                {error}
-              </p>
-            )}
-          </div>
+          <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+            <div>
+              <label
+                htmlFor="routine-delete-year"
+                className="mb-2 block text-sm font-semibold text-slate-800"
+              >
+                Type <span className="font-black text-slate-950">{year}</span> to
+                confirm
+              </label>
+              <input
+                id="routine-delete-year"
+                type="text"
+                inputMode="numeric"
+                value={confirmYear}
+                onChange={(event) => onConfirmYearChange(event.target.value)}
+                disabled={deleting}
+                autoComplete="off"
+                className={`w-full rounded-lg border bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                  confirmYear.trim() && !yearMatches
+                    ? "border-rose-300"
+                    : "border-slate-300"
+                }`}
+                placeholder={`Enter ${year}`}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="routine-delete-password"
+                className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800"
+              >
+                <FaLock size={13} className="text-slate-500" />
+                Admin password
+              </label>
+              <input
+                id="routine-delete-password"
+                type="password"
+                value={password}
+                onChange={(event) => onPasswordChange(event.target.value)}
+                disabled={deleting}
+                autoComplete="current-password"
+                className={`w-full rounded-lg border bg-white px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                  error ? "border-rose-300" : "border-slate-300"
+                }`}
+                placeholder="Enter admin password"
+              />
+              {error && (
+                <p className="mt-2 text-sm font-semibold text-rose-600">
+                  {error}
+                </p>
+              )}
+            </div>
 
           <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
@@ -535,9 +572,8 @@ const RoutineDeleteConfirmModal = ({
               Keep routine
             </button>
             <button
-              type="button"
-              onClick={onConfirm}
-              disabled={deleting || !password.trim()}
+              type="submit"
+              disabled={deleting || !canDelete}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {deleting ? (
@@ -553,6 +589,7 @@ const RoutineDeleteConfirmModal = ({
               )}
             </button>
           </div>
+          </form>
         </div>
       </div>
     </div>
@@ -575,6 +612,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [deletingRoutineYear, setDeletingRoutineYear] = useState(false);
   const [routineDeleteModalOpen, setRoutineDeleteModalOpen] = useState(false);
+  const [routineDeleteConfirmYear, setRoutineDeleteConfirmYear] = useState("");
   const [routineDeletePassword, setRoutineDeletePassword] = useState("");
   const [routineDeletePasswordError, setRoutineDeletePasswordError] = useState("");
   const [data, setData] = useState({
@@ -626,9 +664,17 @@ const AdminDashboard = () => {
   }, [selectedYear, fetchData]);
 
   const handleDeleteRoutineYear = async () => {
-    const password = routineDeletePassword;
+    const password = routineDeletePassword.trim();
+    const confirmYear = routineDeleteConfirmYear.trim();
 
-    if (!password.trim()) {
+    if (confirmYear !== String(selectedYear)) {
+      setRoutineDeletePasswordError(
+        `Type ${selectedYear} exactly to confirm this deletion.`
+      );
+      return;
+    }
+
+    if (!password) {
       setRoutineDeletePasswordError("Enter your admin password to continue.");
       return;
     }
@@ -636,12 +682,17 @@ const AdminDashboard = () => {
     setRoutineDeletePasswordError("");
     setDeletingRoutineYear(true);
     try {
-      const { data: result } = await deleteRoutinesByYear(selectedYear, password);
+      const { data: result } = await deleteRoutinesByYear(
+        selectedYear,
+        password,
+        confirmYear
+      );
       toast.success(
         `${result.assignmentsDeleted || 0} routine entries deleted for ${selectedYear}.`
       );
       fetchData(selectedYear);
       setRoutineDeleteModalOpen(false);
+      setRoutineDeleteConfirmYear("");
       setRoutineDeletePassword("");
     } catch (error) {
       const message =
@@ -656,6 +707,7 @@ const AdminDashboard = () => {
   const closeRoutineDeleteModal = () => {
     if (deletingRoutineYear) return;
     setRoutineDeleteModalOpen(false);
+    setRoutineDeleteConfirmYear("");
     setRoutineDeletePassword("");
     setRoutineDeletePasswordError("");
   };
@@ -908,6 +960,7 @@ const AdminDashboard = () => {
                 deleting={deletingRoutineYear}
                 responsibilities={data.totals.responsibilities}
                 onDelete={() => {
+                  setRoutineDeleteConfirmYear("");
                   setRoutineDeletePassword("");
                   setRoutineDeletePasswordError("");
                   setRoutineDeleteModalOpen(true);
@@ -951,11 +1004,16 @@ const AdminDashboard = () => {
         isOpen={routineDeleteModalOpen}
         year={selectedYear}
         responsibilities={data.totals.responsibilities}
+        confirmYear={routineDeleteConfirmYear}
         password={routineDeletePassword}
         error={routineDeletePasswordError}
         deleting={deletingRoutineYear}
         onClose={closeRoutineDeleteModal}
         onConfirm={handleDeleteRoutineYear}
+        onConfirmYearChange={(value) => {
+          setRoutineDeleteConfirmYear(value);
+          if (routineDeletePasswordError) setRoutineDeletePasswordError("");
+        }}
         onPasswordChange={(value) => {
           setRoutineDeletePassword(value);
           if (routineDeletePasswordError) setRoutineDeletePasswordError("");
