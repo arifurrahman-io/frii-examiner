@@ -1037,7 +1037,25 @@ const ReportViewPage = () => {
                     Summary columns
                   </p>
                   <div className="grid max-h-52 grid-cols-1 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2">
-                    {masterData.types.map((type) => (
+                    {[...masterData.types]
+                      .sort((a, b) => {
+                        const order = [
+                          "Q-HY",
+                          "E-HY",
+                          "Q-Pre-Test",
+                          "E-Pre-Test",
+                          "Q-Test",
+                          "E-Test",
+                          "Q-Annual",
+                          "E-Annual",
+                        ];
+                        let indexA = order.indexOf(a.name);
+                        let indexB = order.indexOf(b.name);
+                        if (indexA === -1) indexA = 999;
+                        if (indexB === -1) indexB = 999;
+                        return indexA - indexB;
+                      })
+                      .map((type) => (
                       <label
                         key={type._id}
                         className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3"
