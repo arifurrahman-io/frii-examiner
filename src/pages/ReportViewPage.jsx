@@ -35,6 +35,7 @@ import {
   getExaminerExchangeDates,
   getReportData,
   getResponsibilityTypes,
+  getSubjects,
   saveExaminerExchangeDates,
 } from "../api/apiService";
 
@@ -52,6 +53,12 @@ const reportTypes = [
     label: "Detailed",
     description: "Assignment level duty records",
     icon: FaTable,
+  },
+  {
+    id: "SUBJECT_WISE_TEACHERS",
+    label: "Subject Wise",
+    description: "Teachers assigned by selected subjects",
+    icon: FaBookOpen,
   },
   {
     id: "UNASSIGNED_TEACHERS",
@@ -203,7 +210,7 @@ const FilterMultiSelect = ({
 };
 
 const ReportTypeTabs = ({ activeType, onChange }) => (
-  <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
     {reportTypes.map((item) => {
       const Icon = item.icon;
       const active = activeType === item.id;
@@ -287,6 +294,18 @@ const getHeaders = (reportType) => {
     ];
   }
 
+  if (reportType === "SUBJECT_WISE_TEACHERS") {
+    return [
+      "Sl.",
+      "SUBJECT",
+      "CLASS",
+      "RESPONSIBILITY_TYPE",
+      "TEACHER",
+      "PHONE",
+      "CAMPUS",
+    ];
+  }
+
   return ["Sl.", "RESPONSIBILITY_TYPE", "CLASS", "SUBJECT", "TEACHER", "CAMPUS"];
 };
 
@@ -298,6 +317,7 @@ const headerLabel = (key) => {
     TEACHER: "Teacher",
     CAMPUS: "Campus",
     TEACHERID: "Teacher ID",
+    PHONE: "Phone",
     YEAR: "Year",
     CLASSES: "Class",
     RESPONSIBILITY_TYPE: "Duty Type",
@@ -478,11 +498,16 @@ const ReportViewPage = () => {
   const [selectedDetailedTypeIds, setSelectedDetailedTypeIds] = useState([]);
   const [selectedUnassignedTypeIds, setSelectedUnassignedTypeIds] = useState([]);
   const [selectedUnassignedClassIds, setSelectedUnassignedClassIds] = useState([]);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
+  const [selectedSubjectWiseTypeIds, setSelectedSubjectWiseTypeIds] = useState(
+    []
+  );
   const [reportData, setReportData] = useState([]);
   const [masterData, setMasterData] = useState({
     classes: [],
     types: [],
     branches: [],
+    subjects: [],
   });
   const [loading, setLoading] = useState(false);
   const [fetchTrigger, setFetchTrigger] = useState(0);
@@ -502,16 +527,18 @@ const ReportViewPage = () => {
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
-        const [classesRes, typesRes, branchesRes] = await Promise.all([
+        const [classesRes, typesRes, branchesRes, subjectsRes] = await Promise.all([
           getClasses(),
           getResponsibilityTypes(),
           getBranches(),
+          getSubjects(),
         ]);
         const types = typesRes.data || [];
         setMasterData({
           classes: classesRes.data || [],
           types,
           branches: branchesRes.data || [],
+          subjects: subjectsRes.data || [],
         });
         setSelectedRespTypes(types.map((type) => type.name));
         setFetchTrigger((value) => value + 1);
@@ -528,8 +555,14 @@ const ReportViewPage = () => {
 
     const isUnassignedReport = filters.reportType === "UNASSIGNED_TEACHERS";
     const isDetailedReport = filters.reportType === "DETAILED_ASSIGNMENT";
+    const isSubjectWiseReport = filters.reportType === "SUBJECT_WISE_TEACHERS";
 
     if (isUnassignedReport && selectedUnassignedTypeIds.length === 0) {
+      setReportData([]);
+      return;
+    }
+
+    if (isSubjectWiseReport && selectedSubjectIds.length === 0) {
       setReportData([]);
       return;
     }
@@ -551,6 +584,15 @@ const ReportViewPage = () => {
           typeId: "",
           typeIds: selectedDetailedTypeIds.join(","),
         };
+      } else if (isSubjectWiseReport) {
+        reportFilters = {
+          ...filters,
+          status: "Assigned",
+          typeId: "",
+          typeIds: selectedSubjectWiseTypeIds.join(","),
+          subjectId: "",
+          subjectIds: selectedSubjectIds.join(","),
+        };
       }
       const { data } = await getReportData(reportFilters);
       setReportData(Array.isArray(data) ? data : []);
@@ -563,6 +605,8 @@ const ReportViewPage = () => {
     filters,
     fetchTrigger,
     selectedDetailedTypeIds,
+    selectedSubjectIds,
+    selectedSubjectWiseTypeIds,
     selectedUnassignedClassIds,
     selectedUnassignedTypeIds,
   ]);
@@ -646,6 +690,17 @@ const ReportViewPage = () => {
       exportFilters.typeIds = selectedUnassignedTypeIds.join(",");
       exportFilters.classId = "";
       exportFilters.classIds = selectedUnassignedClassIds.join(",");
+    } else if (exportType === "EXPORT_SUBJECT_WISE") {
+      if (selectedSubjectIds.length === 0) {
+        setExportError("Select at least one subject.");
+        return;
+      }
+      exportFilters.reportType = "SUBJECT_WISE_TEACHERS";
+      exportFilters.status = "Assigned";
+      exportFilters.typeId = "";
+      exportFilters.typeIds = selectedSubjectWiseTypeIds.join(",");
+      exportFilters.subjectId = "";
+      exportFilters.subjectIds = selectedSubjectIds.join(",");
     } else if (exportType === "EXPORT_INACTIVE_NO_ROUTINE") {
       exportFilters.reportType = "INACTIVE_NO_ROUTINE";
       exportFilters.typeId = "";
@@ -804,8 +859,15 @@ const ReportViewPage = () => {
   const selectedUnassignedClasses = masterData.classes.filter((item) =>
     selectedUnassignedClassIds.includes(item._id)
   );
+  const selectedSubjects = masterData.subjects.filter((item) =>
+    selectedSubjectIds.includes(item._id)
+  );
   const activeClassLabel =
-    filters.reportType === "UNASSIGNED_TEACHERS"
+    filters.reportType === "SUBJECT_WISE_TEACHERS"
+      ? selectedSubjects.length > 0
+        ? `${selectedSubjects.map((item) => item.name).join(", ")} selected`
+        : "Select subjects to generate report"
+      : filters.reportType === "UNASSIGNED_TEACHERS"
       ? selectedUnassignedClasses.length > 0
         ? `${selectedUnassignedClasses.map((item) => item.name).join(", ")} class filter active`
         : "All routine classes included"
@@ -895,6 +957,37 @@ const ReportViewPage = () => {
                 onClear={() => setSelectedDetailedTypeIds([])}
                 allLabel="All duty types"
                 emptyLabel="Select duty types"
+              />
+            )}
+            {filters.reportType === "SUBJECT_WISE_TEACHERS" && (
+              <FilterMultiSelect
+                label="Duty types"
+                items={masterData.types}
+                selectedIds={selectedSubjectWiseTypeIds}
+                onToggle={toggleTypeId(setSelectedSubjectWiseTypeIds)}
+                onSelectAll={() =>
+                  selectAllTypeIds(setSelectedSubjectWiseTypeIds)
+                }
+                onClear={() => setSelectedSubjectWiseTypeIds([])}
+                allLabel="All duty types"
+                emptyLabel="Select duty types"
+              />
+            )}
+            {filters.reportType === "SUBJECT_WISE_TEACHERS" && (
+              <FilterMultiSelect
+                label="Subjects"
+                items={masterData.subjects}
+                selectedIds={selectedSubjectIds}
+                onToggle={toggleTypeId(setSelectedSubjectIds)}
+                onSelectAll={() =>
+                  setSelectedSubjectIds(
+                    masterData.subjects.map((item) => item._id)
+                  )
+                }
+                onClear={() => setSelectedSubjectIds([])}
+                allLabel="All subjects"
+                emptyLabel="Select subjects"
+                required
               />
             )}
             {filters.reportType === "UNASSIGNED_TEACHERS" && (
@@ -990,6 +1083,21 @@ const ReportViewPage = () => {
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-500">
                   Unassigned teacher reports need a duty type target.
+                </p>
+              </div>
+            </div>
+          ) : filters.reportType === "SUBJECT_WISE_TEACHERS" &&
+            selectedSubjectIds.length === 0 ? (
+            <div className="grid min-h-[320px] place-items-center rounded-lg border border-dashed border-slate-300 bg-white px-4 text-center">
+              <div>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-slate-400">
+                  <FaBookOpen size={24} />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-slate-600">
+                  Select at least one subject
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Subject-wise reports list assigned teachers for chosen subjects.
                 </p>
               </div>
             </div>
@@ -1099,6 +1207,18 @@ const ReportViewPage = () => {
               >
                 <FaFileExport />
                 {exportLoading ? "Exporting..." : "Export Unassigned Teachers"}
+              </button>
+            ) : filters.reportType === "SUBJECT_WISE_TEACHERS" ? (
+              <button
+                type="button"
+                onClick={() => handleExportAction("EXPORT_SUBJECT_WISE")}
+                disabled={exportLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <FaFileExport />
+                {exportLoading
+                  ? "Exporting..."
+                  : "Export Subject-wise Teachers"}
               </button>
             ) : filters.reportType === "INACTIVE_NO_ROUTINE" ? (
               <button
