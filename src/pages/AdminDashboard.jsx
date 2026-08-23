@@ -660,7 +660,12 @@ const AdminDashboard = () => {
         recentLeaves: leaves.data || [],
       });
     } catch (error) {
-      toast.error("Dashboard sync failed.");
+      const message =
+        error.response?.data?.message ||
+        (error.response?.status
+          ? `Dashboard sync failed (${error.response.status}).`
+          : "Dashboard sync failed. Check API connection.");
+      toast.error(message);
     } finally {
       setLoading(false);
     }
