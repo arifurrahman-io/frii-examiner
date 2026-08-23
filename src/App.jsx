@@ -15,6 +15,12 @@ import TeacherViewPage from "./pages/TeacherViewPage";
 import LoginPage from "./pages/LoginPage";
 import GrantedLeavesPage from "./pages/GrantedLeavesPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import IncrementEvaluationPage from "./pages/IncrementEvaluationPage";
+import IncrementEvaluatePage from "./pages/IncrementEvaluatePage";
+import PayrollAttendancePage from "./pages/PayrollAttendancePage";
+import PayrollSalaryPage from "./pages/PayrollSalaryPage";
+import PayrollClBenefitPage from "./pages/PayrollClBenefitPage";
+import PayrollProvidentFundPage from "./pages/PayrollProvidentFundPage";
 
 function App() {
   return (
@@ -28,7 +34,7 @@ function App() {
             element={
               <ProtectedRoute
                 element={<AdminDashboard />}
-                allowedRoles={["admin", "head_teacher", "incharge"]}
+                allowedRoles={["admin", "head_teacher", "coordinator", "incharge", "executive"]}
               />
             }
           />
@@ -58,7 +64,7 @@ function App() {
             element={
               <ProtectedRoute
                 element={<RoutineSetupPage />}
-                allowedRoles={["admin", "incharge"]}
+                allowedRoles={["admin", "head_teacher", "incharge", "executive"]}
               />
             }
           />
@@ -68,7 +74,7 @@ function App() {
             element={
               <ProtectedRoute
                 element={<TeacherViewPage />}
-                allowedRoles={["admin", "head_teacher", "incharge"]}
+                allowedRoles={["admin", "head_teacher", "coordinator", "incharge", "executive"]}
               />
             }
           />
@@ -78,7 +84,7 @@ function App() {
             element={
               <ProtectedRoute
                 element={<TeacherViewPage />}
-                allowedRoles={["admin", "head_teacher", "incharge"]}
+                allowedRoles={["admin", "head_teacher", "coordinator", "incharge", "executive"]}
               />
             }
           />
@@ -114,11 +120,71 @@ function App() {
           />
 
           <Route
+            path="/increment"
+            element={
+              <ProtectedRoute
+                element={<IncrementEvaluationPage />}
+                allowedRoles={["admin", "head_teacher", "coordinator", "incharge"]}
+              />
+            }
+          />
+
+          <Route
+            path="/increment/:teacherId"
+            element={
+              <ProtectedRoute
+                element={<IncrementEvaluatePage />}
+                allowedRoles={["admin", "head_teacher", "coordinator", "incharge"]}
+              />
+            }
+          />
+
+          <Route
             path="/leaves/granted"
             element={
               <ProtectedRoute
                 element={<GrantedLeavesPage />}
                 allowedRoles={["admin", "incharge"]}
+              />
+            }
+          />
+
+          <Route
+            path="/payroll/attendance"
+            element={
+              <ProtectedRoute
+                element={<PayrollAttendancePage />}
+                allowedRoles={["admin", "head_teacher", "executive"]}
+              />
+            }
+          />
+
+          <Route
+            path="/payroll/salary"
+            element={
+              <ProtectedRoute
+                element={<PayrollSalaryPage />}
+                allowedRoles={["admin", "head_teacher", "executive"]}
+              />
+            }
+          />
+
+          <Route
+            path="/payroll/cl-benefit"
+            element={
+              <ProtectedRoute
+                element={<PayrollClBenefitPage />}
+                allowedRoles={["admin", "head_teacher", "executive"]}
+              />
+            }
+          />
+
+          <Route
+            path="/payroll/provident-fund"
+            element={
+              <ProtectedRoute
+                element={<PayrollProvidentFundPage />}
+                allowedRoles={["admin", "head_teacher", "executive"]}
               />
             }
           />

@@ -265,4 +265,46 @@ export const addUser = (data) => api.post("/users/add", data);
 export const updateUser = (id, data) => api.put(`/users/update/${id}`, data);
 export const deleteUser = (id) => api.delete(`/users/delete/${id}`);
 
+// --- Increment evaluation & letters ---
+export const getIncrementMeta = () => api.get("/increment/meta");
+export const getIncrementSettings = (params) =>
+  api.get("/increment/settings", { params });
+export const updateIncrementSettings = (payload) =>
+  api.put("/increment/settings", payload);
+export const getIncrementCriteria = (params) =>
+  api.get("/increment/criteria", { params });
+export const getIncrementTeachers = (params) =>
+  api.get("/increment/teachers", { params });
+export const getTeacherIncrementSummary = (teacherId, params) =>
+  api.get(`/increment/teachers/${teacherId}/summary`, { params });
+export const getTeacherIncrementLetter = (teacherId, params) =>
+  api.get(`/increment/teachers/${teacherId}/letter`, { params });
+export const createIncrementEvaluation = (payload) =>
+  api.post("/increment/evaluations", payload);
+export const updateIncrementEvaluation = (id, payload) =>
+  api.put(`/increment/evaluations/${id}`, payload);
+export const deleteIncrementEvaluation = (id) =>
+  api.delete(`/increment/evaluations/${id}`);
+export const updateTeacherSalary = (teacherId, payload) =>
+  api.put(`/increment/teachers/${teacherId}/salary`, payload);
+export const upsertIncrementLetter = (payload) =>
+  api.put("/increment/letters", payload);
+export const getIncrementLetterBundle = (params) =>
+  api.get("/increment/letters/bundle", { params });
+
+export const getPayrollAttendance = (params) =>
+  api.get("/payroll/attendance", { params });
+export const savePayrollAttendance = (payload) =>
+  api.put("/payroll/attendance", payload);
+export const getPayrollSalaryReport = (params) =>
+  api.get("/payroll/salary-report", { params });
+export const getPayrollPayslip = (teacherId, params) =>
+  api.get(`/payroll/payslip/${teacherId}`, { params });
+export const getPayrollClBenefit = (params) =>
+  api.get("/payroll/cl-benefit", { params });
+export const getPayrollProvidentFund = (params) =>
+  api.get("/payroll/provident-fund", { params });
+export const savePayrollProvidentFund = (payload) =>
+  api.put("/payroll/provident-fund", payload);
+
 export default api;

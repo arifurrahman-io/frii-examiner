@@ -1,0 +1,550 @@
+.increment-letter-page {
+  box-sizing: border-box;
+  display: none;
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+  color: #111827;
+}
+
+.il-preview-modal {
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  position: fixed;
+  z-index: 80;
+}
+
+.il-preview-toolbar {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  justify-content: space-between;
+  padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+.il-preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.il-preview-subtitle {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 2px 0 0;
+}
+
+.il-preview-zoom,
+.il-preview-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.il-preview-icon-btn,
+.il-preview-text-btn,
+.il-preview-print-btn {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #f8fafc;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.il-preview-icon-btn {
+  width: 36px;
+}
+
+.il-preview-print-btn {
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
+.il-preview-icon-btn:hover,
+.il-preview-text-btn:hover,
+.il-preview-print-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.il-preview-print-btn:hover {
+  background: #0d9488;
+}
+
+.il-preview-zoom-label {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: center;
+}
+
+.il-preview-slider {
+  accent-color: #2dd4bf;
+  max-width: 160px;
+  min-width: 90px;
+  width: 22vw;
+}
+
+.il-preview-viewport {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.il-preview-canvas {
+  margin: 0 auto;
+}
+
+.il-preview-stage {
+  height: 297mm;
+  transform-origin: top left;
+  width: 210mm;
+}
+
+.il-preview-stage .increment-letter-page {
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  display: block;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .il-preview-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .il-preview-zoom,
+  .il-preview-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .il-preview-slider {
+    flex: 1;
+    max-width: none;
+  }
+}
+
+.il-letter {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 297mm;
+  padding: 12mm 20mm 10mm 22mm;
+  color: #111827;
+  font-family: "Anek Bangla", Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  font-weight: 400;
+  font-feature-settings: "kern" 1, "liga" 1;
+  line-height: 1.38;
+  text-align: justify;
+}
+
+.il-letter p {
+  margin: 0;
+}
+
+.il-letter-main {
+  flex: 0 0 auto;
+}
+
+.il-masthead {
+  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22mm;
+  column-gap: 10px;
+  margin-bottom: 2px;
+}
+
+.il-masthead-copy {
+  min-width: 0;
+}
+
+.il-logo {
+  display: block;
+  height: auto;
+  object-fit: contain;
+  width: 22mm;
+}
+
+.il-date,
+.il-to,
+.il-name,
+.il-meta,
+.il-salam {
+  text-align: left;
+}
+
+.il-date {
+  margin-bottom: 6px;
+}
+
+.il-name {
+  font-weight: 600;
+}
+
+.il-subject {
+  font-weight: 700;
+  margin: 9px 0 7px !important;
+  text-align: left;
+}
+
+.il-salam {
+  margin-bottom: 7px !important;
+}
+
+.il-body {
+  margin-bottom: 8px !important;
+}
+
+.il-criterion {
+  margin: 0 0 5px;
+  page-break-inside: avoid;
+}
+
+.il-criterion-head {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58mm;
+  column-gap: 8px;
+  padding-left: 8mm;
+}
+
+.il-criterion-title {
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.il-money {
+  align-items: flex-end;
+  align-self: end;
+  border-bottom: 1.5px dotted #334155;
+  display: flex;
+  justify-content: flex-end;
+  min-height: 1.45em;
+  min-width: 0;
+  padding: 0 1px 0;
+}
+
+.il-money-fill {
+  background: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  margin-bottom: 3px;
+  padding: 0 3px 0 8px;
+  position: relative;
+  white-space: nowrap;
+}
+
+.il-consider {
+  color: #1f2937;
+  font-size: 10.2pt;
+  line-height: 1.32;
+  margin: 1px 0 0 !important;
+  padding-left: 8mm;
+  text-align: justify;
+}
+
+.il-section {
+  margin: 7px 0 3px;
+}
+
+.il-section-title,
+.il-section-lead {
+  font-weight: 700;
+  margin: 0 0 4px !important;
+  text-align: justify;
+}
+
+.il-en {
+  font-weight: 700;
+}
+
+.il-kv {
+  align-items: end;
+  display: grid;
+  grid-template-columns: 62mm 10px minmax(40px, 1fr);
+  column-gap: 2px;
+  margin: 2px 0;
+}
+
+.il-kv-label {
+  line-height: 1.45;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.il-kv-colon {
+  text-align: left;
+}
+
+.il-salary-note {
+  margin: 7px 0 0 !important;
+}
+
+.il-close {
+  margin: 7px 0 0 !important;
+}
+
+.il-rate {
+  margin: 0 0 5px;
+  page-break-inside: avoid;
+}
+
+.il-rate-line {
+  line-height: 1.38;
+  margin: 0 0 3px !important;
+  text-align: justify;
+}
+
+.il-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  padding-left: 6mm;
+}
+
+.il-check {
+  align-items: center;
+  display: inline-flex;
+  font-size: 9.6pt;
+  font-weight: 500;
+  gap: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.il-check-box {
+  align-items: center;
+  border: 1.15px solid #111827;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 8pt;
+  font-weight: 700;
+  height: 3.2mm;
+  justify-content: center;
+  line-height: 1;
+  width: 3.2mm;
+}
+
+.il-letter--rated {
+  font-size: 10.7pt;
+  line-height: 1.36;
+}
+
+.il-letter--rated .il-body {
+  margin-bottom: 6px !important;
+}
+
+.il-sign {
+  flex: 0 0 auto;
+  margin-top: 7mm;
+  padding-top: 0;
+  padding-bottom: 0;
+  page-break-inside: avoid;
+  text-align: left;
+}
+
+.il-sign p {
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.il-sign-img {
+  display: block;
+  height: 12mm;
+  margin: 0 0 1mm;
+  object-fit: contain;
+  object-position: left bottom;
+  width: 26mm;
+}
+
+.il-letter--compact {
+  font-size: 11pt;
+  line-height: 1.38;
+}
+
+.il-letter--compact .il-criterion {
+  margin-bottom: 5px;
+}
+
+.il-letter--compact .il-consider {
+  font-size: 10.2pt;
+  line-height: 1.32;
+}
+
+.il-letter--compact .il-sign-img {
+  height: 12mm;
+}
+
+.il-letter--compact .il-logo {
+  width: 20mm;
+}
+
+.il-letter-capture {
+  background: #ffffff;
+  height: 297mm;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  width: 210mm;
+  z-index: 2147483000;
+}
+
+.il-letter-capture .increment-letter-page {
+  background: #ffffff;
+  box-shadow: none;
+  display: block !important;
+  height: 297mm;
+  margin: 0;
+  max-height: 297mm;
+  min-height: 297mm;
+  overflow: hidden;
+  width: 210mm;
+}
+
+.il-letter-capture .il-letter {
+  min-height: 0;
+  padding: 12mm 20mm 10mm 22mm;
+}
+
+.il-letter-progress {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.72);
+  display: grid;
+  inset: 0;
+  justify-items: center;
+  place-items: center;
+  position: fixed;
+  z-index: 2147483646;
+}
+
+.il-letter-progress-card {
+  background: #0f172a;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  color: #f8fafc;
+  min-width: 240px;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.il-letter-progress-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.il-letter-progress-copy {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+@media print {
+  @page increment-letter {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html.increment-letter-print-mode,
+  html.increment-letter-print-mode body,
+  html.increment-letter-print-mode #root {
+    background: #ffffff !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+
+  .increment-letter-print-root {
+    display: block !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .il-preview-modal,
+  .il-letter-capture,
+  .il-letter-progress {
+    display: none !important;
+  }
+
+  .increment-letter-page {
+    display: block !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: hidden;
+    page: increment-letter;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  .increment-letter-page .il-letter {
+    display: flex !important;
+    min-height: 297mm;
+    padding: 12mm 18mm 10mm 20mm;
+    overflow: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .increment-letter-page .il-letter-main {
+    overflow: visible;
+  }
+
+  .increment-letter-page .il-sign {
+    margin-top: 7mm;
+    padding-bottom: 0;
+  }
+
+  .increment-letter-page .il-money {
+    border-bottom: 1.5px dotted #334155 !important;
+  }
+
+  .increment-letter-page .il-check-box {
+    border-color: #111827 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .increment-letter-page .il-logo,
+  .increment-letter-page .il-sign-img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

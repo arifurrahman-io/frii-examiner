@@ -23,6 +23,7 @@ import {
   addUser,
   deleteUser,
   getBranches,
+  getTeachers,
   getUsers,
   updateUser,
 } from "../api/apiService";
@@ -30,6 +31,8 @@ import {
 const roleOptions = [
   { _id: "admin", name: "Admin" },
   { _id: "head_teacher", name: "Head Teacher" },
+  { _id: "coordinator", name: "Branch Coordinator" },
+  { _id: "executive", name: "Executive" },
   { _id: "teacher", name: "Teacher" },
   { _id: "incharge", name: "Incharge" },
 ];
@@ -46,6 +49,18 @@ const roleMeta = {
     icon: FaUserCog,
     badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
     avatar: "bg-indigo-700 text-white",
+  },
+  coordinator: {
+    label: "Coordinator",
+    icon: FaBuilding,
+    badge: "border-amber-200 bg-amber-50 text-amber-800",
+    avatar: "bg-amber-700 text-white",
+  },
+  executive: {
+    label: "Executive",
+    icon: FaUserCog,
+    badge: "border-sky-200 bg-sky-50 text-sky-800",
+    avatar: "bg-sky-700 text-white",
   },
   incharge: {
     label: "Incharge",
@@ -67,6 +82,8 @@ const emptyForm = {
   password: "",
   role: "teacher",
   campus: "",
+  campuses: [],
+  teacherProfile: "",
 };
 
 const getInitials = (name = "") => {
@@ -79,8 +96,12 @@ const getInitials = (name = "") => {
 };
 
 const getCampusName = (user) => {
-  if (user.role !== "incharge") return "Global access";
-  return user.campus?.name || "Unassigned";
+  if (user.role === "incharge") return user.campus?.name || "Unassigned";
+  if (user.role === "coordinator" || user.role === "executive") {
+    const names = (user.campuses || []).map((item) => item.name).filter(Boolean);
+    return names.length ? names.join(", ") : "Unassigned";
+  }
+  return "Global access";
 };
 
 const StatCard = ({ icon: Icon, label, value }) => (
@@ -128,12 +149,19 @@ const UserFormModal = ({
   editingUser,
   formData,
   branches,
+  teachers,
   saving,
   onClose,
   onSubmit,
   onChange,
+  onToggleCampus,
 }) => {
   if (!isOpen) return null;
+
+  const teacherOptions = (teachers || []).map((item) => ({
+    _id: item._id,
+    name: `${item.name} (${item.teacherId})`,
+  }));
 
   return (
     <div
@@ -149,7 +177,7 @@ const UserFormModal = ({
         aria-label="Close user form"
       />
 
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
         <div className="h-1.5 bg-slate-900" />
         <div className="p-6 sm:p-7">
           <div className="mb-6 flex items-start justify-between gap-4">
@@ -230,7 +258,7 @@ const UserFormModal = ({
           </div>
 
           {formData.role === "incharge" && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
               <SelectDropdown
                 label="Assigned campus"
                 options={branches}
@@ -238,8 +266,58 @@ const UserFormModal = ({
                 onChange={(event) => onChange("campus", event.target.value)}
                 placeholder="Select campus"
               />
+              <SelectDropdown
+                label="Linked teacher profile"
+                options={teacherOptions}
+                value={formData.teacherProfile}
+                onChange={(event) =>
+                  onChange("teacherProfile", event.target.value)
+                }
+                placeholder="Select teacher profile"
+              />
             </div>
           )}
+
+          {formData.role === "coordinator" || formData.role === "executive" ? (
+            <div className="mt-4 space-y-4">
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  Assigned campuses (multi)
+                </p>
+                <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
+                  {branches.map((branch) => {
+                    const checked = (formData.campuses || []).includes(
+                      branch._id
+                    );
+                    return (
+                      <label
+                        key={branch._id}
+                        className="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-sm font-semibold text-slate-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => onToggleCampus(branch._id)}
+                        />
+                        {branch.name}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              {formData.role === "coordinator" ? (
+                <SelectDropdown
+                  label="Linked teacher profile"
+                  options={teacherOptions}
+                  value={formData.teacherProfile}
+                  onChange={(event) =>
+                    onChange("teacherProfile", event.target.value)
+                  }
+                  placeholder="Select teacher profile"
+                />
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
@@ -376,6 +454,7 @@ const DeleteUserModal = ({
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -389,12 +468,18 @@ const UserManagementPage = () => {
   const fetchUsersAndBranches = useCallback(async () => {
     setLoading(true);
     try {
-      const [userRes, branchRes] = await Promise.all([
+      const [userRes, branchRes, teacherRes] = await Promise.all([
         getUsers(),
         getBranches(),
+        getTeachers("", 1, 500),
       ]);
       setUsers(Array.isArray(userRes.data) ? userRes.data : []);
       setBranches(Array.isArray(branchRes.data) ? branchRes.data : []);
+      const teacherPayload = teacherRes.data;
+      const teacherList = Array.isArray(teacherPayload)
+        ? teacherPayload
+        : teacherPayload?.teachers || teacherPayload?.data || [];
+      setTeachers(teacherList);
     } catch (error) {
       toast.error(
         error.response?.status === 403
@@ -415,6 +500,8 @@ const UserManagementPage = () => {
       total: users.length,
       admins: users.filter((user) => user.role === "admin").length,
       headTeachers: users.filter((user) => user.role === "head_teacher").length,
+      coordinators: users.filter((user) => user.role === "coordinator").length,
+      executives: users.filter((user) => user.role === "executive").length,
       incharges: users.filter((user) => user.role === "incharge").length,
     }),
     [users]
@@ -425,9 +512,10 @@ const UserManagementPage = () => {
 
     return users.filter((user) => {
       const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const campusText = getCampusName(user);
       const matchesSearch =
         !query ||
-        [user.name, user.email, user.role, user.campus?.name]
+        [user.name, user.email, user.role, campusText]
           .filter(Boolean)
           .some((value) => value.toLowerCase().includes(query));
 
@@ -449,6 +537,9 @@ const UserManagementPage = () => {
       password: "",
       role: user.role || "teacher",
       campus: user.campus?._id || user.campus || "",
+      campuses: (user.campuses || []).map((item) => item._id || item),
+      teacherProfile:
+        user.teacherProfile?._id || user.teacherProfile || "",
     });
     setIsModalOpen(true);
   };
@@ -463,7 +554,27 @@ const UserManagementPage = () => {
       ...prev,
       [field]: value,
       ...(field === "role" && value !== "incharge" ? { campus: "" } : {}),
+      ...(field === "role" &&
+      !["coordinator", "executive"].includes(value)
+        ? { campuses: [] }
+        : {}),
+      ...(field === "role" &&
+      !["incharge", "coordinator"].includes(value)
+        ? { teacherProfile: "" }
+        : {}),
     }));
+  };
+
+  const toggleCampus = (campusId) => {
+    setFormData((prev) => {
+      const current = prev.campuses || [];
+      return {
+        ...prev,
+        campuses: current.includes(campusId)
+          ? current.filter((id) => id !== campusId)
+          : [...current, campusId],
+      };
+    });
   };
 
   const handleSubmit = async () => {
@@ -477,6 +588,18 @@ const UserManagementPage = () => {
       return;
     }
 
+    if (
+      ["coordinator", "executive"].includes(formData.role) &&
+      (!formData.campuses || formData.campuses.length === 0)
+    ) {
+      toast.error(
+        formData.role === "executive"
+          ? "Select at least one campus for executive."
+          : "Select at least one campus for coordinator."
+      );
+      return;
+    }
+
     if (!editingUser && !formData.password) {
       toast.error("Password is required for new users.");
       return;
@@ -484,11 +607,15 @@ const UserManagementPage = () => {
 
     setSaving(true);
     try {
+      const payload = {
+        ...formData,
+        teacherProfile: formData.teacherProfile || null,
+      };
       if (editingUser) {
-        await updateUser(editingUser._id, formData);
+        await updateUser(editingUser._id, payload);
         toast.success("User updated.");
       } else {
-        await addUser(formData);
+        await addUser(payload);
         toast.success("User added.");
       }
       setIsModalOpen(false);
@@ -557,13 +684,18 @@ const UserManagementPage = () => {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <StatCard icon={FaUsers} label="Total Users" value={stats.total} />
           <StatCard icon={FaUserShield} label="Admins" value={stats.admins} />
           <StatCard
             icon={FaUserCog}
             label="Head Teachers"
             value={stats.headTeachers}
+          />
+          <StatCard
+            icon={FaBuilding}
+            label="Executives"
+            value={stats.executives}
           />
           <StatCard
             icon={FaUserCheck}
@@ -610,6 +742,8 @@ const UserManagementPage = () => {
                   <option value="all">All roles</option>
                   <option value="admin">Admin</option>
                   <option value="head_teacher">Head Teacher</option>
+                  <option value="coordinator">Coordinator</option>
+                  <option value="executive">Executive</option>
                   <option value="incharge">Incharge</option>
                   <option value="teacher">Teacher</option>
                 </select>
@@ -778,10 +912,12 @@ const UserManagementPage = () => {
           editingUser={editingUser}
           formData={formData}
           branches={branches}
+          teachers={teachers}
           saving={saving}
           onClose={closeFormModal}
           onSubmit={handleSubmit}
           onChange={updateFormField}
+          onToggleCampus={toggleCampus}
         />
 
         <DeleteUserModal

@@ -498,6 +498,9 @@ const ReportViewPage = () => {
   const [selectedDetailedTypeIds, setSelectedDetailedTypeIds] = useState([]);
   const [selectedUnassignedTypeIds, setSelectedUnassignedTypeIds] = useState([]);
   const [selectedUnassignedClassIds, setSelectedUnassignedClassIds] = useState([]);
+  const [selectedUnassignedYears, setSelectedUnassignedYears] = useState([
+    new Date().getFullYear(),
+  ]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
   const [selectedSubjectWiseTypeIds, setSelectedSubjectWiseTypeIds] = useState(
     []
@@ -557,7 +560,12 @@ const ReportViewPage = () => {
     const isDetailedReport = filters.reportType === "DETAILED_ASSIGNMENT";
     const isSubjectWiseReport = filters.reportType === "SUBJECT_WISE_TEACHERS";
 
-    if (isUnassignedReport && selectedUnassignedTypeIds.length === 0) {
+    if (
+      isUnassignedReport &&
+      (selectedUnassignedTypeIds.length === 0 ||
+        selectedUnassignedYears.length === 0 ||
+        selectedUnassignedClassIds.length === 0)
+    ) {
       setReportData([]);
       return;
     }
@@ -573,6 +581,8 @@ const ReportViewPage = () => {
       if (isUnassignedReport) {
         reportFilters = {
           ...filters,
+          year: selectedUnassignedYears[0] || filters.year,
+          years: selectedUnassignedYears.join(","),
           typeId: "",
           typeIds: selectedUnassignedTypeIds.join(","),
           classId: "",
@@ -609,6 +619,7 @@ const ReportViewPage = () => {
     selectedSubjectWiseTypeIds,
     selectedUnassignedClassIds,
     selectedUnassignedTypeIds,
+    selectedUnassignedYears,
   ]);
 
   useEffect(() => {
@@ -623,6 +634,11 @@ const ReportViewPage = () => {
         ? { status: "Assigned" }
         : { typeId: "", classId: "", status: "" }),
     }));
+    if (reportType === "UNASSIGNED_TEACHERS") {
+      setSelectedUnassignedYears((prev) =>
+        prev.length > 0 ? prev : [new Date().getFullYear()]
+      );
+    }
   };
 
   const handleChange = (event) => {
@@ -681,11 +697,21 @@ const ReportViewPage = () => {
       exportFilters.reportType = "YEARLY_SUMMARY";
       exportFilters.selectedTypes = selectedRespTypes.join(",");
     } else if (exportType === "EXPORT_UNASSIGNED") {
+      if (selectedUnassignedYears.length === 0) {
+        setExportError("Select at least one year.");
+        return;
+      }
       if (selectedUnassignedTypeIds.length === 0) {
         setExportError("Select at least one duty type.");
         return;
       }
+      if (selectedUnassignedClassIds.length === 0) {
+        setExportError("Select at least one class.");
+        return;
+      }
       exportFilters.reportType = "UNASSIGNED_TEACHERS";
+      exportFilters.year = selectedUnassignedYears[0] || filters.year;
+      exportFilters.years = selectedUnassignedYears.join(",");
       exportFilters.typeId = "";
       exportFilters.typeIds = selectedUnassignedTypeIds.join(",");
       exportFilters.classId = "";
@@ -869,8 +895,8 @@ const ReportViewPage = () => {
         : "Select subjects to generate report"
       : filters.reportType === "UNASSIGNED_TEACHERS"
       ? selectedUnassignedClasses.length > 0
-        ? `${selectedUnassignedClasses.map((item) => item.name).join(", ")} class filter active`
-        : "All routine classes included"
+        ? `${selectedUnassignedClasses.map((item) => item.name).join(", ")} selected`
+        : "Select classes to generate report"
       : selectedClass
       ? `${selectedClass.name} class filter active`
       : "Filtered output is ready for review";
@@ -916,7 +942,12 @@ const ReportViewPage = () => {
                 Filter report
               </h2>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                {getReportTitle(filters.reportType)} report for {filters.year}
+                {getReportTitle(filters.reportType)} report for{" "}
+                {filters.reportType === "UNASSIGNED_TEACHERS"
+                  ? selectedUnassignedYears.length
+                    ? selectedUnassignedYears.join(", ")
+                    : "selected years"
+                  : filters.year}
               </p>
             </div>
             <button
@@ -931,14 +962,30 @@ const ReportViewPage = () => {
           </div>
 
           <div className="relative z-50 grid grid-cols-1 items-end gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <SelectDropdown
-              label="Year"
-              name="year"
-              value={filters.year}
-              onChange={handleChange}
-              options={yearOptions}
-              required
-            />
+            {filters.reportType === "UNASSIGNED_TEACHERS" ? (
+              <FilterMultiSelect
+                label="Years"
+                items={yearOptions}
+                selectedIds={selectedUnassignedYears}
+                onToggle={toggleTypeId(setSelectedUnassignedYears)}
+                onSelectAll={() =>
+                  setSelectedUnassignedYears(yearOptions.map((item) => item._id))
+                }
+                onClear={() => setSelectedUnassignedYears([])}
+                allLabel="All years"
+                emptyLabel="Select years"
+                required
+              />
+            ) : (
+              <SelectDropdown
+                label="Year"
+                name="year"
+                value={filters.year}
+                onChange={handleChange}
+                options={yearOptions}
+                required
+              />
+            )}
             <SelectDropdown
               label="Campus"
               name="branchId"
@@ -1015,8 +1062,9 @@ const ReportViewPage = () => {
                   )
                 }
                 onClear={() => setSelectedUnassignedClassIds([])}
-                allLabel="All routine classes"
+                allLabel="All classes"
                 emptyLabel="Select classes"
+                required
               />
             )}
             {filters.reportType === "DETAILED_ASSIGNMENT" && (
@@ -1042,7 +1090,13 @@ const ReportViewPage = () => {
           <StatCard
             icon={FaCalendarCheck}
             label="Year"
-            value={filters.year}
+            value={
+              filters.reportType === "UNASSIGNED_TEACHERS"
+                ? selectedUnassignedYears.length
+                  ? selectedUnassignedYears.join(", ")
+                  : "—"
+                : filters.year
+            }
           />
         </section>
 
@@ -1072,6 +1126,21 @@ const ReportViewPage = () => {
               </div>
             </div>
           ) : filters.reportType === "UNASSIGNED_TEACHERS" &&
+            selectedUnassignedYears.length === 0 ? (
+            <div className="grid min-h-[320px] place-items-center rounded-lg border border-dashed border-slate-300 bg-white px-4 text-center">
+              <div>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-slate-400">
+                  <FaSearch size={24} />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-slate-600">
+                  Select at least one year
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Unassigned teacher reports can include multiple years.
+                </p>
+              </div>
+            </div>
+          ) : filters.reportType === "UNASSIGNED_TEACHERS" &&
             selectedUnassignedTypeIds.length === 0 ? (
             <div className="grid min-h-[320px] place-items-center rounded-lg border border-dashed border-slate-300 bg-white px-4 text-center">
               <div>
@@ -1083,6 +1152,21 @@ const ReportViewPage = () => {
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-500">
                   Unassigned teacher reports need a duty type target.
+                </p>
+              </div>
+            </div>
+          ) : filters.reportType === "UNASSIGNED_TEACHERS" &&
+            selectedUnassignedClassIds.length === 0 ? (
+            <div className="grid min-h-[320px] place-items-center rounded-lg border border-dashed border-slate-300 bg-white px-4 text-center">
+              <div>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-slate-400">
+                  <FaSearch size={24} />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-slate-600">
+                  Select at least one class
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Shows teachers missing the selected duties for those classes.
                 </p>
               </div>
             </div>

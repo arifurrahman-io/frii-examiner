@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
           role: decoded.role,
           email: decoded.email,
           campus: decoded.campus,
+          campuses: decoded.campuses || [],
         };
         setUser(sessionUser);
         localStorage.setItem("user", JSON.stringify(sessionUser));

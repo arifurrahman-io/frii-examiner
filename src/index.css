@@ -645,7 +645,9 @@
   .app-shell main,
   .app-shell main > div,
   .performance-report-page,
-  .granted-leaves-page {
+  .granted-leaves-page,
+  .increment-letter-page,
+  .increment-letter-print-root {
     width: 100% !important;
     min-height: auto !important;
     max-width: none !important;

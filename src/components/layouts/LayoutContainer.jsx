@@ -18,6 +18,7 @@ import {
   FaUserCircle,
   FaUserTie,
   FaUsersCog,
+  FaMoneyCheckAlt,
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -207,8 +208,8 @@ const AppSidebar = ({
   onCollapse,
   user,
 }) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center justify-between gap-3">
+  <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex shrink-0 items-center justify-between gap-3">
       <BrandMark onNavigate={onNavigate} />
       <button
         type="button"
@@ -221,7 +222,7 @@ const AppSidebar = ({
       </button>
     </div>
 
-    <div className="mt-8">
+    <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
       <p className="mb-3 px-3 text-xs font-semibold text-slate-500">
         Workspace
       </p>
@@ -232,7 +233,7 @@ const AppSidebar = ({
       />
     </div>
 
-    <div className="mt-auto space-y-3 border-t border-slate-100 pt-5">
+    <div className="mt-4 shrink-0 space-y-3 border-t border-slate-100 pt-5">
       <UserPanel user={user} />
       <button
         type="button"
@@ -249,20 +250,20 @@ const AppSidebar = ({
 );
 
 const IconRail = ({ navItems, isActive, onNavigate, onLogout, onExpand, user }) => (
-  <div className="flex h-full flex-col items-center">
+  <div className="flex h-full min-h-0 flex-col items-center overflow-hidden">
     <BrandMark compact onNavigate={onNavigate} />
 
     <button
       type="button"
       onClick={onExpand}
-      className="mt-4 grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
+      className="mt-4 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
       title="Expand menu"
       aria-label="Expand sidebar"
     >
       <FaChevronRight className="text-xs" />
     </button>
 
-    <div className="mt-7">
+    <div className="mt-7 min-h-0 w-full flex-1 overflow-y-auto overscroll-contain">
       <NavigationList
         navItems={navItems}
         isActive={isActive}
@@ -271,7 +272,7 @@ const IconRail = ({ navItems, isActive, onNavigate, onLogout, onExpand, user }) 
       />
     </div>
 
-    <div className="mt-auto flex flex-col items-center gap-3">
+    <div className="mt-4 flex shrink-0 flex-col items-center gap-3">
       <UserPanel user={user} compact />
       <button
         type="button"
@@ -287,7 +288,7 @@ const IconRail = ({ navItems, isActive, onNavigate, onLogout, onExpand, user }) 
 );
 
 const MobileTopBar = ({ pageTitle, onOpen }) => (
-  <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-sm lg:hidden">
+  <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] shadow-sm lg:hidden print:hidden">
     <div className="flex items-center justify-between gap-3">
       <button
         type="button"
@@ -328,13 +329,13 @@ const MobileDrawer = ({
     />
 
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] w-[min(88vw,336px)] border-r border-slate-200 bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 lg:hidden ${
+      className={`fixed inset-y-0 left-0 z-[60] w-[min(88vw,336px)] overflow-hidden border-r border-slate-200 bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 lg:hidden ${
         open ? "translate-x-0" : "-translate-x-full"
       }`}
       aria-label="Mobile navigation"
     >
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="flex shrink-0 items-center justify-between gap-3">
           <BrandMark onNavigate={onNavigate} />
           <button
             type="button"
@@ -346,7 +347,7 @@ const MobileDrawer = ({
           </button>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
           <p className="mb-3 px-3 text-xs font-semibold text-slate-500">
             Navigation
           </p>
@@ -357,7 +358,7 @@ const MobileDrawer = ({
           />
         </div>
 
-        <div className="mt-auto space-y-3 border-t border-slate-100 pt-5">
+        <div className="mt-4 shrink-0 space-y-3 border-t border-slate-100 pt-5">
           <UserPanel user={user} />
           <button
             type="button"
@@ -405,15 +406,41 @@ const LayoutContainer = ({ children }) => {
 
   const navItems = useMemo(() => {
     const items = [];
-    const canRateReportTeachers = ["admin", "head_teacher", "incharge"].includes(
+    const canRateReportTeachers = [
+      "admin",
+      "head_teacher",
+      "coordinator",
+      "incharge",
+    ].includes(user?.role);
+    const canUsePayroll = ["admin", "head_teacher", "executive"].includes(
       user?.role
     );
+    const payrollNav = {
+      name: "Payroll",
+      icon: FaMoneyCheckAlt,
+      children: [
+        { name: "Attendance", path: "/payroll/attendance", icon: FaCalendarAlt },
+        { name: "Salary", path: "/payroll/salary", icon: FaMoneyCheckAlt },
+        { name: "CL Benefit", path: "/payroll/cl-benefit", icon: FaChartBar },
+        { name: "Provident Fund", path: "/payroll/provident-fund", icon: FaMoneyCheckAlt },
+      ],
+    };
+
+    if (user?.role === "executive") {
+      items.push(
+        { name: "Teachers", path: "/teachers", icon: FaUserTie },
+        { name: "Routine", path: "/routine", icon: FaCalendarAlt },
+        payrollNav
+      );
+      return items;
+    }
 
     if (canRateReportTeachers) {
       items.push(
         { name: "Dashboard", path: "/", icon: FaLayerGroup },
         { name: "Teachers", path: "/teachers", icon: FaUserTie },
-        { name: "Performance", path: "/performance-report", icon: FaChartBar }
+        { name: "Performance", path: "/performance-report", icon: FaChartBar },
+        { name: "Evaluation", path: "/increment", icon: FaChartBar }
       );
     }
 
@@ -434,6 +461,8 @@ const LayoutContainer = ({ children }) => {
         { name: "Report", path: "/report", icon: FaChartBar },
         { name: "Users", path: "/users", icon: FaUsersCog }
       );
+    } else if (user?.role === "head_teacher") {
+      items.push({ name: "Routine", path: "/routine", icon: FaCalendarAlt });
     } else if (user?.role === "incharge") {
       items.push({ name: "Routine", path: "/routine", icon: FaCalendarAlt });
       items.push({
@@ -442,6 +471,8 @@ const LayoutContainer = ({ children }) => {
         icon: FaClipboardList,
       });
     }
+
+    if (canUsePayroll) items.push(payrollNav);
 
     return items;
   }, [user]);
@@ -479,7 +510,7 @@ const LayoutContainer = ({ children }) => {
   return (
     <div className="app-shell min-h-screen bg-slate-50 text-slate-900">
       {sidebarCollapsed ? (
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[80px] border-r border-slate-200 bg-white px-5 py-6 lg:block">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[80px] overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:block print:hidden">
           <IconRail
             navItems={navItems}
             isActive={isActive}
@@ -490,7 +521,7 @@ const LayoutContainer = ({ children }) => {
           />
         </aside>
       ) : (
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-slate-200 bg-white px-5 py-6 lg:block">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:block print:hidden">
           <AppSidebar
             navItems={navItems}
             isActive={isActive}
@@ -515,7 +546,7 @@ const LayoutContainer = ({ children }) => {
       />
 
       <main
-        className={`min-h-screen pb-[env(safe-area-inset-bottom)] transition-[padding] duration-300 ${
+        className={`min-h-screen pb-[env(safe-area-inset-bottom)] transition-[padding] duration-300 print:pl-0 ${
           sidebarCollapsed ? "lg:pl-[80px]" : "lg:pl-[260px]"
         }`}
       >

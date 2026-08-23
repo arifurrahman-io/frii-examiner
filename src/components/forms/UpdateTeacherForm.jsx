@@ -23,14 +23,21 @@ import {
   updateTeacher,
   getBranches,
 } from "../../api/apiService";
+import { houseRentFromBasic } from "../../utils/incrementUi";
 
-const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
+const UpdateTeacherForm = ({ teacherId, onUpdateSuccess, limited = false }) => {
   const [formData, setFormData] = useState({
     teacherId: "",
     name: "",
+    banglaName: "",
     phone: "",
     campus: "",
     designation: "",
+    basicSalary: "",
+    houseRent: "",
+    salaryBankAccount: "",
+    pfBankAccount: "",
+    providentFundEnabled: false,
     isActive: true,
   });
   const [branches, setBranches] = useState([]);
@@ -51,9 +58,15 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
         setFormData({
           teacherId: teacherDetails.teacherId,
           name: teacherDetails.name,
+          banglaName: teacherDetails.banglaName || "",
           phone: teacherDetails.phone,
           campus: teacherDetails.campus._id,
           designation: teacherDetails.designation || "",
+          basicSalary: teacherDetails.basicSalary || 0,
+          houseRent: teacherDetails.houseRent || 0,
+          salaryBankAccount: teacherDetails.salaryBankAccount || "",
+          pfBankAccount: teacherDetails.pfBankAccount || "",
+          providentFundEnabled: Boolean(teacherDetails.providentFundEnabled),
           isActive: teacherDetails.isActive,
         });
 
@@ -70,17 +83,25 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
   const handleChange = (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    setFormData((prev) => {
+      const next = { ...prev, [e.target.name]: value };
+      if (e.target.name === "basicSalary") {
+        next.houseRent = houseRentFromBasic(value);
+      }
+      return next;
+    });
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null });
   };
 
   const validate = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Required";
-    if (!formData.phone) newErrors.phone = "Required";
-    if (!formData.campus) newErrors.campus = "Required";
-    if (formData.phone && !/^\d+$/.test(formData.phone))
-      newErrors.phone = "Digits only";
+    if (!limited) {
+      if (!formData.phone) newErrors.phone = "Required";
+      if (!formData.campus) newErrors.campus = "Required";
+      if (formData.phone && !/^\d+$/.test(formData.phone))
+        newErrors.phone = "Digits only";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -95,7 +116,16 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
     setSubmitting(true);
 
     try {
-      const response = await updateTeacher(teacherId, formData);
+      const payload = limited
+        ? {
+            name: formData.name,
+            basicSalary: formData.basicSalary,
+            salaryBankAccount: formData.salaryBankAccount,
+            pfBankAccount: formData.pfBankAccount,
+            providentFundEnabled: formData.providentFundEnabled,
+          }
+        : formData;
+      const response = await updateTeacher(teacherId, payload);
       toast.success(`Profile updated: ${response.data.teacher.name}`);
       if (onUpdateSuccess) onUpdateSuccess(response.data.teacher);
     } catch (error) {
@@ -153,14 +183,16 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
 
         {/* --- INPUT GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField
-            label="Neural Identifier (Locked)"
-            name="teacherId"
-            icon={FaIdCard}
-            value={formData.teacherId}
-            disabled
-            className="bg-slate-100/50 border-slate-100 text-slate-400 rounded-2xl font-bold cursor-not-allowed"
-          />
+          {!limited ? (
+            <InputField
+              label="Neural Identifier (Locked)"
+              name="teacherId"
+              icon={FaIdCard}
+              value={formData.teacherId}
+              disabled
+              className="bg-slate-100/50 border-slate-100 text-slate-400 rounded-2xl font-bold cursor-not-allowed"
+            />
+          ) : null}
 
           <InputField
             label="Full Legal Name"
@@ -174,39 +206,113 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
             className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
           />
 
-          <SelectDropdown
-            label="Primary Station"
-            name="campus"
-            icon={FaBuilding}
-            options={branches}
-            value={formData.campus}
-            onChange={handleChange}
-            error={errors.campus}
-            required
-          />
+          {!limited ? (
+            <>
+              <InputField
+                label="Bangla Name"
+                name="banglaName"
+                icon={FaUser}
+                placeholder="বাংলা নাম"
+                value={formData.banglaName}
+                onChange={handleChange}
+                className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+              />
 
+              <SelectDropdown
+                label="Primary Station"
+                name="campus"
+                icon={FaBuilding}
+                options={branches}
+                value={formData.campus}
+                onChange={handleChange}
+                error={errors.campus}
+                required
+              />
+
+              <InputField
+                label="Contact String"
+                name="phone"
+                icon={FaPhone}
+                placeholder="Numerical Code"
+                value={formData.phone}
+                onChange={handleChange}
+                error={errors.phone}
+                required
+                className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+              />
+            </>
+          ) : null}
+        </div>
+
+        {!limited ? (
           <InputField
-            label="Contact String"
-            name="phone"
-            icon={FaPhone}
-            placeholder="Numerical Code"
-            value={formData.phone}
+            label="Institutional Designation"
+            name="designation"
+            placeholder="Senior Teacher"
+            value={formData.designation}
             onChange={handleChange}
-            error={errors.phone}
-            required
+          />
+        ) : null}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputField
+            label="Basic Salary"
+            name="basicSalary"
+            type="number"
+            placeholder="0"
+            value={formData.basicSalary}
+            onChange={handleChange}
+          />
+          <InputField
+            label="House Rent (50% of basic)"
+            name="houseRent"
+            type="number"
+            placeholder="0"
+            value={houseRentFromBasic(formData.basicSalary)}
+            readOnly
+          />
+          <InputField
+            label="Salary bank account"
+            name="salaryBankAccount"
+            placeholder="Main salary A/C"
+            value={formData.salaryBankAccount}
+            onChange={handleChange}
+            className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+          />
+          <InputField
+            label="Provident fund bank account"
+            name="pfBankAccount"
+            placeholder="PF A/C"
+            value={formData.pfBankAccount}
+            onChange={handleChange}
+            className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
           />
         </div>
 
-        <InputField
-          label="Institutional Designation"
-          name="designation"
-          placeholder="Senior Teacher"
-          value={formData.designation}
-          onChange={handleChange}
-        />
+        <div className="bg-teal-50/40 p-6 rounded-[2rem] border border-teal-100/70 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black text-teal-900 uppercase tracking-widest">
+              Provident fund
+            </p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">
+              Off by default. On deducts 10% of basic; institute adds 10%.
+            </p>
+          </div>
+          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              name="providentFundEnabled"
+              checked={formData.providentFundEnabled}
+              onChange={handleChange}
+              className="w-12 h-6 rounded-full appearance-none bg-slate-200 checked:bg-teal-700 transition-all cursor-pointer relative after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all checked:after:translate-x-6 shadow-inner"
+            />
+            {formData.providentFundEnabled ? "On" : "Off"}
+          </label>
+        </div>
 
         {/* --- TOGGLE AREA --- */}
-        <div className="bg-indigo-50/30 p-6 rounded-[2rem] border border-indigo-100/50 flex items-center justify-between">
+        {!limited ? (
+          <div className="bg-indigo-50/30 p-6 rounded-[2rem] border border-indigo-100/50 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div
               className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
@@ -235,6 +341,7 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess }) => {
             className="w-12 h-6 rounded-full appearance-none bg-slate-200 checked:bg-indigo-600 transition-all cursor-pointer relative after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all checked:after:translate-x-6 shadow-inner"
           />
         </div>
+        ) : null}
 
         {/* --- ACTION BUTTON --- */}
         <div className="pt-4 flex flex-col md:flex-row items-center gap-6">

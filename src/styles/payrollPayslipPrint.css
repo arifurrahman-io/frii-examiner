@@ -1,0 +1,144 @@
+.payroll-payslip-page {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 14mm 18mm 16mm;
+  background: #ffffff;
+  color: #111827;
+  font-family: "Anek Bangla", Arial, Helvetica, sans-serif;
+}
+
+.ps-masthead {
+  align-items: center;
+  border-bottom: 2px solid #0f766e;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 22mm 1fr;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+
+.ps-logo {
+  display: block;
+  height: auto;
+  width: 22mm;
+}
+
+.ps-institute {
+  font-size: 18pt;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.ps-title {
+  font-size: 14pt;
+  font-weight: 700;
+  margin: 2px 0 0;
+}
+
+.ps-meta {
+  color: #475569;
+  font-size: 11pt;
+  font-weight: 600;
+  margin: 2px 0 0;
+}
+
+.ps-section {
+  margin-top: 14px;
+}
+
+.ps-section h3 {
+  background: #f1f5f9;
+  border-left: 4px solid #0f766e;
+  font-size: 11pt;
+  font-weight: 700;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+}
+
+.ps-grid {
+  display: grid;
+  gap: 6px 18px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ps-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.ps-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.ps-value {
+  font-weight: 700;
+}
+
+.ps-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ps-table th,
+.ps-table td {
+  border: 1px solid #cbd5e1;
+  font-size: 11pt;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.ps-table th {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.ps-table td.num,
+.ps-table th.num {
+  text-align: right;
+}
+
+.ps-net {
+  background: #ecfdf5;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.ps-footer {
+  color: #64748b;
+  font-size: 9pt;
+  font-weight: 600;
+  margin-top: 28px;
+}
+
+.ps-preview-modal {
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  position: fixed;
+  z-index: 80;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .payroll-payslip-page {
+    display: block !important;
+    height: 297mm;
+    margin: 0;
+    overflow: hidden;
+    page-break-after: avoid;
+  }
+
+  @page {
+    margin: 8mm;
+    size: A4 portrait;
+  }
+}

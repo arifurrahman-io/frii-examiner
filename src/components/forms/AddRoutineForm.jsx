@@ -74,6 +74,15 @@ const AddRoutineForm = ({ onSaveSuccess, initialData, defaultTeacherId }) => {
               teacher.campus?._id === user.campus._id ||
               teacher.campus === user.campus._id
           );
+        } else if (
+          (user?.role === "executive" || user?.role === "coordinator") &&
+          Array.isArray(user.campuses) &&
+          user.campuses.length
+        ) {
+          const allowed = user.campuses.map((item) => item._id || item);
+          teacherList = teacherList.filter((teacher) =>
+            allowed.includes(teacher.campus?._id || teacher.campus)
+          );
         }
 
         setTeachers(

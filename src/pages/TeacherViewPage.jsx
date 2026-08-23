@@ -30,6 +30,10 @@ const TeacherViewPage = () => {
     user?.role === "admin" || user?.role === "head_teacher";
   const isAdmin = user?.role === "admin";
   const isIncharge = user?.role === "incharge";
+  const assignedCampusLabel =
+    user?.campus?.name ||
+    (user?.campuses || []).map((item) => item.name).filter(Boolean).join(", ") ||
+    "Assigned campuses";
   const canAddTeacher = isAdmin || isIncharge;
 
   // --- Success Handler ---
@@ -63,7 +67,7 @@ const TeacherViewPage = () => {
               <p className="mt-1 text-sm font-medium text-slate-500">
                 {hasGlobalTeacherAccess
                   ? "Manage teachers across all branches and shifts"
-                  : `${user?.campus?.name || "Campus"} Teachers' Directory`}
+                  : `${assignedCampusLabel} Teachers' Directory`}
               </p>
             </div>
           </div>

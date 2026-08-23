@@ -33,6 +33,9 @@ const ProfileHeader = ({
   teacherDetails,
   stats,
   isAdmin,
+  canEditProfile,
+  canDeleteTeacher,
+  canUseStaffTools,
   isEditing,
   setIsEditing,
   navigate,
@@ -86,23 +89,38 @@ const ProfileHeader = ({
             Print
           </Button>
 
-          <Button
-            onClick={() => toggleModal("report", true)}
-            variant="primary"
-            className="px-3 py-2.5 text-sm"
-          >
-            <FaChartLine size={13} />
-            Report
-          </Button>
+          {canUseStaffTools ? (
+            <>
+              <Button
+                onClick={() => toggleModal("report", true)}
+                variant="primary"
+                className="px-3 py-2.5 text-sm"
+              >
+                <FaChartLine size={13} />
+                Report
+              </Button>
 
-          <Button
-            onClick={() => toggleModal("classPerformance", true)}
-            variant="secondary"
-            className="px-3 py-2.5 text-sm"
-          >
-            <FaChalkboardTeacher size={13} />
-            Observe
-          </Button>
+              <Button
+                onClick={() => toggleModal("classPerformance", true)}
+                variant="secondary"
+                className="px-3 py-2.5 text-sm"
+              >
+                <FaChalkboardTeacher size={13} />
+                Observe
+              </Button>
+
+              <Button
+                onClick={() =>
+                  navigate(`/increment/${teacherDetails._id}`)
+                }
+                variant="secondary"
+                className="px-3 py-2.5 text-sm"
+              >
+                <FaChartLine size={13} />
+                Evaluation
+              </Button>
+            </>
+          ) : null}
 
           {isAdmin && (
             <>
@@ -114,26 +132,30 @@ const ProfileHeader = ({
                 <FaCalendarCheck size={13} />
                 Leave
               </Button>
-
-              <Button
-                onClick={() => setIsEditing(!isEditing)}
-                variant={isEditing ? "danger" : "secondary"}
-                className="px-3 py-2.5 text-sm"
-              >
-                {isEditing ? <FaRegWindowClose size={13} /> : <FaEdit size={13} />}
-                {isEditing ? "Cancel" : "Edit"}
-              </Button>
-
-              <Button
-                onClick={() => setShowDeleteConfirm(true)}
-                variant="danger"
-                className="px-3 py-2.5 text-sm"
-              >
-                <FaTrashAlt size={12} />
-                Delete
-              </Button>
             </>
           )}
+
+          {canEditProfile ? (
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "danger" : "secondary"}
+              className="px-3 py-2.5 text-sm"
+            >
+              {isEditing ? <FaRegWindowClose size={13} /> : <FaEdit size={13} />}
+              {isEditing ? "Cancel" : "Edit"}
+            </Button>
+          ) : null}
+
+          {canDeleteTeacher ? (
+            <Button
+              onClick={() => setShowDeleteConfirm(true)}
+              variant="danger"
+              className="px-3 py-2.5 text-sm"
+            >
+              <FaTrashAlt size={12} />
+              Delete
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>

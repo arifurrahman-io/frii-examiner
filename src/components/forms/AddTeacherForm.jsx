@@ -13,13 +13,17 @@ import InputField from "../ui/InputField";
 import SelectDropdown from "../ui/SelectDropdown";
 import { addTeacher, getBranches } from "../../api/apiService";
 import { useAuth } from "../../context/AuthContext";
+import { houseRentFromBasic } from "../../utils/incrementUi";
 
 const initialFormData = {
   teacherId: "",
   name: "",
+  banglaName: "",
   phone: "",
   campus: "",
   designation: "",
+  basicSalary: "",
+  houseRent: "",
 };
 
 const AddTeacherForm = ({ onSaveSuccess }) => {
@@ -52,7 +56,13 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === "basicSalary") {
+        next.houseRent = houseRentFromBasic(value);
+      }
+      return next;
+    });
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
@@ -109,6 +119,15 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
         />
 
         <InputField
+          label="Bangla Name"
+          name="banglaName"
+          icon={FaUser}
+          placeholder="বাংলা নাম"
+          value={formData.banglaName}
+          onChange={handleChange}
+        />
+
+        <InputField
           label="Teacher's ID"
           name="teacherId"
           icon={FaIdCard}
@@ -150,7 +169,24 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
           placeholder="Senior Teacher"
           value={formData.designation}
           onChange={handleChange}
-          className={!isIncharge ? "md:col-span-2" : ""}
+        />
+
+        <InputField
+          label="Basic Salary"
+          name="basicSalary"
+          type="number"
+          placeholder="0"
+          value={formData.basicSalary}
+          onChange={handleChange}
+        />
+
+        <InputField
+          label="House Rent (50% of basic)"
+          name="houseRent"
+          type="number"
+          placeholder="0"
+          value={houseRentFromBasic(formData.basicSalary)}
+          readOnly
         />
       </div>
 

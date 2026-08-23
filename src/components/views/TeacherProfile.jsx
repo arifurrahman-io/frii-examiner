@@ -53,7 +53,14 @@ const TeacherProfile = ({ teacherId }) => {
 
   const isAdmin = user?.role === "admin";
   const isIncharge = user?.role === "incharge";
-  const canManageRoutine = isAdmin || isIncharge;
+  const isExecutive = user?.role === "executive";
+  const isHeadTeacher = user?.role === "head_teacher";
+  const canManageRoutine = isAdmin || isIncharge || isExecutive || isHeadTeacher;
+  const canEditProfile = isAdmin || isHeadTeacher || isExecutive;
+  const limitedProfileEdit = isExecutive || isHeadTeacher;
+  const canUseStaffTools = ["admin", "head_teacher", "coordinator", "incharge"].includes(
+    user?.role
+  );
 
   // --- 🛠️ Logic Helpers ---
   const dynamicYears = useMemo(() => {
@@ -84,26 +91,30 @@ const TeacherProfile = ({ teacherId }) => {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const promises = [
+      const [profileRes, routinesRes] = await Promise.all([
         getTeacherProfile(teacherId),
         getTeacherRoutines(teacherId),
-        getTeacherPerformanceSummary(teacherId),
-      ];
-      if (isAdmin || isIncharge)
-        promises.push(getGrantedLeavesByTeacher(teacherId));
-
-      const [profileRes, routinesRes, performanceRes, leavesRes] =
-        await Promise.all(promises);
+      ]);
       setTeacherData(profileRes.data);
       setRoutineSchedule(routinesRes.data || []);
-      setPerformanceSummary(performanceRes.data || null);
-      if (leavesRes) setGrantedLeaves(leavesRes.data || []);
+
+      if (["admin", "head_teacher", "incharge"].includes(user?.role)) {
+        const performanceRes = await getTeacherPerformanceSummary(teacherId);
+        setPerformanceSummary(performanceRes.data || null);
+      } else {
+        setPerformanceSummary(null);
+      }
+
+      if (isAdmin || isIncharge) {
+        const leavesRes = await getGrantedLeavesByTeacher(teacherId);
+        setGrantedLeaves(leavesRes.data || []);
+      }
     } catch (error) {
       toast.error("Protocol Error: Synchronization failed.");
     } finally {
       setLoading(false);
     }
-  }, [teacherId, isAdmin, isIncharge]);
+  }, [teacherId, isAdmin, isIncharge, user?.role]);
 
   useEffect(() => {
     fetchProfile();
@@ -445,6 +456,9 @@ const TeacherProfile = ({ teacherId }) => {
           teacherDetails={teacherDetails}
           stats={profileStats}
           isAdmin={isAdmin}
+          canEditProfile={canEditProfile}
+          canDeleteTeacher={isAdmin}
+          canUseStaffTools={canUseStaffTools}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
           navigate={navigate}
@@ -484,6 +498,7 @@ const TeacherProfile = ({ teacherId }) => {
           <div className="border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <UpdateTeacherForm
               teacherId={teacherId}
+              limited={limitedProfileEdit}
               onUpdateSuccess={() => {
                 setIsEditing(false);
                 fetchProfile();

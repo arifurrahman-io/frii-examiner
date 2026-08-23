@@ -18,6 +18,7 @@ import {
   FaTasks,
   FaTimes,
   FaTrashAlt,
+  FaUniversity,
   FaUserTie,
   FaUsers,
 } from "react-icons/fa";
@@ -602,12 +603,18 @@ const AdminDashboard = () => {
   const isAdmin = user?.role === "admin";
   const isHeadTeacher = user?.role === "head_teacher";
   const isIncharge = user?.role === "incharge";
+  const isExecutive = user?.role === "executive";
   const assignedCampusName = user?.campus?.name || "Assigned shift";
+  const assignedCampusesLabel =
+    (user?.campuses || []).map((item) => item.name).filter(Boolean).join(", ") ||
+    "Assigned campuses";
   const workspaceLabel = isAdmin
     ? "Admin workspace"
     : isHeadTeacher
       ? "Headmaster workspace"
-      : "Incharge workspace";
+      : isExecutive
+        ? "Executive workspace"
+        : "Incharge workspace";
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [loading, setLoading] = useState(true);
   const [deletingRoutineYear, setDeletingRoutineYear] = useState(false);
@@ -660,8 +667,12 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (isExecutive) {
+      setLoading(false);
+      return;
+    }
     fetchData(selectedYear);
-  }, [selectedYear, fetchData]);
+  }, [selectedYear, fetchData, isExecutive]);
 
   const handleDeleteRoutineYear = async () => {
     const password = routineDeletePassword.trim();
@@ -791,6 +802,18 @@ const AdminDashboard = () => {
           path: "/performance-report",
           featured: true,
         },
+        {
+          icon: FaCalendarCheck,
+          title: "Routine",
+          subtitle: "School-wide schedule",
+          path: "/routine",
+        },
+        {
+          icon: FaClipboard,
+          title: "Payroll",
+          subtitle: "Attendance and salary",
+          path: "/payroll/attendance",
+        },
       ];
     }
 
@@ -822,6 +845,91 @@ const AdminDashboard = () => {
       },
     ];
   }, [assignedCampusName, isAdmin, isHeadTeacher]);
+
+  if (isExecutive) {
+    const executiveActions = [
+      {
+        icon: FaUserTie,
+        title: "Teachers",
+        subtitle: assignedCampusesLabel,
+        path: "/teachers",
+      },
+      {
+        icon: FaCalendarCheck,
+        title: "Routine",
+        subtitle: "Assigned campus schedules",
+        path: "/routine",
+      },
+      {
+        icon: FaClipboard,
+        title: "Attendance",
+        subtitle: "Monthly present / CL / LWP",
+        path: "/payroll/attendance",
+        featured: true,
+      },
+      {
+        icon: FaChartBar,
+        title: "Salary",
+        subtitle: "Monthly salary and payslips",
+        path: "/payroll/salary",
+      },
+      {
+        icon: FaMedal,
+        title: "CL Benefit",
+        subtitle: "Yearly unused CL report",
+        path: "/payroll/cl-benefit",
+      },
+      {
+        icon: FaUniversity,
+        title: "Provident Fund",
+        subtitle: "Bank accounts and PF on/off",
+        path: "/payroll/provident-fund",
+      },
+    ];
+
+    return (
+      <div className="min-h-screen bg-slate-50 px-4 pb-10 pt-5 text-slate-900 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-[1440px] space-y-6">
+          <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <FaShieldAlt size={12} />
+              {workspaceLabel}
+            </div>
+            <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">
+              Executive workspace
+            </h1>
+            <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
+              Teachers, routine, and payroll for {assignedCampusesLabel}.
+            </p>
+          </header>
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {executiveActions.map((action) => (
+              <button
+                key={action.path}
+                type="button"
+                onClick={() => navigate(action.path)}
+                className={`rounded-lg border p-5 text-left shadow-sm transition-colors ${
+                  action.featured
+                    ? "border-teal-200 bg-teal-50 hover:bg-teal-100"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-900 text-white">
+                  <action.icon size={16} />
+                </div>
+                <h2 className="mt-4 text-lg font-semibold text-slate-950">
+                  {action.title}
+                </h2>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  {action.subtitle}
+                </p>
+              </button>
+            ))}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (loading && !data.totals.teachers) {
     return (

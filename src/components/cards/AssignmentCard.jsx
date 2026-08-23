@@ -144,7 +144,7 @@ const AssignmentCard = ({
   };
 
   // ✅ Updated List with Subject Integration
-  const CompactList = ({ list, title, icon: Icon, color, showAll = false }) => (
+  const CompactList = ({ list, title, icon: Icon, color }) => (
     <div className="flex flex-col space-y-2">
       <div className="flex items-center gap-2">
         <Icon className={`text-xs ${color}`} />
@@ -152,9 +152,9 @@ const AssignmentCard = ({
           {title}
         </p>
       </div>
-      <div className="max-h-40 space-y-1 overflow-y-auto">
+      <div className="max-h-56 space-y-1 overflow-y-auto">
         {list.length > 0 ? (
-          (showAll ? list : list.slice(0, 2)).map((a, i) => (
+          list.map((a, i) => (
             <p
               key={i}
               className="truncate text-xs font-semibold leading-tight text-slate-700"
@@ -174,11 +174,6 @@ const AssignmentCard = ({
         ) : (
           <p className="text-xs font-semibold text-slate-300">
             No data
-          </p>
-        )}
-        {!showAll && list.length > 2 && (
-          <p className="text-xs font-bold text-teal-700">
-            + {list.length - 2} more
           </p>
         )}
       </div>
@@ -235,7 +230,6 @@ const AssignmentCard = ({
               title={`Archive ${previousYear}`}
               icon={FaHistory}
               color="text-slate-400"
-              showAll
             />
           </div>
         </div>

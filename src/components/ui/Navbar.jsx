@@ -14,6 +14,7 @@ import {
   FaChartBar,
   FaUsersCog,
   FaFingerprint,
+  FaAward,
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -32,20 +33,24 @@ const Navbar = () => {
 
   // --- 🛡️ ডায়নামিক নেভিগেশন ইঞ্জিন ---
   const NavItems = useMemo(() => {
-    // সবার জন্য কমন আইটেম (Dashboard, Teacher, Routine)
     const items = [
       { name: "Dashboard", path: "/", icon: <FaThLarge /> },
       { name: "Teachers", path: "/teachers", icon: <FaUserTie /> },
-      { name: "Routine", path: "/routine", icon: <FaCalendarAlt /> },
     ];
 
-    /**
-     * 🔐 ROLE SPECIFIC LOGIC:
-     * ১. 'Infrastructure' (Master Setup) শুধুমাত্র Admin এর জন্য।
-     * ২. 'Allocation' (Assign Duty) Admin এবং Incharge উভয়ের জন্য।
-     */
+    if (user?.role === "admin" || user?.role === "incharge" || user?.role === "executive" || user?.role === "head_teacher") {
+      items.push({ name: "Routine", path: "/routine", icon: <FaCalendarAlt /> });
+    }
+
+    if (user?.role === "admin" || user?.role === "head_teacher" || user?.role === "executive") {
+      items.push({
+        name: "Payroll",
+        path: "/payroll/attendance",
+        icon: <FaAward />,
+      });
+    }
+
     if (user?.role === "admin") {
-      // এডমিনের জন্যInfrastructure ২য় পজিশনে ইনসার্ট করা হয়েছে
       items.splice(1, 0, {
         name: "Setting",
         path: "/setup/branch",
@@ -65,16 +70,32 @@ const Navbar = () => {
       });
 
       items.push({
+        name: "Evaluation",
+        path: "/increment",
+        icon: <FaAward />,
+      });
+
+      items.push({
         name: "Users",
         path: "/users",
         icon: <FaUsersCog />,
       });
     } else if (user?.role === "incharge") {
-      // ইনচার্জের জন্য শুধুমাত্র Allocation যোগ করা হয়েছে (Infrastructure বাদ)
       items.push({
         name: "Assign Duty",
         path: "/assign",
         icon: <FaClipboardList />,
+      });
+      items.push({
+        name: "Evaluation",
+        path: "/increment",
+        icon: <FaAward />,
+      });
+    } else if (user?.role === "head_teacher" || user?.role === "coordinator") {
+      items.push({
+        name: "Evaluation",
+        path: "/increment",
+        icon: <FaAward />,
       });
     }
 
