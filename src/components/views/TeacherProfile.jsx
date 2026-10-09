@@ -14,6 +14,7 @@ import {
   deletePerformanceReport,
   getTeacherPerformanceSummary,
 } from "../../api/apiService";
+import headerLogo from "../../assets/frii-report-header.png";
 import { INSTITUTE_NAME } from "../../utils/reportBranding";
 
 // UI/Sections
@@ -290,9 +291,11 @@ const TeacherProfile = ({ teacherId }) => {
 
       {/* --- প্রিন্ট টেমপ্লেট --- */}
       <div className="print-container">
-        <p className="print-institute-name mb-4 text-center text-lg font-bold leading-tight text-slate-900">
-          {INSTITUTE_NAME}
-        </p>
+        <img
+          src={headerLogo}
+          alt={INSTITUTE_NAME}
+          className="print-institute-logo mb-4 mx-auto block w-[70%] max-w-[420px] h-auto"
+        />
         <div className="report-title">
           <div>
             <h1 className="text-2xl font-black uppercase text-slate-900 leading-tight">

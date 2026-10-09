@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import "../styles/grantedLeavesPrint.css";
+import headerLogo from "../assets/frii-report-header.png";
 import { INSTITUTE_NAME } from "../utils/reportBranding";
 import {
   exportGrantedLeavesPrintToPdf,
@@ -337,7 +338,11 @@ const GrantedLeavesPage = () => {
       >
         <header className="performance-print-header performance-print-header-stacked">
           <div className="performance-print-header-main">
-            <p className="performance-print-institute">{INSTITUTE_NAME}</p>
+            <img
+              src={headerLogo}
+              alt={INSTITUTE_NAME}
+              className="performance-print-institute-logo"
+            />
             <h1>Granted Leave Register</h1>
             <p className="performance-print-subtitle">
               Complete list of granted leave records

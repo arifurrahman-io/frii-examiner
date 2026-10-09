@@ -12,6 +12,7 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaClipboardList,
+  FaExchangeAlt,
   FaFileExport,
   FaGraduationCap,
   FaSearch,
@@ -33,11 +34,19 @@ import {
   getBranches,
   getClasses,
   getExaminerExchangeDates,
+  getExaminerPairOrders,
   getReportData,
   getResponsibilityTypes,
   getSubjects,
   saveExaminerExchangeDates,
+  saveExaminerPairOrders,
 } from "../api/apiService";
+import {
+  formatJoiningDate,
+  getPairRoleLabels,
+  isExaminerScrutinizerPair,
+  sortTeachersForPair,
+} from "../utils/examinerPairOrder";
 
 const hasRows = (data) => Array.isArray(data) && data.length > 0;
 
@@ -519,6 +528,8 @@ const ReportViewPage = () => {
   const [exportError, setExportError] = useState(null);
   const [exchangeDates, setExchangeDates] = useState({});
   const [exchangeDateSaveLoading, setExchangeDateSaveLoading] = useState(false);
+  const [pairOrders, setPairOrders] = useState({});
+  const [pairOrderSaveLoading, setPairOrderSaveLoading] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -825,6 +836,86 @@ const ReportViewPage = () => {
     });
   }, [filters.reportType, hasSelectedExaminerDuty, reportData]);
 
+  const examinerPairRows = useMemo(() => {
+    if (!hasSelectedExaminerDuty || filters.reportType !== "DETAILED_ASSIGNMENT") {
+      return [];
+    }
+
+    const groupMap = new Map();
+    reportData.forEach((row) => {
+      if (
+        !row.RESPONSIBILITY_TYPE_ID ||
+        !row.CLASS_ID ||
+        !row.SUBJECT_ID ||
+        !row.TEACHER_REF_ID
+      ) {
+        return;
+      }
+      const key = getExchangeDateIdKey({
+        responsibilityType: row.RESPONSIBILITY_TYPE_ID,
+        targetClass: row.CLASS_ID,
+        targetSubject: row.SUBJECT_ID,
+      });
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          key,
+          responsibilityType: row.RESPONSIBILITY_TYPE_ID,
+          targetClass: row.CLASS_ID,
+          targetSubject: row.SUBJECT_ID,
+          dutyType: row.RESPONSIBILITY_TYPE,
+          className: row.CLASS,
+          subjectName: row.SUBJECT,
+          teachers: [],
+        });
+      }
+      const group = groupMap.get(key);
+      if (!group.teachers.some((item) => item.refId === row.TEACHER_REF_ID)) {
+        group.teachers.push({
+          refId: row.TEACHER_REF_ID,
+          name: row.TEACHER || "N/A",
+          teacherId: row.TEACHERID || "",
+          campus: row.CAMPUS || "",
+          joiningDate: row.JOINING_DATE || null,
+        });
+      }
+    });
+
+    return [...groupMap.values()]
+      .map((group) => {
+        const teachers = sortTeachersForPair(
+          group.teachers,
+          pairOrders[group.key] || [],
+          {
+            className: group.className,
+            subjectName: group.subjectName,
+          }
+        );
+        const labels = getPairRoleLabels(group.className, group.subjectName);
+        const isScrutinizerPair = isExaminerScrutinizerPair(
+          group.className,
+          group.subjectName
+        );
+        return {
+          ...group,
+          teachers,
+          firstLabel: labels.first,
+          secondLabel: labels.second,
+          canSwap: teachers.length >= 2,
+          isScrutinizerPair,
+        };
+      })
+      .sort((first, second) => {
+        const classCompare = first.className.localeCompare(second.className);
+        if (classCompare !== 0) return classCompare;
+        return first.subjectName.localeCompare(second.subjectName);
+      });
+  }, [
+    filters.reportType,
+    hasSelectedExaminerDuty,
+    pairOrders,
+    reportData,
+  ]);
+
   useEffect(() => {
     if (!isExportModalOpen || exchangeDateRows.length === 0) return;
 
@@ -840,22 +931,38 @@ const ReportViewPage = () => {
           ...new Set(exchangeDateRows.map((row) => row.targetSubject)),
         ].join(",");
 
-        const { data } = await getExaminerExchangeDates({
-          year: filters.year,
-          typeIds,
-          classIds,
-          subjectIds,
-        });
+        const [{ data: dateData }, { data: pairData }] = await Promise.all([
+          getExaminerExchangeDates({
+            year: filters.year,
+            typeIds,
+            classIds,
+            subjectIds,
+          }),
+          getExaminerPairOrders({
+            year: filters.year,
+            typeIds,
+            classIds,
+            subjectIds,
+          }),
+        ]);
 
         const savedDates = Object.fromEntries(
-          (Array.isArray(data) ? data : []).map((item) => [
+          (Array.isArray(dateData) ? dateData : []).map((item) => [
             item.key,
             item.lastDateOfExchange || "",
           ])
         );
         setExchangeDates(savedDates);
+
+        const savedOrders = Object.fromEntries(
+          (Array.isArray(pairData) ? pairData : []).map((item) => [
+            item.key,
+            item.teacherOrder || [],
+          ])
+        );
+        setPairOrders(savedOrders);
       } catch (error) {
-        toast.error("Failed to load exchange dates.");
+        toast.error("Failed to load exchange dates or pair orders.");
       }
     };
 
@@ -882,6 +989,44 @@ const ReportViewPage = () => {
       setExchangeDateSaveLoading(false);
     }
   };
+
+  const handleSwapExaminerPair = async (pair) => {
+    if (!pair?.canSwap || pair.teachers.length < 2) return;
+
+    const nextTeachers = [...pair.teachers];
+    [nextTeachers[0], nextTeachers[1]] = [nextTeachers[1], nextTeachers[0]];
+    const teacherOrder = nextTeachers.map((teacher) => teacher.refId);
+
+    setPairOrders((prev) => ({ ...prev, [pair.key]: teacherOrder }));
+    setPairOrderSaveLoading(true);
+    try {
+      await saveExaminerPairOrders({
+        year: filters.year,
+        entries: [
+          {
+            responsibilityType: pair.responsibilityType,
+            targetClass: pair.targetClass,
+            targetSubject: pair.targetSubject,
+            teacherOrder,
+          },
+        ],
+      });
+      toast.success(
+        `${pair.className} · ${pair.subjectName}: ${pair.firstLabel} / ${pair.secondLabel} swapped.`
+      );
+    } catch (error) {
+      setPairOrders((prev) => ({
+        ...prev,
+        [pair.key]: pair.teachers.map((teacher) => teacher.refId),
+      }));
+      toast.error(
+        error.response?.data?.message || "Failed to save examiner pair order."
+      );
+    } finally {
+      setPairOrderSaveLoading(false);
+    }
+  };
+
   const selectedUnassignedClasses = masterData.classes.filter((item) =>
     selectedUnassignedClassIds.includes(item._id)
   );
@@ -1367,6 +1512,80 @@ const ReportViewPage = () => {
                           : "Save Exchange Dates"}
                       </button>
                     )}
+                  </div>
+                )}
+
+                {hasSelectedExaminerDuty && examinerPairRows.length > 0 && (
+                  <div className="rounded-lg border border-slate-200 bg-white p-4">
+                    <p className="text-sm font-semibold text-slate-950">
+                      Examiner order
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                      Nine/Ten Agriculture, ICT, H.Science use Examiner /
+                      Scrutinizer only (no senior/junior). Other subjects use
+                      joining date (earlier = Examiner-1). Swap saves the PDF
+                      order.
+                    </p>
+                    <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
+                      {examinerPairRows.map((pair) => {
+                        const first = pair.teachers[0];
+                        const second = pair.teachers[1];
+                        return (
+                          <div
+                            key={pair.key}
+                            className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                          >
+                            <p className="text-xs font-semibold text-slate-600">
+                              {pair.className} · {pair.subjectName}
+                              {pair.dutyType ? ` (${pair.dutyType})` : ""}
+                            </p>
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <div className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-teal-700">
+                                  {pair.firstLabel}
+                                </p>
+                                <p className="truncate text-sm font-semibold text-slate-900">
+                                  {first?.name || "—"}
+                                </p>
+                                <p className="truncate text-[11px] font-medium text-slate-500">
+                                  {first?.campus || "N/A"}
+                                  {!pair.isScrutinizerPair &&
+                                    (first?.joiningDate
+                                      ? ` · joined ${formatJoiningDate(first.joiningDate)}`
+                                      : " · no joining date")}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSwapExaminerPair(pair)}
+                                disabled={!pair.canSwap || pairOrderSaveLoading}
+                                title="Swap positions"
+                                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-teal-50 hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <FaExchangeAlt />
+                                Swap
+                              </button>
+                              <div className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                  {pair.secondLabel}
+                                </p>
+                                <p className="truncate text-sm font-semibold text-slate-900">
+                                  {second?.name || "—"}
+                                </p>
+                                <p className="truncate text-[11px] font-medium text-slate-500">
+                                  {second?.campus || "N/A"}
+                                  {!pair.isScrutinizerPair &&
+                                    second &&
+                                    (second.joiningDate
+                                      ? ` · joined ${formatJoiningDate(second.joiningDate)}`
+                                      : " · no joining date")}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 

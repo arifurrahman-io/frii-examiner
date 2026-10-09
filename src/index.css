@@ -713,6 +713,16 @@
     border-bottom: 1.5px solid #0f766e;
   }
 
+  .performance-print-institute-logo {
+    display: block !important;
+    width: min(420px, 72%) !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 auto 10px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1.5px solid #0f766e;
+  }
+
   .performance-print-header h1 {
     color: #0f172a !important;
     font-size: 14pt !important;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FaBuilding,
+  FaCalendarAlt,
   FaIdCard,
   FaPhone,
   FaSave,
@@ -22,6 +23,7 @@ const initialFormData = {
   phone: "",
   campus: "",
   designation: "",
+  joiningDate: "",
   basicSalary: "",
   houseRent: "",
 };
@@ -168,6 +170,15 @@ const AddTeacherForm = ({ onSaveSuccess }) => {
           icon={FaUserTie}
           placeholder="Senior Teacher"
           value={formData.designation}
+          onChange={handleChange}
+        />
+
+        <InputField
+          label="Joining Date"
+          name="joiningDate"
+          type="date"
+          icon={FaCalendarAlt}
+          value={formData.joiningDate}
           onChange={handleChange}
         />
 

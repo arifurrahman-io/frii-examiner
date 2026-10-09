@@ -1,5 +1,5 @@
 import React from "react";
-import friiLogo from "../../assets/frii-logo.png";
+import headerLogo from "../../assets/frii-report-header.png";
 import { INSTITUTE_NAME } from "../../utils/reportBranding";
 import { formatTaka, monthLabelBn } from "../../utils/payrollUi";
 import "../../styles/payrollPayslipPrint.css";
@@ -24,9 +24,12 @@ const PayrollPayslipPrint = ({ slip }) => {
   return (
     <article className="payroll-payslip-page">
       <header className="ps-masthead">
-        <img src={friiLogo} alt="" className="ps-logo" />
-        <div>
-          <p className="ps-institute">{INSTITUTE_NAME}</p>
+        <img
+          src={headerLogo}
+          alt={INSTITUTE_NAME}
+          className="ps-header-logo"
+        />
+        <div className="ps-masthead-titles">
           <p className="ps-title">মাসিক বেতন স্লিপ</p>
           <p className="ps-meta">
             {monthBn} {yearBn}

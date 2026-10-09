@@ -11,6 +11,7 @@ import {
   FaTerminal,
   FaShieldAlt,
   FaToggleOn,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 // Reusable UI Components
@@ -33,6 +34,7 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess, limited = false }) => {
     phone: "",
     campus: "",
     designation: "",
+    joiningDate: "",
     basicSalary: "",
     houseRent: "",
     salaryBankAccount: "",
@@ -62,6 +64,9 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess, limited = false }) => {
           phone: teacherDetails.phone,
           campus: teacherDetails.campus._id,
           designation: teacherDetails.designation || "",
+          joiningDate: teacherDetails.joiningDate
+            ? String(teacherDetails.joiningDate).slice(0, 10)
+            : "",
           basicSalary: teacherDetails.basicSalary || 0,
           houseRent: teacherDetails.houseRent || 0,
           salaryBankAccount: teacherDetails.salaryBankAccount || "",
@@ -245,13 +250,24 @@ const UpdateTeacherForm = ({ teacherId, onUpdateSuccess, limited = false }) => {
         </div>
 
         {!limited ? (
-          <InputField
-            label="Institutional Designation"
-            name="designation"
-            placeholder="Senior Teacher"
-            value={formData.designation}
-            onChange={handleChange}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField
+              label="Institutional Designation"
+              name="designation"
+              placeholder="Senior Teacher"
+              value={formData.designation}
+              onChange={handleChange}
+            />
+            <InputField
+              label="Joining Date"
+              name="joiningDate"
+              type="date"
+              icon={FaCalendarAlt}
+              value={formData.joiningDate}
+              onChange={handleChange}
+              className="bg-slate-50/50 border-slate-100 rounded-2xl font-bold"
+            />
+          </div>
         ) : null}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

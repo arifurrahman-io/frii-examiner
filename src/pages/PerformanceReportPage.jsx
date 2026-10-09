@@ -21,6 +21,7 @@ import {
   getUniformTableStyles,
   withUniformHeadStyles,
 } from "../utils/pdfTableRows";
+import headerLogo from "../assets/frii-report-header.png";
 import { drawInstituteHeader, INSTITUTE_NAME } from "../utils/reportBranding";
 
 const RatingCell = ({ value }) => (
@@ -661,7 +662,11 @@ const PerformanceReportPage = () => {
       <section className="performance-print" aria-label="Printable performance report">
         <header className="performance-print-header performance-print-header-stacked">
           <div className="performance-print-header-main">
-            <p className="performance-print-institute">{INSTITUTE_NAME}</p>
+            <img
+              src={headerLogo}
+              alt={INSTITUTE_NAME}
+              className="performance-print-institute-logo"
+            />
             <h1>Class Performance Report</h1>
             <p className="performance-print-subtitle">
               Campus/Shift: {selectedCampusName}

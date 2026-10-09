@@ -210,6 +210,12 @@ export const getExaminerExchangeDates = (filters) =>
 export const saveExaminerExchangeDates = (payload) =>
   api.put("/reports/examiner-exchange-dates", payload);
 
+export const getExaminerPairOrders = (filters) =>
+  api.get("/reports/examiner-pair-orders", { params: filters });
+
+export const saveExaminerPairOrders = (payload) =>
+  api.put("/reports/examiner-pair-orders", payload);
+
 /**
  * 📄 PDF এক্সপোর্ট ফিক্স
  * সরাসরি window.open না করে বেস URL এর সাথে কনক্যাট করা হয়েছে

@@ -10,19 +10,26 @@
 }
 
 .ps-masthead {
-  align-items: center;
   border-bottom: 2px solid #0f766e;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 22mm 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 14px;
   padding-bottom: 10px;
+  text-align: center;
 }
 
-.ps-logo {
+.ps-header-logo {
   display: block;
+  width: min(150mm, 100%);
+  max-width: 100%;
   height: auto;
-  width: 22mm;
+  margin: 0 auto;
+}
+
+.ps-masthead-titles {
+  text-align: center;
 }
 
 .ps-institute {
@@ -35,7 +42,7 @@
 .ps-title {
   font-size: 14pt;
   font-weight: 700;
-  margin: 2px 0 0;
+  margin: 0;
 }
 
 .ps-meta {
