@@ -307,4 +307,8 @@ export const getPayrollProvidentFund = (params) =>
 export const savePayrollProvidentFund = (payload) =>
   api.put("/payroll/provident-fund", payload);
 
+// --- App settings ---
+export const getAppSettings = () => api.get("/settings");
+export const updateAppSettings = (payload) => api.put("/settings", payload);
+
 export default api;

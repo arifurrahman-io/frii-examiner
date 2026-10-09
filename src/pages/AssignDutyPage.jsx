@@ -21,7 +21,12 @@ import {
   getSubjects,
   getResponsibilityTypes,
   getEligibleTeachers,
+  getAppSettings,
 } from "../api/apiService";
+import {
+  DEFAULT_DUTY_EXCLUSIVITY,
+  normalizeDutyExclusivity,
+} from "../utils/dutyExclusivity";
 
 const initialFilters = {
   year: new Date().getFullYear(),
@@ -56,6 +61,9 @@ const AssignDutyPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [triggerRefresh, setTriggerRefresh] = useState(0);
+  const [dutyExclusivity, setDutyExclusivity] = useState(
+    DEFAULT_DUTY_EXCLUSIVITY
+  );
 
   // --- 🛡️ ROLE PROTECTION (Updated for Incharge Access) ---
   useEffect(() => {
@@ -78,16 +86,21 @@ const AssignDutyPage = () => {
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
-        const [classesRes, subjectsRes, typesRes] = await Promise.all([
-          getClasses(),
-          getSubjects(),
-          getResponsibilityTypes(),
-        ]);
+        const [classesRes, subjectsRes, typesRes, settingsRes] =
+          await Promise.all([
+            getClasses(),
+            getSubjects(),
+            getResponsibilityTypes(),
+            getAppSettings(),
+          ]);
         setMasterData({
           classes: Array.isArray(classesRes.data) ? classesRes.data : [],
           subjects: Array.isArray(subjectsRes.data) ? subjectsRes.data : [],
           types: Array.isArray(typesRes.data) ? typesRes.data : [],
         });
+        setDutyExclusivity(
+          normalizeDutyExclusivity(settingsRes.data?.dutyExclusivity)
+        );
       } catch (error) {
         toast.error("Buffer Sync Failure: Master records unreachable.");
       }
@@ -310,6 +323,7 @@ const AssignDutyPage = () => {
                   targetClass={selectedClass}
                   targetSubject={selectedSubject}
                   routineSchedule={teacher.routineSchedule}
+                  dutyExclusivity={dutyExclusivity}
                   onAssignSuccess={handleAssignSuccess}
                 />
               ))}

@@ -21,6 +21,11 @@ import {
   deleteAssignmentPermanently,
   checkLeaveConflict,
 } from "../../api/apiService";
+import {
+  DEFAULT_DUTY_EXCLUSIVITY,
+  getExclusiveGroup,
+  getConflictingExclusiveAssignment,
+} from "../../utils/dutyExclusivity";
 
 const getName = (value) => (typeof value === "object" ? value?.name : value);
 const normalizeName = (value) =>
@@ -40,6 +45,7 @@ const AssignmentCard = ({
   targetSubject,
   year,
   routineSchedule,
+  dutyExclusivity = DEFAULT_DUTY_EXCLUSIVITY,
   onAssignSuccess,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +57,12 @@ const AssignmentCard = ({
   const [existingAssignments, setExistingAssignments] = useState([]);
   const [conflictLoading, setConflictLoading] = useState(false);
   const [isConflict, setIsConflict] = useState(false);
+  const [conflictReason, setConflictReason] = useState("");
   const [isLeaveConflict, setIsLeaveConflict] = useState(false);
+  const exclusiveGroup = getExclusiveGroup(
+    responsibilityType?.name,
+    dutyExclusivity
+  );
 
   const matchesSelectedTarget = useCallback(
     (assignment) =>
@@ -99,13 +110,35 @@ const AssignmentCard = ({
     setConflictLoading(true);
     try {
       const { data } = await getAssignmentsByTeacherAndYear(teacher._id, year);
-      const hasConflict = data.some(
+      const exclusiveConflict = getConflictingExclusiveAssignment(
+        data,
+        responsibilityType.name,
+        dutyExclusivity
+      );
+      const exactDuplicate = data.some(
         (a) => a.status === "Assigned" && matchesSelectedTarget(a)
       );
+
+      let reason = "";
+      if (exclusiveConflict) {
+        const existingType =
+          exclusiveConflict.responsibilityType?.name || "this duty";
+        const group = getExclusiveGroup(
+          responsibilityType.name,
+          dutyExclusivity
+        );
+        reason = `Already has ${existingType} in ${year}. Only one ${group?.label || "of these"} duty is allowed per year.`;
+      } else if (exactDuplicate) {
+        reason = "This exact responsibility is already assigned.";
+      }
+
       setExistingAssignments(data);
-      setIsConflict(hasConflict);
+      setIsConflict(Boolean(exclusiveConflict || exactDuplicate));
+      setConflictReason(reason);
     } catch (error) {
       setExistingAssignments([]);
+      setIsConflict(false);
+      setConflictReason("");
     } finally {
       setConflictLoading(false);
     }
@@ -114,6 +147,7 @@ const AssignmentCard = ({
     year,
     responsibilityType?.name,
     matchesSelectedTarget,
+    dutyExclusivity,
   ]);
 
   useEffect(() => {
@@ -301,11 +335,18 @@ const AssignmentCard = ({
             <div className="max-h-40 overflow-y-auto space-y-2 custom-scrollbar pr-1">
               {existingAssignments
                 .filter((a) => a.status === "Assigned")
-                .map((a) => (
+                .map((a) => {
+                  const assignmentTypeName = a.responsibilityType?.name;
+                  const isExclusiveConflict =
+                    exclusiveGroup?.types.includes(assignmentTypeName);
+                  const isHighlighted =
+                    matchesSelectedTarget(a) || isExclusiveConflict;
+
+                  return (
                   <div
                     key={a._id}
                     className={`flex justify-between items-center p-3 rounded-xl border ${
-                      matchesSelectedTarget(a)
+                      isHighlighted
                         ? "bg-rose-50 border-rose-100"
                         : "bg-slate-50 border-slate-100"
                     }`}
@@ -334,7 +375,8 @@ const AssignmentCard = ({
                       Terminate
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               {existingAssignments.length === 0 && !conflictLoading && (
                 <p className="text-[10px] text-slate-300 font-bold uppercase italic text-center py-6 border-2 border-dashed border-slate-50 rounded-2xl">
                   No conflicts detected.
@@ -350,8 +392,9 @@ const AssignmentCard = ({
               </div>
             )}
             {isConflict && (
-              <div className="p-3 sm:p-4 bg-rose-50 border border-rose-100 rounded-xl text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-3">
-                <FaTimesCircle size={14} /> DUPLICATE DUTY BLOCKED
+              <div className="p-3 sm:p-4 bg-rose-50 border border-rose-100 rounded-xl text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-start gap-3">
+                <FaTimesCircle size={14} className="mt-0.5 shrink-0" />
+                <span>{conflictReason || "DUTY CONFLICT BLOCKED"}</span>
               </div>
             )}
           </div>

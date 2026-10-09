@@ -21,6 +21,7 @@ import PayrollAttendancePage from "./pages/PayrollAttendancePage";
 import PayrollSalaryPage from "./pages/PayrollSalaryPage";
 import PayrollClBenefitPage from "./pages/PayrollClBenefitPage";
 import PayrollProvidentFundPage from "./pages/PayrollProvidentFundPage";
+import DutyRulesSettingsPage from "./pages/DutyRulesSettingsPage";
 
 function App() {
   return (
@@ -44,6 +45,16 @@ function App() {
             element={
               <ProtectedRoute
                 element={<UserManagementPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+
+          <Route
+            path="/setup/duty-rules"
+            element={
+              <ProtectedRoute
+                element={<DutyRulesSettingsPage />}
                 allowedRoles={["admin"]}
               />
             }

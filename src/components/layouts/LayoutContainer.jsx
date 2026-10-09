@@ -19,6 +19,7 @@ import {
   FaUserTie,
   FaUsersCog,
   FaMoneyCheckAlt,
+  FaShieldAlt,
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -56,17 +57,18 @@ const UserPanel = ({ user, compact = false }) => {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-white text-slate-600">
-          <FaUserCircle size={22} />
+    <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-slate-100 text-slate-600">
+          <FaUserCircle size={20} />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-950">
+          <p className="truncate text-sm font-semibold leading-tight text-slate-950">
             {user?.name || "User"}
-          </p>
-          <p className="text-xs font-medium capitalize text-slate-500">
-            {user?.role || "role"}
+            <span className="font-medium text-slate-400"> · </span>
+            <span className="text-xs font-medium capitalize text-slate-500">
+              {user?.role || "role"}
+            </span>
           </p>
         </div>
       </div>
@@ -233,17 +235,16 @@ const AppSidebar = ({
       />
     </div>
 
-    <div className="mt-4 shrink-0 space-y-3 border-t border-slate-100 pt-5">
+    <div className="mt-4 flex shrink-0 items-center gap-2 border-t border-slate-100 pt-5">
       <UserPanel user={user} />
       <button
         type="button"
         onClick={onLogout}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+        className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+        title="Log out"
       >
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-white">
-          <FaSignOutAlt size={14} />
-        </span>
-        Log out
+        <FaSignOutAlt size={14} />
+        <span className="hidden sm:inline">Log out</span>
       </button>
     </div>
   </div>
@@ -358,14 +359,15 @@ const MobileDrawer = ({
           />
         </div>
 
-        <div className="mt-4 shrink-0 space-y-3 border-t border-slate-100 pt-5">
+        <div className="mt-4 flex shrink-0 items-center gap-2 border-t border-slate-100 pt-5">
           <UserPanel user={user} />
           <button
             type="button"
             onClick={onLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+            title="Log out"
           >
-            <FaSignOutAlt />
+            <FaSignOutAlt size={14} />
             Log out
           </button>
         </div>
@@ -453,6 +455,7 @@ const LayoutContainer = ({ children }) => {
           { name: "Class", path: "/setup/class", icon: FaLayerGroup },
           { name: "Subject", path: "/setup/subject", icon: FaBook },
           { name: "Duty Type", path: "/setup/responsibility", icon: FaTasks },
+          { name: "Duty Rules", path: "/setup/duty-rules", icon: FaShieldAlt },
         ],
       });
       items.push(
