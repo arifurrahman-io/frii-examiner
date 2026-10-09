@@ -715,11 +715,11 @@
 
   .performance-print-institute-logo {
     display: block !important;
-    width: min(420px, 72%) !important;
+    width: min(320px, 58%) !important;
     max-width: 100% !important;
     height: auto !important;
-    margin: 0 auto 10px !important;
-    padding-bottom: 8px !important;
+    margin: 0 auto 8px !important;
+    padding-bottom: 6px !important;
     border-bottom: 1.5px solid #0f766e;
   }
 

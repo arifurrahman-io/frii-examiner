@@ -1521,10 +1521,10 @@ const ReportViewPage = () => {
                       Examiner order
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-500">
-                      Nine/Ten Agriculture, ICT, H.Science use Examiner /
-                      Scrutinizer only (no senior/junior). Other subjects use
-                      joining date (earlier = Examiner-1). Swap saves the PDF
-                      order.
+                      Nine/Ten Agriculture, ICT, H.Science: Examiner from E-*
+                      and Scrutinizer from S-* (S-Test with E-Test, S-Pre-Test
+                      with E-Pre-Test). Other subjects use Examiner-1/2 by
+                      joining date. Swap saves Examiner-1/2 PDF order.
                     </p>
                     <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
                       {examinerPairRows.map((pair) => {

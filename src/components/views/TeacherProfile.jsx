@@ -294,7 +294,7 @@ const TeacherProfile = ({ teacherId }) => {
         <img
           src={headerLogo}
           alt={INSTITUTE_NAME}
-          className="print-institute-logo mb-4 mx-auto block w-[70%] max-w-[420px] h-auto"
+          className="print-institute-logo mb-4 mx-auto block w-[58%] max-w-[320px] h-auto"
         />
         <div className="report-title">
           <div>
