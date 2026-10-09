@@ -22,6 +22,7 @@ import PayrollSalaryPage from "./pages/PayrollSalaryPage";
 import PayrollClBenefitPage from "./pages/PayrollClBenefitPage";
 import PayrollProvidentFundPage from "./pages/PayrollProvidentFundPage";
 import DutyRulesSettingsPage from "./pages/DutyRulesSettingsPage";
+import ExaminerReportSetupPage from "./pages/ExaminerReportSetupPage";
 
 function App() {
   return (
@@ -115,6 +116,16 @@ function App() {
             element={
               <ProtectedRoute
                 element={<ReportViewPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+
+          <Route
+            path="/report/examiner-setup"
+            element={
+              <ProtectedRoute
+                element={<ExaminerReportSetupPage />}
                 allowedRoles={["admin"]}
               />
             }

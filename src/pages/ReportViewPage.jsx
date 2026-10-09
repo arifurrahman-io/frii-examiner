@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   FaAngleLeft,
@@ -33,20 +33,10 @@ import {
   exportCustomReportToPDF,
   getBranches,
   getClasses,
-  getExaminerExchangeDates,
-  getExaminerPairOrders,
   getReportData,
   getResponsibilityTypes,
   getSubjects,
-  saveExaminerExchangeDates,
-  saveExaminerPairOrders,
 } from "../api/apiService";
-import {
-  formatJoiningDate,
-  getPairRoleLabels,
-  isExaminerScrutinizerPair,
-  sortTeachersForPair,
-} from "../utils/examinerPairOrder";
 
 const hasRows = (data) => Array.isArray(data) && data.length > 0;
 
@@ -91,12 +81,6 @@ const reportTypes = [
 
 const getReportTitle = (reportType) =>
   reportTypes.find((item) => item.id === reportType)?.label || "Report";
-
-const getExchangeDateIdKey = ({
-  responsibilityType,
-  targetClass,
-  targetSubject,
-}) => [responsibilityType, targetClass, targetSubject].join("|||");
 
 const FilterMultiSelect = ({
   label,
@@ -526,10 +510,6 @@ const ReportViewPage = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
-  const [exchangeDates, setExchangeDates] = useState({});
-  const [exchangeDateSaveLoading, setExchangeDateSaveLoading] = useState(false);
-  const [pairOrders, setPairOrders] = useState({});
-  const [pairOrderSaveLoading, setPairOrderSaveLoading] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -757,21 +737,6 @@ const ReportViewPage = () => {
 
     setExportLoading(true);
     try {
-      if (
-        exportType === "EXPORT_CLASS_DETAILED" &&
-        hasSelectedExaminerDuty &&
-        exchangeDateRows.length > 0
-      ) {
-        await saveExaminerExchangeDates({
-          year: filters.year,
-          entries: exchangeDateRows.map((row) => ({
-            responsibilityType: row.responsibilityType,
-            targetClass: row.targetClass,
-            targetSubject: row.targetSubject,
-            lastDateOfExchange: exchangeDates[row.key] || "",
-          })),
-        });
-      }
       await exportCustomReportToPDF(exportFilters);
       toast.success("Report export initialized.");
       setIsExportModalOpen(false);
@@ -796,236 +761,6 @@ const ReportViewPage = () => {
     selectedDetailedTypes.every((type) =>
       type.name?.trim().toUpperCase().startsWith("E")
     );
-  const exchangeDateRows = useMemo(() => {
-    if (!hasSelectedExaminerDuty || filters.reportType !== "DETAILED_ASSIGNMENT") {
-      return [];
-    }
-
-    const rowMap = new Map();
-    reportData.forEach((row) => {
-      if (
-        !row.RESPONSIBILITY_TYPE_ID ||
-        !row.CLASS_ID ||
-        !row.SUBJECT_ID ||
-        !row.CLASS ||
-        !row.SUBJECT
-      ) {
-        return;
-      }
-      const key = getExchangeDateIdKey({
-        responsibilityType: row.RESPONSIBILITY_TYPE_ID,
-        targetClass: row.CLASS_ID,
-        targetSubject: row.SUBJECT_ID,
-      });
-      if (!rowMap.has(key)) {
-        rowMap.set(key, {
-          key,
-          responsibilityType: row.RESPONSIBILITY_TYPE_ID,
-          targetClass: row.CLASS_ID,
-          targetSubject: row.SUBJECT_ID,
-          dutyType: row.RESPONSIBILITY_TYPE,
-          className: row.CLASS,
-          subjectName: row.SUBJECT,
-        });
-      }
-    });
-    return [...rowMap.values()].sort((first, second) => {
-      const classCompare = first.className.localeCompare(second.className);
-      if (classCompare !== 0) return classCompare;
-      return first.subjectName.localeCompare(second.subjectName);
-    });
-  }, [filters.reportType, hasSelectedExaminerDuty, reportData]);
-
-  const examinerPairRows = useMemo(() => {
-    if (!hasSelectedExaminerDuty || filters.reportType !== "DETAILED_ASSIGNMENT") {
-      return [];
-    }
-
-    const groupMap = new Map();
-    reportData.forEach((row) => {
-      if (
-        !row.RESPONSIBILITY_TYPE_ID ||
-        !row.CLASS_ID ||
-        !row.SUBJECT_ID ||
-        !row.TEACHER_REF_ID
-      ) {
-        return;
-      }
-      const key = getExchangeDateIdKey({
-        responsibilityType: row.RESPONSIBILITY_TYPE_ID,
-        targetClass: row.CLASS_ID,
-        targetSubject: row.SUBJECT_ID,
-      });
-      if (!groupMap.has(key)) {
-        groupMap.set(key, {
-          key,
-          responsibilityType: row.RESPONSIBILITY_TYPE_ID,
-          targetClass: row.CLASS_ID,
-          targetSubject: row.SUBJECT_ID,
-          dutyType: row.RESPONSIBILITY_TYPE,
-          className: row.CLASS,
-          subjectName: row.SUBJECT,
-          teachers: [],
-        });
-      }
-      const group = groupMap.get(key);
-      if (!group.teachers.some((item) => item.refId === row.TEACHER_REF_ID)) {
-        group.teachers.push({
-          refId: row.TEACHER_REF_ID,
-          name: row.TEACHER || "N/A",
-          teacherId: row.TEACHERID || "",
-          campus: row.CAMPUS || "",
-          joiningDate: row.JOINING_DATE || null,
-        });
-      }
-    });
-
-    return [...groupMap.values()]
-      .map((group) => {
-        const teachers = sortTeachersForPair(
-          group.teachers,
-          pairOrders[group.key] || [],
-          {
-            className: group.className,
-            subjectName: group.subjectName,
-          }
-        );
-        const labels = getPairRoleLabels(group.className, group.subjectName);
-        const isScrutinizerPair = isExaminerScrutinizerPair(
-          group.className,
-          group.subjectName
-        );
-        return {
-          ...group,
-          teachers,
-          firstLabel: labels.first,
-          secondLabel: labels.second,
-          canSwap: teachers.length >= 2,
-          isScrutinizerPair,
-        };
-      })
-      .sort((first, second) => {
-        const classCompare = first.className.localeCompare(second.className);
-        if (classCompare !== 0) return classCompare;
-        return first.subjectName.localeCompare(second.subjectName);
-      });
-  }, [
-    filters.reportType,
-    hasSelectedExaminerDuty,
-    pairOrders,
-    reportData,
-  ]);
-
-  useEffect(() => {
-    if (!isExportModalOpen || exchangeDateRows.length === 0) return;
-
-    const fetchExchangeDates = async () => {
-      try {
-        const typeIds = [
-          ...new Set(exchangeDateRows.map((row) => row.responsibilityType)),
-        ].join(",");
-        const classIds = [
-          ...new Set(exchangeDateRows.map((row) => row.targetClass)),
-        ].join(",");
-        const subjectIds = [
-          ...new Set(exchangeDateRows.map((row) => row.targetSubject)),
-        ].join(",");
-
-        const [{ data: dateData }, { data: pairData }] = await Promise.all([
-          getExaminerExchangeDates({
-            year: filters.year,
-            typeIds,
-            classIds,
-            subjectIds,
-          }),
-          getExaminerPairOrders({
-            year: filters.year,
-            typeIds,
-            classIds,
-            subjectIds,
-          }),
-        ]);
-
-        const savedDates = Object.fromEntries(
-          (Array.isArray(dateData) ? dateData : []).map((item) => [
-            item.key,
-            item.lastDateOfExchange || "",
-          ])
-        );
-        setExchangeDates(savedDates);
-
-        const savedOrders = Object.fromEntries(
-          (Array.isArray(pairData) ? pairData : []).map((item) => [
-            item.key,
-            item.teacherOrder || [],
-          ])
-        );
-        setPairOrders(savedOrders);
-      } catch (error) {
-        toast.error("Failed to load exchange dates or pair orders.");
-      }
-    };
-
-    fetchExchangeDates();
-  }, [exchangeDateRows, filters.year, isExportModalOpen]);
-
-  const handleSaveExchangeDates = async () => {
-    setExportError(null);
-    setExchangeDateSaveLoading(true);
-    try {
-      await saveExaminerExchangeDates({
-        year: filters.year,
-        entries: exchangeDateRows.map((row) => ({
-          responsibilityType: row.responsibilityType,
-          targetClass: row.targetClass,
-          targetSubject: row.targetSubject,
-          lastDateOfExchange: exchangeDates[row.key] || "",
-        })),
-      });
-      toast.success("Exchange dates saved.");
-    } catch (error) {
-      toast.error("Failed to save exchange dates.");
-    } finally {
-      setExchangeDateSaveLoading(false);
-    }
-  };
-
-  const handleSwapExaminerPair = async (pair) => {
-    if (!pair?.canSwap || pair.teachers.length < 2) return;
-
-    const nextTeachers = [...pair.teachers];
-    [nextTeachers[0], nextTeachers[1]] = [nextTeachers[1], nextTeachers[0]];
-    const teacherOrder = nextTeachers.map((teacher) => teacher.refId);
-
-    setPairOrders((prev) => ({ ...prev, [pair.key]: teacherOrder }));
-    setPairOrderSaveLoading(true);
-    try {
-      await saveExaminerPairOrders({
-        year: filters.year,
-        entries: [
-          {
-            responsibilityType: pair.responsibilityType,
-            targetClass: pair.targetClass,
-            targetSubject: pair.targetSubject,
-            teacherOrder,
-          },
-        ],
-      });
-      toast.success(
-        `${pair.className} · ${pair.subjectName}: ${pair.firstLabel} / ${pair.secondLabel} swapped.`
-      );
-    } catch (error) {
-      setPairOrders((prev) => ({
-        ...prev,
-        [pair.key]: pair.teachers.map((teacher) => teacher.refId),
-      }));
-      toast.error(
-        error.response?.data?.message || "Failed to save examiner pair order."
-      );
-    } finally {
-      setPairOrderSaveLoading(false);
-    }
-  };
 
   const selectedUnassignedClasses = masterData.classes.filter((item) =>
     selectedUnassignedClassIds.includes(item._id)
@@ -1067,14 +802,23 @@ const ReportViewPage = () => {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsExportModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-            >
-              <FaFileExport size={14} />
-              Export Report
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/report/examiner-setup"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                <FaExchangeAlt size={14} />
+                Examiner Setup
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsExportModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              >
+                <FaFileExport size={14} />
+                Export Report
+              </button>
+            </div>
           </div>
         </header>
 
@@ -1462,131 +1206,22 @@ const ReportViewPage = () => {
             ) : (
               <div className="space-y-4">
                 {hasSelectedExaminerDuty && (
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-950">
-                      Last Date of Exchange
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-500">
-                      Saved dates are reused automatically when printing this report.
-                    </p>
-
-                    {exchangeDateRows.length > 0 ? (
-                      <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2">
-                        {exchangeDateRows.map((row) => (
-                          <label
-                            key={row.key}
-                            className="space-y-1.5 rounded-lg border border-slate-100 bg-slate-50 p-3"
-                          >
-                            <span className="block truncate text-xs font-semibold text-slate-600">
-                              {row.className} - {row.subjectName}
-                              {row.dutyType ? ` (${row.dutyType})` : ""}
-                            </span>
-                            <input
-                              type="date"
-                              value={exchangeDates[row.key] || ""}
-                              onChange={(event) =>
-                                setExchangeDates((prev) => ({
-                                  ...prev,
-                                  [row.key]: event.target.value,
-                                }))
-                              }
-                              className="h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-slate-700 focus:ring-2 focus:ring-slate-200"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
-                        Sync the report after selecting class and E-duty type to add exchange dates.
+                  <Link
+                    to="/report/examiner-setup"
+                    onClick={() => setIsExportModalOpen(false)}
+                    className="flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50 p-4 transition-colors hover:bg-teal-100"
+                  >
+                    <FaExchangeAlt className="mt-0.5 shrink-0 text-teal-700" />
+                    <div>
+                      <p className="text-sm font-semibold text-teal-900">
+                        Open Examiner Setup
                       </p>
-                    )}
-                    {exchangeDateRows.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleSaveExchangeDates}
-                        disabled={exchangeDateSaveLoading}
-                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {exchangeDateSaveLoading
-                          ? "Saving..."
-                          : "Save Exchange Dates"}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {hasSelectedExaminerDuty && examinerPairRows.length > 0 && (
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-950">
-                      Examiner order
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-500">
-                      Nine/Ten Agriculture, ICT, H.Science: Examiner from E-*
-                      and Scrutinizer from S-* (S-Test with E-Test, S-Pre-Test
-                      with E-Pre-Test). Other subjects use Examiner-1/2 by
-                      joining date. Swap saves Examiner-1/2 PDF order.
-                    </p>
-                    <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
-                      {examinerPairRows.map((pair) => {
-                        const first = pair.teachers[0];
-                        const second = pair.teachers[1];
-                        return (
-                          <div
-                            key={pair.key}
-                            className="rounded-lg border border-slate-100 bg-slate-50 p-3"
-                          >
-                            <p className="text-xs font-semibold text-slate-600">
-                              {pair.className} · {pair.subjectName}
-                              {pair.dutyType ? ` (${pair.dutyType})` : ""}
-                            </p>
-                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                              <div className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-teal-700">
-                                  {pair.firstLabel}
-                                </p>
-                                <p className="truncate text-sm font-semibold text-slate-900">
-                                  {first?.name || "—"}
-                                </p>
-                                <p className="truncate text-[11px] font-medium text-slate-500">
-                                  {first?.campus || "N/A"}
-                                  {!pair.isScrutinizerPair &&
-                                    (first?.joiningDate
-                                      ? ` · joined ${formatJoiningDate(first.joiningDate)}`
-                                      : " · no joining date")}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleSwapExaminerPair(pair)}
-                                disabled={!pair.canSwap || pairOrderSaveLoading}
-                                title="Swap positions"
-                                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-teal-50 hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                <FaExchangeAlt />
-                                Swap
-                              </button>
-                              <div className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                                  {pair.secondLabel}
-                                </p>
-                                <p className="truncate text-sm font-semibold text-slate-900">
-                                  {second?.name || "—"}
-                                </p>
-                                <p className="truncate text-[11px] font-medium text-slate-500">
-                                  {second?.campus || "N/A"}
-                                  {!pair.isScrutinizerPair &&
-                                    second &&
-                                    (second.joiningDate
-                                      ? ` · joined ${formatJoiningDate(second.joiningDate)}`
-                                      : " · no joining date")}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <p className="mt-1 text-sm font-medium text-teal-800/80">
+                        Manage Last Date of Exchange and Examiner-1 / Examiner-2
+                        order on a full page before exporting.
+                      </p>
                     </div>
-                  </div>
+                  </Link>
                 )}
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -715,7 +715,7 @@
 
   .performance-print-institute-logo {
     display: block !important;
-    width: min(320px, 58%) !important;
+    width: min(250px, 48%) !important;
     max-width: 100% !important;
     height: auto !important;
     margin: 0 auto 8px !important;

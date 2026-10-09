@@ -13,7 +13,7 @@ export const BRAND = {
 // Source image: 717 x 121
 const HEADER_LOGO_ASPECT = 717 / 121;
 
-const getHeaderLogoSize = (pageWidth, preferredWidth = 320) => {
+const getHeaderLogoSize = (pageWidth, preferredWidth = 250) => {
   const width = Math.min(pageWidth - 72, preferredWidth);
   const height = width / HEADER_LOGO_ASPECT;
   return { width, height };
@@ -22,7 +22,7 @@ const getHeaderLogoSize = (pageWidth, preferredWidth = 320) => {
 export const drawInstituteHeaderLogo = (doc, options = {}) => {
   const {
     y = 14,
-    preferredWidth = 320,
+    preferredWidth = 250,
     centerX = doc.internal.pageSize.getWidth() / 2,
   } = options;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -45,7 +45,7 @@ export const drawInstituteHeader = (doc, options = {}) => {
     x = null,
     withDivider = false,
     dividerWidth = null,
-    preferredWidth = 320,
+    preferredWidth = 250,
     useLogo = true,
   } = options;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -136,7 +136,7 @@ export const drawProfessionalReportHeader = (doc, options = {}) => {
     subtitleLines = null,
     titleFontSize = 13,
     subtitleFontSize = 10.5,
-    preferredWidth = 320,
+    preferredWidth = 250,
     centerX = doc.internal.pageSize.getWidth() / 2,
   } = options;
 

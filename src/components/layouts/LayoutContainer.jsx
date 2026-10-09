@@ -20,6 +20,8 @@ import {
   FaUsersCog,
   FaMoneyCheckAlt,
   FaShieldAlt,
+  FaExchangeAlt,
+  FaTable,
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -461,7 +463,18 @@ const LayoutContainer = ({ children }) => {
       items.push(
         { name: "Routine", path: "/routine", icon: FaCalendarAlt },
         { name: "Assign Duty", path: "/assign", icon: FaClipboardList },
-        { name: "Report", path: "/report", icon: FaChartBar },
+        {
+          name: "Report",
+          icon: FaChartBar,
+          children: [
+            { name: "Reports", path: "/report", icon: FaTable },
+            {
+              name: "Examiner Setup",
+              path: "/report/examiner-setup",
+              icon: FaExchangeAlt,
+            },
+          ],
+        },
         { name: "Users", path: "/users", icon: FaUsersCog }
       );
     } else if (user?.role === "head_teacher") {
